@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الرفيق</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#05070A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+    <main id="app" class="app-shell">
+        <header class="app-header">
+            <h1 style="font-size: 1.2rem; margin: 0; color: #D4AF37;">أهلاً يا رفيق</h1>
+            <p style="color: #A0A0A0; font-size: 0.8rem; margin: 5px 0;">22 محرم 1448</p>
+        </header>
+
+        <section class="hero-card">
+            <div style="font-size: 0.9rem; opacity: 0.8;">الصلاة القادمة: العشاء</div>
+            <div class="timer">01:14:02</div>
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+            <p style="font-size: 0.75rem; color: #D4AF37;">يتبقى على الأذان</p>
+        </section>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active"><span>🏠</span>الرئيسية</a>
+        <a href="quran.html" class="nav-item"><span>📖</span>القرآن</a>
+        <a href="prayer.html" class="nav-item"><span>🕌</span>الصلاة</a>
+        <a href="adhkar.html" class="nav-item"><span>🤲</span>الأذكار</a>
+        <a href="more.html" class="nav-item"><span>⚙️</span>المزيد</a>
+    </nav>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
