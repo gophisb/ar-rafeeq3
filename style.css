@@ -1,0 +1,82 @@
+/* style.css — الرفيق 3
+   نظام ألوان مزدوج: ليلي افتراضي (أسود + أخضر + ذهبي) ونهاري (أخضر فاتح).
+   كل الصفحات (quran, arbaeen, adhkar, qibla, hisnul, prayer) تستعمل نفس
+   أسماء المتغيرات (--primary, --gold, --card, --line, --radius, --text, --bg)
+   لذا أي تعديل هنا ينعكس على كل التطبيق دون لمس أي ملف آخر. */
+
+:root{
+  /* الوضع الليلي (الافتراضي) */
+  --bg:#080B09;
+  --text:#EDEFE8;
+  --primary:#2E8B57;        /* أخضر */
+  --primary-dark:#175C38;
+  --gold:#C9A227;           /* ذهبي */
+  --card:rgba(255,255,255,0.045);
+  --line:rgba(201,162,39,0.20);
+  --radius:16px;
+  --muted:#93998C;
+}
+
+body.day-mode{
+  /* الوضع النهاري — أخضر فاتح */
+  --bg:#EAF6EC;
+  --text:#15241A;
+  --primary:#2E8B57;
+  --primary-dark:#1F6B42;
+  --gold:#A9791A;
+  --card:#FFFFFF;
+  --line:rgba(30,90,50,0.16);
+  --muted:#5A6A5A;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.8;
+  min-height:100dvh;
+  transition:background .4s,color .4s;
+}
+
+.container{ max-width:720px; margin:0 auto; padding:16px; }
+
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; padding:14px 0;
+}
+.back{ color:var(--primary); text-decoration:none; font-size:14px; font-weight:600; }
+
+h1{ text-align:center; font-size:26px; color:var(--primary); margin:6px 0 2px; }
+.sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:18px; }
+
+/* صندوق البحث — مستخدم في: quran.html, arbaeen.html, hisnul.html */
+.search-box{ position:relative; margin-bottom:16px; }
+.search-box input{
+  width:100%; padding:13px 44px 13px 16px; border-radius:14px; border:1px solid var(--line);
+  background:var(--card); color:var(--text); font-size:15px; font-family:inherit;
+}
+.search-box input:focus{ outline:2px solid var(--primary); }
+.search-box .ic{ position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); }
+.result-count{ font-size:13px; color:var(--muted); margin-bottom:12px; }
+
+footer{ text-align:center; padding:24px 0 10px; color:var(--muted); font-size:12px; line-height:1.7; }
+
+#status{ text-align:center; color:var(--muted); padding:30px 0; }
+
+/* شريط التنقل السفلي — مشترك عبر كل الصفحات (يُضاف مرة واحدة هنا) */
+.bottom-nav{
+  position:fixed; bottom:0; left:0; right:0; z-index:30;
+  display:flex; justify-content:space-around; align-items:center;
+  background:var(--card); backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+  padding:10px 4px 14px;
+}
+.bottom-nav .nav-item{
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  text-decoration:none; color:var(--muted); font-size:11px;
+}
+.bottom-nav .nav-item span:first-child{ font-size:20px; }
+.bottom-nav .nav-item.active{ color:var(--gold); font-weight:700; }
+
+body{ padding-bottom:88px; } /* مساحة لشريط التنقل السفلي الثابت */
