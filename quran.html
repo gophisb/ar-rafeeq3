@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>القرآن الكريم — الرفيق</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .container{max-width:760px;margin:0 auto;padding:16px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;}
+  .back{color:var(--primary);text-decoration:none;font-size:14px;font-weight:600;}
+  h1{text-align:center;font-size:26px;color:var(--primary);margin:6px 0 2px;}
+  .sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:18px;}
+
+  .surah-list .surah-row{
+    display:flex;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--line);
+    cursor:pointer;background:var(--card);border-radius:12px;margin-bottom:8px;
+  }
+  .surah-num{flex-shrink:0;width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(155deg,var(--primary),var(--primary-dark));color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
+  .surah-name{flex:1;font-family:'Amiri',serif;font-size:19px;font-weight:700;color:var(--text);}
+  .surah-count{font-size:12px;color:var(--muted);}
+
+  .reader{display:none;}
+  .reader.open{display:block;}
+  .reader-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .reader-head button{background:var(--card);border:1px solid var(--line);color:var(--primary);
+    border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;}
+  .reader-title{font-family:'Amiri',serif;font-size:24px;color:var(--gold);text-align:center;}
+  .ayah{font-family:'Amiri',serif;font-size:22px;line-height:2.4;color:var(--text);
+    background:var(--card);border-radius:14px;border:1px solid var(--line);padding:20px;margin-top:14px;
+    text-align:justify;}
+  .ayah .n{color:var(--gold);font-size:14px;font-family:inherit;font-weight:700;}
+
+  #status{text-align:center;color:var(--muted);padding:40px 0;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <a class="back" href="./index.html">→ الرئيسية</a>
+    <span style="font-size:22px;">📖</span>
+  </div>
+  <h1>القرآن الكريم</h1>
+  <p class="sub">114 سورة — تلاوة كاملة محلياً بدون إنترنت</p>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="ابحث عن اسم سورة...">
+    <span class="ic">🔍</span>
+  </div>
+
+  <div id="status">جاري تحميل القرآن الكريم...</div>
+
+  <div class="surah-list" id="surahList"></div>
+
+  <div class="reader" id="reader">
+    <div class="reader-head">
+      <button id="backToList">→ فهرس السور</button>
+      <div></div>
+    </div>
+    <div class="reader-title" id="readerTitle">—</div>
+    <div id="ayahList"></div>
+  </div>
+</div>
+
+<script>
+let QURAN = [];
+
+fetch('./quran-local.json')
+  .then(r => r.json())
+  .then(data => {
+    QURAN = data;
+    document.getElementById('status').hidden = true;
+    renderList(QURAN);
+  })
+  .catch(() => {
+    document.getElementById('status').textContent =
+      'تعذّر تحميل ملف القرآن (quran-local.json). تأكد أن الملف مرفوع بجانب index.html.';
+  });
+
+function renderList(items){
+  const wrap = document.getElementById('surahList');
+  wrap.innerHTML = items.map(s => `
+    <div class="surah-row" data-i="${s.i}">
+      <div class="surah-num">${s.i}</div>
+      <div class="surah-name">${s.name}</div>
+      <div class="surah-count">${s.a.length} آية</div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.surah-row').forEach(row=>{
+    row.addEventListener('click', () => openSurah(parseInt(row.dataset.i, 10)));
+  });
+}
+
+function openSurah(i){
+  const surah = QURAN.find(s => s.i === i);
+  if(!surah) return;
+  document.getElementById('surahList').style.display = 'none';
+  document.querySelector('.search-box').style.display = 'none';
+  document.getElementById('reader').classList.add('open');
+  document.getElementById('readerTitle').textContent = `سورة ${surah.name}`;
+  document.getElementById('ayahList').innerHTML = surah.a.map(a => `
+    <div class="ayah"><span class="n">﴿${a.n}﴾</span> ${a.t}</div>
+  `).join('');
+  window.scrollTo(0,0);
+}
+
+document.getElementById('backToList').addEventListener('click', () => {
+  document.getElementById('reader').classList.remove('open');
+  document.getElementById('surahList').style.display = '';
+  document.querySelector('.search-box').style.display = '';
+});
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.trim();
+  if(!q){ renderList(QURAN); return; }
+  renderList(QURAN.filter(s => s.name.includes(q)));
+});
+</script>
+</body>
+</html>
