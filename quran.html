@@ -1,125 +1,112 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>القرآن الكريم — الرفيق</title>
-<link rel="stylesheet" href="./style.css">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  .container{max-width:760px;margin:0 auto;padding:16px;}
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;}
-  .back{color:var(--primary);text-decoration:none;font-size:14px;font-weight:600;}
-  h1{text-align:center;font-size:26px;color:var(--primary);margin:6px 0 2px;}
-  .sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:18px;}
-
-  .surah-list .surah-row{
-    display:flex;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--line);
-    cursor:pointer;background:var(--card);border-radius:12px;margin-bottom:8px;
-  }
-  .surah-num{flex-shrink:0;width:34px;height:34px;border-radius:10px;
-    background:linear-gradient(155deg,var(--primary),var(--primary-dark));color:#fff;
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
-  .surah-name{flex:1;font-family:'Amiri',serif;font-size:19px;font-weight:700;color:var(--text);}
-  .surah-count{font-size:12px;color:var(--muted);}
-
-  .reader{display:none;}
-  .reader.open{display:block;}
-  .reader-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-  .reader-head button{background:var(--card);border:1px solid var(--line);color:var(--primary);
-    border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;}
-  .reader-title{font-family:'Amiri',serif;font-size:24px;color:var(--gold);text-align:center;}
-  .ayah{font-family:'Amiri',serif;font-size:22px;line-height:2.4;color:var(--text);
-    background:var(--card);border-radius:14px;border:1px solid var(--line);padding:20px;margin-top:14px;
-    text-align:justify;}
-  .ayah .n{color:var(--gold);font-size:14px;font-family:inherit;font-weight:700;}
-
-  #status{text-align:center;color:var(--muted);padding:40px 0;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>القرآن الكريم — الرفيق</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        .quran-container { max-width: 460px; margin: 0 auto; padding: 16px; }
+        .quran-header { text-align: center; padding: 20px 0; }
+        .quran-header h2 { color: var(--gold); font-family: 'Amiri', serif; }
+        .search-box { width: 100%; padding: 12px; margin: 16px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-size: 1rem; }
+        .surah-list { list-style: none; padding: 0; }
+        .surah-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .surah-item:hover { background: rgba(255,255,255,0.03); }
+        .surah-name { color: var(--gold); font-family: 'Amiri', serif; font-size: 1.2rem; }
+        .ayah-text { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); line-height: 2.2; font-family: 'Amiri', serif; font-size: 1.1rem; }
+        .ayah-number { color: var(--gold); font-size: 0.8rem; margin-left: 8px; }
+        .back-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 20px; border-radius: 99px; margin-bottom: 16px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
+        .no-results { text-align: center; padding: 40px; color: var(--muted); }
+    </style>
 </head>
 <body>
-<div class="container">
-  <div class="topbar">
-    <a class="back" href="./index.html">→ الرئيسية</a>
-    <span style="font-size:22px;">📖</span>
-  </div>
-  <h1>القرآن الكريم</h1>
-  <p class="sub">114 سورة — تلاوة كاملة محلياً بدون إنترنت</p>
-
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="ابحث عن اسم سورة...">
-    <span class="ic">🔍</span>
-  </div>
-
-  <div id="status">جاري تحميل القرآن الكريم...</div>
-
-  <div class="surah-list" id="surahList"></div>
-
-  <div class="reader" id="reader">
-    <div class="reader-head">
-      <button id="backToList">→ فهرس السور</button>
-      <div></div>
+    <div class="quran-container">
+        <div class="quran-header">
+            <h2>📖 القرآن الكريم</h2>
+        </div>
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 ابحث عن كلمة أو آية...">
+        <div id="quranContent"></div>
     </div>
-    <div class="reader-title" id="readerTitle">—</div>
-    <div id="ayahList"></div>
-  </div>
-</div>
+    <script>
+        (function() {
+            var quranData = null;
+            var container = document.getElementById('quranContent');
+            var searchInput = document.getElementById('searchInput');
 
-<script>
-let QURAN = [];
+            // تحميل ملف القرآن المحلي
+            function loadQuran() {
+                container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px;">جاري تحميل القرآن الكريم...</p>';
+                fetch('./quran-local.json')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        quranData = data;
+                        displaySurahList();
+                    })
+                    .catch(function() {
+                        container.innerHTML = '<p class="no-results">❌ تعذر تحميل القرآن. تأكد من وجود ملف quran-local.json في نفس المجلد.</p>';
+                    });
+            }
 
-fetch('./quran-local.json')
-  .then(r => r.json())
-  .then(data => {
-    QURAN = data;
-    document.getElementById('status').hidden = true;
-    renderList(QURAN);
-  })
-  .catch(() => {
-    document.getElementById('status').textContent =
-      'تعذّر تحميل ملف القرآن (quran-local.json). تأكد أن الملف مرفوع بجانب index.html.';
-  });
+            // عرض قائمة السور
+            function displaySurahList() {
+                if (!quranData || quranData.length === 0) {
+                    container.innerHTML = '<p class="no-results">لا توجد بيانات قرآنية.</p>';
+                    return;
+                }
+                var html = '<ul class="surah-list">';
+                quranData.forEach(function(surah, index) {
+                    html += '<li class="surah-item" onclick="window.showSurah(' + index + ')">';
+                    html += '<span class="surah-name">' + (index + 1) + '. ' + surah.name + '</span>';
+                    html += '<span style="color:var(--muted);font-size:0.8rem;">' + surah.ayahs.length + ' آيات</span>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                container.innerHTML = html;
+            }
 
-function renderList(items){
-  const wrap = document.getElementById('surahList');
-  wrap.innerHTML = items.map(s => `
-    <div class="surah-row" data-i="${s.i}">
-      <div class="surah-num">${s.i}</div>
-      <div class="surah-name">${s.name}</div>
-      <div class="surah-count">${s.a.length} آية</div>
-    </div>
-  `).join('');
-  wrap.querySelectorAll('.surah-row').forEach(row=>{
-    row.addEventListener('click', () => openSurah(parseInt(row.dataset.i, 10)));
-  });
-}
+            // عرض آيات سورة محددة
+            window.showSurah = function(index) {
+                var surah = quranData[index];
+                if (!surah) return;
+                var html = '<button class="back-btn" onclick="displaySurahList()">← فهرس السور</button>';
+                html += '<h2 style="color:var(--gold);text-align:center;margin:16px 0;font-family:Amiri,serif;">' + surah.name + '</h2>';
+                surah.ayahs.forEach(function(ayah, i) {
+                    html += '<div class="ayah-text">';
+                    html += '<span class="ayah-number">' + (i + 1) + '</span>';
+                    html += ayah.text || ayah.t || ayah;
+                    html += '</div>';
+                });
+                container.innerHTML = html;
+                window.scrollTo(0, 0);
+            };
 
-function openSurah(i){
-  const surah = QURAN.find(s => s.i === i);
-  if(!surah) return;
-  document.getElementById('surahList').style.display = 'none';
-  document.querySelector('.search-box').style.display = 'none';
-  document.getElementById('reader').classList.add('open');
-  document.getElementById('readerTitle').textContent = `سورة ${surah.name}`;
-  document.getElementById('ayahList').innerHTML = surah.a.map(a => `
-    <div class="ayah"><span class="n">﴿${a.n}﴾</span> ${a.t}</div>
-  `).join('');
-  window.scrollTo(0,0);
-}
+            // البحث المباشر
+            searchInput.addEventListener('input', function() {
+                var term = this.value.trim();
+                if (!term) {
+                    displaySurahList();
+                    return;
+                }
+                if (!quranData) return;
+                var results = '';
+                quranData.forEach(function(surah, sIdx) {
+                    surah.ayahs.forEach(function(ayah, aIdx) {
+                        var text = ayah.text || ayah.t || ayah;
+                        if (text && text.includes(term)) {
+                            results += '<div class="ayah-text">';
+                            results += '<strong style="color:var(--gold);">' + surah.name + ' ' + (aIdx + 1) + ':</strong> ';
+                            results += text;
+                            results += '</div>';
+                        }
+                    });
+                });
+                container.innerHTML = results || '<p class="no-results">لا توجد نتائج مطابقة.</p>';
+            });
 
-document.getElementById('backToList').addEventListener('click', () => {
-  document.getElementById('reader').classList.remove('open');
-  document.getElementById('surahList').style.display = '';
-  document.querySelector('.search-box').style.display = '';
-});
-
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  if(!q){ renderList(QURAN); return; }
-  renderList(QURAN.filter(s => s.name.includes(q)));
-});
-</script>
+            // بدء التحميل
+            loadQuran();
+        })();
+    </script>
 </body>
 </html>
