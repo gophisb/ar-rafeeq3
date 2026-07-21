@@ -17,20 +17,30 @@
         .ayah-text { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); line-height: 2.2; font-family: 'Amiri', serif; font-size: 1.1rem; }
         .ayah-number { color: var(--gold); font-size: 0.8rem; margin-left: 8px; }
         .back-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 20px; border-radius: 99px; margin-bottom: 16px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
-        .no-results { text-align: center; padding: 40px; color: var(--muted); }
+        .retry-btn { background: var(--gold); color: #080B10; border: none; padding: 12px 24px; border-radius: 99px; cursor: pointer; font-family: inherit; font-weight: bold; margin: 10px 0; display: block; width: 100%; text-align: center; }
+        .error-box { background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); padding: 16px; border-radius: 12px; margin: 16px 0; color: #ff6b6b; }
+        .success-box { background: rgba(0,255,0,0.1); border: 1px solid rgba(0,255,0,0.3); padding: 16px; border-radius: 12px; margin: 16px 0; color: #51cf66; }
     </style>
 </head>
 <body>
     <div class="quran-container">
         <div class="quran-header"><h2>📖 القرآن الكريم</h2></div>
         <input type="text" class="search-box" id="searchInput" placeholder="🔍 ابحث عن كلمة أو آية...">
-        <div id="quranContent"></div>
+        <div id="quranContent">
+            <p style="text-align:center;color:var(--muted);padding:40px;">جاري تحميل القرآن الكريم...</p>
+        </div>
     </div>
     <script>
         (function() {
             var quranData = null;
             var container = document.getElementById('quranContent');
             var searchInput = document.getElementById('searchInput');
+
+            function escapeHtml(text) {
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(text));
+                return div.innerHTML;
+            }
 
             function normalizeSurahs(data) {
                 if (Array.isArray(data) && data.length > 0) {
@@ -39,14 +49,10 @@
                         if (Array.isArray(s.ayahs)) {
                             ayahs = s.ayahs.map(function(a) {
                                 if (typeof a === 'string') return a;
-                                // يدعم: t, text, verse, aya
                                 return a.t || a.text || a.verse || a.aya || '';
                             });
                         }
-                        return {
-                            name: s.name || s.transliteration || '',
-                            ayahs: ayahs
-                        };
+                        return { name: s.name || '', ayahs: ayahs };
                     });
                 }
                 if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -56,33 +62,63 @@
                 return null;
             }
 
-            function loadQuran() {
-                container.innerHTML = '<p class="no-results">جاري تحميل القرآن الكريم...</p>';
-                fetch('./quran-local.json')
-                    .then(function(r) { return r.json(); })
-                    .then(function(raw) {
-                        var n = normalizeSurahs(raw);
-                        if (!n || n.length === 0) {
-                            container.innerHTML = '<p class="no-results">❌ بنية الملف غير مدعومة.</p>';
-                            return;
-                        }
-                        quranData = n;
-                        displaySurahList();
-                    })
-                    .catch(function() {
-                        container.innerHTML = '<p class="no-results">❌ فشل تحميل الملف. تأكد من وجود quran-local.json.</p>';
-                    });
+            function showError(msg) {
+                container.innerHTML =
+                    '<div class="error-box">❌ ' + escapeHtml(msg) + '</div>' +
+                    '<button class="retry-btn" onclick="window.loadQuran()">🔄 إعادة المحاولة</button>';
             }
+
+            function showSuccess(msg) {
+                container.innerHTML = '<div class="success-box">✅ ' + escapeHtml(msg) + '</div>';
+            }
+
+            window.loadQuran = function() {
+                container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px;">جاري تحميل القرآن الكريم...</p>';
+
+                // تجربة التحميل من مسارات مختلفة، مع تجاوز الكاش
+                var urls = [
+                    './quran-local.json?v=' + Date.now(),
+                    './quran-local.json',
+                    'quran-local.json'
+                ];
+
+                function tryFetch(index) {
+                    if (index >= urls.length) {
+                        showError('لم يتم العثور على ملف quran-local.json في أي مسار.');
+                        return;
+                    }
+                    fetch(urls[index])
+                        .then(function(r) {
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            return r.json();
+                        })
+                        .then(function(raw) {
+                            var normalized = normalizeSurahs(raw);
+                            if (!normalized || normalized.length === 0) {
+                                showError('تم تحميل الملف لكن بنيته غير مدعومة. يجب أن يحتوي الملف على مصفوفة سور، كل سورة لها name و ayahs.');
+                                return;
+                            }
+                            quranData = normalized;
+                            showSuccess('تم تحميل ' + quranData.length + ' سورة بنجاح.');
+                            displaySurahList();
+                        })
+                        .catch(function(err) {
+                            console.warn('فشل تحميل من ' + urls[index] + ': ' + err.message);
+                            tryFetch(index + 1);
+                        });
+                }
+                tryFetch(0);
+            };
 
             function displaySurahList() {
                 if (!quranData || quranData.length === 0) {
-                    container.innerHTML = '<p class="no-results">لا توجد بيانات.</p>';
+                    showError('لا توجد بيانات قرآنية.');
                     return;
                 }
                 var h = '<ul class="surah-list">';
                 quranData.forEach(function(s, i) {
                     h += '<li class="surah-item" onclick="window.showSurah(' + i + ')">';
-                    h += '<span class="surah-name">' + (i + 1) + '. ' + s.name + '</span>';
+                    h += '<span class="surah-name">' + (i + 1) + '. ' + escapeHtml(s.name) + '</span>';
                     h += '<span style="color:var(--muted);font-size:0.8rem;">' + s.ayahs.length + ' آيات</span>';
                     h += '</li>';
                 });
@@ -94,9 +130,9 @@
                 var s = quranData[i];
                 if (!s) return;
                 var h = '<button class="back-btn" onclick="displaySurahList()">← فهرس السور</button>';
-                h += '<h2 style="color:var(--gold);text-align:center;margin:16px 0;font-family:Amiri,serif;">' + s.name + '</h2>';
+                h += '<h2 style="color:var(--gold);text-align:center;margin:16px 0;font-family:Amiri,serif;">' + escapeHtml(s.name) + '</h2>';
                 s.ayahs.forEach(function(txt, j) {
-                    h += '<div class="ayah-text"><span class="ayah-number">' + (j + 1) + '</span>' + txt + '</div>';
+                    h += '<div class="ayah-text"><span class="ayah-number">' + (j + 1) + '</span>' + escapeHtml(txt) + '</div>';
                 });
                 container.innerHTML = h;
                 window.scrollTo(0, 0);
@@ -110,14 +146,14 @@
                 quranData.forEach(function(s) {
                     s.ayahs.forEach(function(txt, j) {
                         if (txt && txt.includes(term)) {
-                            results += '<div class="ayah-text"><strong style="color:var(--gold);">' + s.name + ' ' + (j + 1) + ':</strong> ' + txt + '</div>';
+                            results += '<div class="ayah-text"><strong style="color:var(--gold);">' + escapeHtml(s.name) + ' ' + (j + 1) + ':</strong> ' + escapeHtml(txt) + '</div>';
                         }
                     });
                 });
-                container.innerHTML = results || '<p class="no-results">لا توجد نتائج.</p>';
+                container.innerHTML = results || '<p style="text-align:center;color:var(--muted);padding:40px;">لا توجد نتائج.</p>';
             });
 
-            loadQuran();
+            window.loadQuran();
         })();
     </script>
 </body>
