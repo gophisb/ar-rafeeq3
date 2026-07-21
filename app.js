@@ -80,19 +80,35 @@ function loadPrayerTimes(){
     }catch(e){}
   }
 
-  fetchMonthCalendar(w, today).then(data=>{
-    if(data){
-      localStorage.setItem(cacheKey, JSON.stringify(data));
-      render(findTodayInCalendar(data, today));
+  fetchMonthCalendar(w, today).then(result=>{
+    if(result.data){
+      localStorage.setItem(cacheKey, JSON.stringify(result.data));
+      render(findTodayInCalendar(result.data, today));
     } else {
-      statusEl.textContent = 'لا توجد بيانات محلية لهذا الشهر. يرجى الاتصال بالإنترنت مرة واحدة لتحميل المواقيت.';
+      // نعرض سبب الفشل الحقيقي بدل رسالة عامة، لتشخيص أي عطل مستقبلي فوراً
+      statusEl.textContent = 'تعذّر تحميل مواقيت الصلاة (' + result.reason + '). تحقق من الاتصال بالإنترنت وأعد المحاولة، أو أرسل هذه الرسالة للمطوّر.';
     }
   });
 }
 
 function fetchMonthCalendar(w, date){
   const url = `https://api.aladhan.com/v1/calendarByCity/${date.getFullYear()}/${date.getMonth()+1}?city=${encodeURIComponent(w.city)}&country=Algeria&method=19&tune=0,-7,0,-7,-7,-7,0,-7,0`;
-  return fetch(url).then(r=>r.json()).then(d=> d.code===200 ? d.data : null).catch(()=>null);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=>controller.abort(), 15000); // لا نترك الطلب معلّقاً إلى الأبد على شبكة بطيئة
+  return fetch(url, { signal: controller.signal })
+    .then(r=>{
+      clearTimeout(timeoutId);
+      if(!r.ok) return { data:null, reason: 'HTTP ' + r.status };
+      return r.json().then(d=>{
+        if(d.code === 200 && d.data) return { data: d.data, reason: null };
+        return { data:null, reason: 'استجابة غير متوقعة من الخادم (code ' + d.code + ')' };
+      });
+    })
+    .catch(err=>{
+      clearTimeout(timeoutId);
+      const reason = err.name === 'AbortError' ? 'انتهت مهلة الاتصال (15 ثانية)' : ('خطأ شبكة: ' + err.message);
+      return { data:null, reason };
+    });
 }
 
 function refreshCalendarInBackground(w, cacheKey, date){
