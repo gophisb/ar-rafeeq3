@@ -10,6 +10,7 @@
         .quran-header { text-align: center; padding: 20px 0; }
         .quran-header h2 { color: var(--gold); font-family: 'Amiri', serif; }
         .search-box { width: 100%; padding: 12px; margin: 16px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-size: 1rem; }
+        .search-status { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 4px 0; min-height: 20px; }
         .surah-list { list-style: none; padding: 0; }
         .surah-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .surah-item:hover { background: rgba(255,255,255,0.03); }
@@ -25,6 +26,7 @@
     <div class="quran-container">
         <div class="quran-header"><h2>📖 القرآن الكريم</h2></div>
         <input type="text" class="search-box" id="searchInput" placeholder="🔍 ابحث عن كلمة أو آية...">
+        <div class="search-status" id="searchStatus"></div>
         <div id="quranContent"></div>
     </div>
     <script>
@@ -32,9 +34,22 @@
             var quranData = null;
             var container = document.getElementById('quranContent');
             var searchInput = document.getElementById('searchInput');
-            var currentView = 'list'; // 'list', 'surah', 'search'
+            var searchStatus = document.getElementById('searchStatus');
+            var currentView = 'list';
+            var debounceTimer = null;
+            var lastSearchTerm = '';
 
-            // تحميل القرآن
+            // إزالة التشكيل والحروف المتشابهة للبحث
+            function normalizeArabic(text) {
+                if (!text) return '';
+                return text
+                    .replace(/[ًٌٍَُِْـ]/g, '')
+                    .replace(/[إأآا]/g, 'ا')
+                    .replace(/[ؤئ]/g, 'ء')
+                    .replace(/ى/g, 'ي')
+                    .replace(/ة/g, 'ه');
+            }
+
             function loadQuran() {
                 container.innerHTML = '<p class="no-results">جاري تحميل القرآن الكريم...</p>';
                 fetch('./quran-local.json')
@@ -49,7 +64,7 @@
                         displaySurahList();
                     })
                     .catch(function() {
-                        container.innerHTML = '<p class="no-results">❌ فشل تحميل الملف. تأكد من وجود quran-local.json.</p>';
+                        container.innerHTML = '<p class="no-results">❌ فشل تحميل الملف.</p>';
                     });
             }
 
@@ -74,10 +89,10 @@
                 return null;
             }
 
-            // عرض قائمة السور
             function displaySurahList() {
                 if (!quranData) return;
                 currentView = 'list';
+                searchStatus.textContent = '';
                 var h = '<ul class="surah-list">';
                 quranData.forEach(function(s, i) {
                     h += '<li class="surah-item" onclick="window.showSurah(' + i + ')">';
@@ -89,11 +104,11 @@
                 container.innerHTML = h;
             }
 
-            // عرض سورة محددة
             window.showSurah = function(index) {
                 var s = quranData[index];
                 if (!s) return;
                 currentView = 'surah';
+                searchStatus.textContent = '';
                 var h = '<button class="back-btn" onclick="displaySurahList()">← فهرس السور</button>';
                 h += '<h2 style="color:var(--gold);text-align:center;margin:16px 0;font-family:Amiri,serif;">' + s.name + '</h2>';
                 s.ayahs.forEach(function(txt, j) {
@@ -103,7 +118,6 @@
                 window.scrollTo(0, 0);
             };
 
-            // البحث المباشر
             function performSearch(term) {
                 if (!quranData) return;
                 if (!term) {
@@ -111,26 +125,46 @@
                     return;
                 }
                 currentView = 'search';
+                searchStatus.textContent = 'جاري البحث...';
                 var results = '';
-                quranData.forEach(function(s) {
-                    s.ayahs.forEach(function(txt, j) {
-                        if (txt && txt.includes(term)) {
-                            results += '<div class="ayah-text">';
-                            results += '<strong style="color:var(--gold);">' + s.name + ' ' + (j + 1) + ':</strong> ';
-                            results += txt.replace(new RegExp('(' + term + ')', 'g'), '<span class="highlight">$1</span>');
-                            results += '</div>';
-                        }
+                var normalizedTerm = normalizeArabic(term);
+                var count = 0;
+                // استخدام setTimeout لعدم تجميد الواجهة أثناء البحث الطويل
+                setTimeout(function() {
+                    quranData.forEach(function(s) {
+                        s.ayahs.forEach(function(txt, j) {
+                            var normalizedAyah = normalizeArabic(txt);
+                            if (normalizedAyah.includes(normalizedTerm)) {
+                                count++;
+                                results += '<div class="ayah-text">';
+                                results += '<strong style="color:var(--gold);">' + s.name + ' ' + (j + 1) + ':</strong> ';
+                                results += txt.replace(new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'g'), '<span class="highlight">$1</span>');
+                                results += '</div>';
+                            }
+                        });
                     });
-                });
-                container.innerHTML = results || '<p class="no-results">لا توجد نتائج مطابقة.</p>';
+                    container.innerHTML = results || '<p class="no-results">لا توجد نتائج مطابقة.</p>';
+                    searchStatus.textContent = count > 0 ? 'تم العثور على ' + count + ' نتيجة' : '';
+                }, 10);
             }
 
-            // حدث الكتابة في مربع البحث
+            // الحدث مع Debounce (300ms)
             searchInput.addEventListener('input', function() {
-                performSearch(this.value.trim());
+                var term = this.value.trim();
+                if (term === lastSearchTerm) return;
+                lastSearchTerm = term;
+                if (debounceTimer) clearTimeout(debounceTimer);
+                if (!term) {
+                    displaySurahList();
+                    searchStatus.textContent = '';
+                    return;
+                }
+                searchStatus.textContent = '...';
+                debounceTimer = setTimeout(function() {
+                    performSearch(term);
+                }, 300);
             });
 
-            // بدء التحميل
             loadQuran();
         })();
     </script>
