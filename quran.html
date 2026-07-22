@@ -10,7 +10,7 @@
         .quran-header { text-align: center; padding: 20px 0; }
         .quran-header h2 { color: var(--gold); font-family: 'Amiri', serif; }
         .search-box { width: 100%; padding: 12px; margin: 16px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-size: 1rem; }
-        .search-status { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 4px 0; min-height: 20px; }
+        .search-status { text-align: center; color: var(--muted); font-size: 0.8rem; min-height: 1.2em; margin-bottom: 8px; }
         .surah-list { list-style: none; padding: 0; }
         .surah-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .surah-item:hover { background: rgba(255,255,255,0.03); }
@@ -31,36 +31,50 @@
     </div>
     <script>
         (function() {
-            var quranData = null;
+            // --- البيانات العامة ---
+            var quranData = null;           // مصفوفة السور بعد المعالجة
+            var flatAyahs = [];            // فهرس مسطح: كل عنصر { surahName, ayahNum, text }
             var container = document.getElementById('quranContent');
             var searchInput = document.getElementById('searchInput');
             var searchStatus = document.getElementById('searchStatus');
-            var currentView = 'list';
             var debounceTimer = null;
-            var lastSearchTerm = '';
 
-            // إزالة التشكيل والحروف المتشابهة للبحث
+            // --- إزالة التشكيل وتحسين البحث ---
             function normalizeArabic(text) {
                 if (!text) return '';
                 return text
-                    .replace(/[ًٌٍَُِْـ]/g, '')
-                    .replace(/[إأآا]/g, 'ا')
-                    .replace(/[ؤئ]/g, 'ء')
-                    .replace(/ى/g, 'ي')
-                    .replace(/ة/g, 'ه');
+                    .replace(/[ًٌٍَُِْـ]/g, '')   // حركات
+                    .replace(/[إأٱآا]/g, 'ا')      // ألفات
+                    .replace(/[ؤئ]/g, 'ء')         // همزات
+                    .replace(/ى/g, 'ي')            // ألف مقصورة
+                    .replace(/ة/g, 'ه');           // تاء مربوطة
             }
 
+            // --- تحميل البيانات ---
             function loadQuran() {
                 container.innerHTML = '<p class="no-results">جاري تحميل القرآن الكريم...</p>';
                 fetch('./quran-local.json')
                     .then(function(r) { return r.json(); })
                     .then(function(raw) {
-                        var n = normalizeSurahs(raw);
-                        if (!n || n.length === 0) {
+                        var surahs = normalizeSurahs(raw);
+                        if (!surahs || surahs.length === 0) {
                             container.innerHTML = '<p class="no-results">❌ بنية الملف غير مدعومة.</p>';
                             return;
                         }
-                        quranData = n;
+                        quranData = surahs;
+                        // بناء الفهرس المسطح
+                        flatAyahs = [];
+                        quranData.forEach(function(s, sIdx) {
+                            s.ayahs.forEach(function(txt, aIdx) {
+                                flatAyahs.push({
+                                    surahName: s.name,
+                                    surahIndex: sIdx,
+                                    ayahNum: aIdx + 1,
+                                    text: txt,
+                                    normalized: normalizeArabic(txt)
+                                });
+                            });
+                        });
                         displaySurahList();
                     })
                     .catch(function() {
@@ -68,11 +82,12 @@
                     });
             }
 
+            // --- تطبيع السور ---
             function normalizeSurahs(data) {
                 if (Array.isArray(data) && data.length > 0) {
                     return data.map(function(s) {
-                        var ayahs = [];
                         var rawAyahs = s.ayahs || s.a;
+                        var ayahs = [];
                         if (Array.isArray(rawAyahs)) {
                             ayahs = rawAyahs.map(function(a) {
                                 if (typeof a === 'string') return a;
@@ -89,9 +104,9 @@
                 return null;
             }
 
+            // --- عرض قائمة السور ---
             function displaySurahList() {
                 if (!quranData) return;
-                currentView = 'list';
                 searchStatus.textContent = '';
                 var h = '<ul class="surah-list">';
                 quranData.forEach(function(s, i) {
@@ -104,10 +119,10 @@
                 container.innerHTML = h;
             }
 
+            // --- عرض سورة ---
             window.showSurah = function(index) {
                 var s = quranData[index];
                 if (!s) return;
-                currentView = 'surah';
                 searchStatus.textContent = '';
                 var h = '<button class="back-btn" onclick="displaySurahList()">← فهرس السور</button>';
                 h += '<h2 style="color:var(--gold);text-align:center;margin:16px 0;font-family:Amiri,serif;">' + s.name + '</h2>';
@@ -118,41 +133,41 @@
                 window.scrollTo(0, 0);
             };
 
+            // --- تنفيذ البحث (سريع) ---
             function performSearch(term) {
                 if (!quranData) return;
                 if (!term) {
                     displaySurahList();
                     return;
                 }
-                currentView = 'search';
-                searchStatus.textContent = 'جاري البحث...';
-                var results = '';
                 var normalizedTerm = normalizeArabic(term);
+                var results = [];
                 var count = 0;
-                // استخدام setTimeout لعدم تجميد الواجهة أثناء البحث الطويل
-                setTimeout(function() {
-                    quranData.forEach(function(s) {
-                        s.ayahs.forEach(function(txt, j) {
-                            var normalizedAyah = normalizeArabic(txt);
-                            if (normalizedAyah.includes(normalizedTerm)) {
-                                count++;
-                                results += '<div class="ayah-text">';
-                                results += '<strong style="color:var(--gold);">' + s.name + ' ' + (j + 1) + ':</strong> ';
-                                results += txt.replace(new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'g'), '<span class="highlight">$1</span>');
-                                results += '</div>';
-                            }
-                        });
-                    });
-                    container.innerHTML = results || '<p class="no-results">لا توجد نتائج مطابقة.</p>';
-                    searchStatus.textContent = count > 0 ? 'تم العثور على ' + count + ' نتيجة' : '';
-                }, 10);
+                // البحث في الفهرس المسطح (سريع جداً)
+                for (var i = 0; i < flatAyahs.length; i++) {
+                    var item = flatAyahs[i];
+                    if (item.normalized.indexOf(normalizedTerm) !== -1) {
+                        count++;
+                        // إضافة النتيجة مع تسليط الضوء
+                        var highlighted = item.text.replace(
+                            new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'g'),
+                            '<span class="highlight">$1</span>'
+                        );
+                        results.push(
+                            '<div class="ayah-text">' +
+                            '<strong style="color:var(--gold);">' + item.surahName + ' ' + item.ayahNum + ':</strong> ' +
+                            highlighted +
+                            '</div>'
+                        );
+                    }
+                }
+                container.innerHTML = results.length > 0 ? results.join('') : '<p class="no-results">لا توجد نتائج مطابقة.</p>';
+                searchStatus.textContent = count > 0 ? 'تم العثور على ' + count + ' نتيجة' : '';
             }
 
-            // الحدث مع Debounce (300ms)
+            // --- حدث الكتابة مع Debounce ---
             searchInput.addEventListener('input', function() {
                 var term = this.value.trim();
-                if (term === lastSearchTerm) return;
-                lastSearchTerm = term;
                 if (debounceTimer) clearTimeout(debounceTimer);
                 if (!term) {
                     displaySurahList();
@@ -162,9 +177,10 @@
                 searchStatus.textContent = '...';
                 debounceTimer = setTimeout(function() {
                     performSearch(term);
-                }, 300);
+                }, 250); // 250 مللي ثانية تأخير كافية
             });
 
+            // البدء
             loadQuran();
         })();
     </script>
