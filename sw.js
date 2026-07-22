@@ -1,119 +1,61 @@
-// sw.js — الرفيق v7
-const CACHE_NAME = 'rafeeq3-v7';
+// ============================================================
+// الرفيق — Service Worker
+// ⚠️ غيّر رقم الإصدار في كل تحديث
+// ============================================================
 
-const APP_SHELL = [
+const CACHE_NAME = 'rafeeq-v7';  // ← غيّر الرقم هنا عند كل تحديث
+
+const urlsToCache = [
     './',
     './index.html',
+    './tafsir.html',
     './style.css',
     './app.js',
-    './theme.js',
+    './quran-local.json',
+    './tafsir-saadi.json',
     './manifest.json',
-    './adhan.mp3',
-    './icon-192.png',
-    './icon-512.png',
-    './quran.html',
-    './prayer.html',
-    './qibla.html',
-    './adhkar.html',
-    './hisnul.html',
-    './arbaeen.html',
-    './more.html',
-    './quran-local.json'
+    'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lateef&display=swap'
 ];
 
+// تثبيت الـ Service Worker وتخزين الملفات
 self.addEventListener('install', function (event) {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(function (cache) {
-                return cache.addAll(APP_SHELL);
+                return cache.addAll(urlsToCache);
             })
             .then(function () {
                 return self.skipWaiting();
             })
-            .catch(function (error) {
-                console.error('SW install error:', error);
-            })
     );
 });
 
+// تفعيل الـ Service Worker وتنظيف الكاش القديم
 self.addEventListener('activate', function (event) {
     event.waitUntil(
-        caches.keys()
-            .then(function (keys) {
-                return Promise.all(
-                    keys
-                        .filter(function (key) {
-                            return key !== CACHE_NAME;
-                        })
-                        .map(function (key) {
-                            return caches.delete(key);
-                        })
-                );
-            })
-            .then(function () {
-                return self.clients.claim();
-            })
+        caches.keys().then(function (cacheNames) {
+            return Promise.all(
+                cacheNames.map(function (cacheName) {
+                    if (cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(function () {
+            return self.clients.claim();
+        })
     );
 });
 
+// اعتراض الطلبات وتقديمها من الكاش
 self.addEventListener('fetch', function (event) {
-    if (event.request.method !== 'GET') {
-        return;
-    }
-
-    const url = new URL(event.request.url);
-
-    if (url.hostname === 'api.aladhan.com') {
-        event.respondWith(
-            fetch(event.request)
-                .then(function (response) {
-                    if (response && response.ok) {
-                        const copy = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(function (cache) {
-                                cache.put(event.request, copy);
-                            });
-                    }
-                    return response;
-                })
-                .catch(function () {
-                    return caches.match(event.request);
-                })
-        );
-        return;
-    }
-
     event.respondWith(
         caches.match(event.request)
-            .then(function (cachedResponse) {
-                if (cachedResponse) {
-                    return cachedResponse;
+            .then(function (response) {
+                if (response) {
+                    return response;
                 }
-
-                return fetch(event.request)
-                    .then(function (networkResponse) {
-                        if (
-                            networkResponse &&
-                            networkResponse.ok &&
-                            event.request.url.startsWith(self.location.origin)
-                        ) {
-                            const copy = networkResponse.clone();
-                            caches.open(CACHE_NAME)
-                                .then(function (cache) {
-                                    cache.put(event.request, copy);
-                                });
-                        }
-                        return networkResponse;
-                    })
-                    .catch(function () {
-                        if (event.request.mode === 'navigate') {
-                            return caches.match('./index.html');
-                        }
-                        return new Response('', {
-                            status: 503,
-                            statusText: 'Offline'
-                        });
-                    });
+                return fetch(event.request);
             })
     );
 });
