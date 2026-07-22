@@ -1,10 +1,9 @@
-
 // ============================================================
 // الرفيق — Service Worker
-// ⚠️ غيّر رقم الإصدار في كل تحديث
+// الإصدار v8
 // ============================================================
 
-const CACHE_NAME = 'rafeeq-v8';  // ← تم التغيير من v7 إلى v8
+const CACHE_NAME = 'rafeeq-v8';
 
 const urlsToCache = [
     './',
@@ -14,8 +13,63 @@ const urlsToCache = [
     './app.js',
     './quran-local.json',
     './tafsir-saadi.json',
-    './manifest.json',
-    'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lateef&display=swap'
+    './manifest.json'
 ];
 
-// باقي الكود كما هو ...
+// ============================================================
+// التثبيت
+// ============================================================
+self.addEventListener('install', function (event) {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(function (cache) {
+                return cache.addAll(urlsToCache);
+            })
+            .then(function () {
+                return self.skipWaiting();
+            })
+    );
+});
+
+// ============================================================
+// التفعيل وتنظيف الكاش القديم
+// ============================================================
+self.addEventListener('activate', function (event) {
+    event.waitUntil(
+        caches.keys()
+            .then(function (cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function (cacheName) {
+                        if (cacheName !== CACHE_NAME) {
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            })
+            .then(function () {
+                return self.clients.claim();
+            })
+    );
+});
+
+// ============================================================
+// التعامل مع الطلبات
+// ============================================================
+self.addEventListener('fetch', function (event) {
+    event.respondWith(
+        caches.match(event.request)
+            .then(function (cachedResponse) {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+
+                return fetch(event.request)
+                    .then(function (networkResponse) {
+                        return networkResponse;
+                    });
+            })
+            .catch(function () {
+                return caches.match('./index.html');
+            })
+    );
+});
