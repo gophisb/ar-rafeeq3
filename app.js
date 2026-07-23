@@ -1,9 +1,5 @@
  
-// ========================================================
-// 1. إعداد وإنشاء واجهة الأزرار برمجياً داخل الصفحة
-// ========================================================
-const container = document.createElement('div');
-container.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:10px; align-items:center; z-index:9999; width:90%; max-width:350px;';
+// ================================================= flex-direction:column; gap:10px; align-items:center; z-index:9999; width:90%; max-width:350px;';
 
 // زر الانتقال للمحادثة المعتاد
 const chatBtn = document.createElement('button');
