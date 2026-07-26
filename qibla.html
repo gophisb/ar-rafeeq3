@@ -1,502 +1,1179 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#000">
-  <title>بوصلة القبلة — الرفيق</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#050505">
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #fff;
-    }
+<title>بوصلة القبلة V4 — الرفيق</title>
 
-    body {
-      font-family: Arial, "Tajawal", sans-serif;
-      overflow: hidden;
-    }
+<link rel="stylesheet" href="./style.css">
+<script src="./theme.js"></script>
 
-    .page {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: radial-gradient(circle, #202020, #080808 60%, #000);
-    }
+<style>
+*{box-sizing:border-box}
 
-    .top {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 18px;
-    }
+html,body{
+margin:0;
+padding:0;
+min-height:100%;
+background:#050505;
+color:#fff;
+font-family:Arial,"Tajawal",sans-serif
+}
 
-    .top a {
-      color: #aaa;
-      text-decoration: none;
-      font-size: 14px;
-    }
+body{
+overflow-x:hidden
+}
 
-    .title {
-      font-weight: bold;
-    }
+.page{
+min-height:100vh;
+padding:15px;
+display:flex;
+flex-direction:column;
+align-items:center;
+background:
+radial-gradient(circle at 50% 35%,#202020,#090909 55%,#000)
+}
 
-    .direction {
-      text-align: center;
-      margin: 10px 0;
-    }
+.top{
+width:100%;
+max-width:500px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:8px 0 15px
+}
 
-    .direction-name {
-      font-size: 26px;
-      font-weight: bold;
-    }
+.top a{
+color:#aaa;
+text-decoration:none;
+font-size:14px
+}
 
-    .heading {
-      font-size: 12px;
-      color: #888;
-      direction: ltr;
-      margin-top: 5px;
-    }
+.title{
+font-weight:bold;
+font-size:16px
+}
 
-    .compass {
-      position: relative;
-      width: min(90vw, 400px);
-      height: min(90vw, 400px);
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+.version{
+font-size:10px;
+color:#777
+}
 
-    .marker {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 12px solid transparent;
-      border-right: 12px solid transparent;
-      border-top: 22px solid #777;
-      z-index: 20;
-    }
+.start-screen{
+position:fixed;
+inset:0;
+z-index:1000;
+background:#050505;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:25px
+}
 
-    .dial {
-      position: absolute;
-      width: 82%;
-      height: 82%;
-      border-radius: 50%;
-      border: 3px solid #777;
-      background: repeating-conic-gradient(#333 0deg 1deg, transparent 1deg 5deg),
-        radial-gradient(circle, #292929, #111);
-      box-shadow: inset 0 0 30px #000, 0 0 30px #000;
-      will-change: transform;
-    }
+.start-box{
+width:100%;
+max-width:380px;
+text-align:center
+}
 
-    .cardinal {
-      position: absolute;
-      inset: 0;
-      font-size: 19px;
-      font-weight: bold;
-    }
+.icon{
+font-size:60px;
+margin-bottom:10px
+}
 
-    .cardinal span {
-      position: absolute;
-    }
+.start-box h2{
+margin:5px 0 15px
+}
 
-    .n {
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #f33;
-    }
+.start-box p{
+color:#999;
+font-size:13px;
+line-height:1.9
+}
 
-    .e {
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
+#startBtn{
+width:100%;
+padding:16px;
+border:0;
+border-radius:14px;
+background:#d4af37;
+color:#000;
+font-size:16px;
+font-weight:bold
+}
 
-    .s {
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
+#error{
+color:#e06f5f;
+font-size:13px;
+line-height:1.8;
+margin-top:15px;
+display:none
+}
 
-    .w {
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
+.compass-area{
+display:none;
+width:100%;
+max-width:500px;
+text-align:center
+}
 
-    .qibla {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 0;
-      height: 0;
-      z-index: 15;
-      transform: translate(-50%, -50%) rotate(0deg);
-      will-change: transform;
-    }
+.qibla-info{
+margin:5px 0 10px
+}
 
-    .qibla:after {
-      content: "";
-      position: absolute;
-      width: 4px;
-      height: 125px;
-      left: -2px;
-      top: -140px;
-      background: #d4af37;
-      border-radius: 5px;
-      box-shadow: 0 0 12px #d4af37;
-    }
+.qibla-angle{
+font-size:16px;
+color:#d4af37;
+font-weight:bold
+}
 
-    .qibla:before {
-      content: "🕋";
-      position: absolute;
-      left: 50%;
-      top: -175px;
-      transform: translateX(-50%);
-      font-size: 27px;
-    }
+.heading{
+font-size:13px;
+color:#888;
+margin-top:5px;
+direction:ltr
+}
 
-    .center {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 17px;
-      height: 17px;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-      background: #fff;
-      border: 3px solid #222;
-      z-index: 30;
-    }
+.direction{
+font-size:24px;
+font-weight:bold;
+margin-top:5px
+}
 
-    .number {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 58px;
-      font-weight: 300;
-      direction: ltr;
-      z-index: 10;
-    }
+.compass{
+position:relative;
+width:min(88vw,380px);
+height:min(88vw,380px);
+margin:20px auto
+}
 
-    .info {
-      text-align: center;
-      margin-top: 15px;
-    }
+.outer{
+position:absolute;
+inset:0;
+border-radius:50%;
+border:2px solid #555;
+box-shadow:
+0 0 25px #000,
+inset 0 0 30px #000
+}
 
-    .qibla-text {
-      color: #d4af37;
-      font-weight: bold;
-    }
+.dial{
+position:absolute;
+width:82%;
+height:82%;
+left:9%;
+top:9%;
+border-radius:50%;
+border:3px solid #777;
+background:
+repeating-conic-gradient(
+from 0deg,
+#777 0deg 1deg,
+transparent 1deg 5deg
+),
+radial-gradient(circle,#292929,#101010);
+will-change:transform
+}
 
-    .qibla-angle {
-      color: #888;
-      font-size: 12px;
-      margin-top: 5px;
-      direction: ltr;
-    }
+.cardinal{
+position:absolute;
+inset:0;
+font-weight:bold;
+font-size:18px
+}
 
-    .status {
-      color: #888;
-      font-size: 12px;
-      margin-top: 10px;
-      text-align: center;
-      padding: 0 20px;
-    }
+.n{
+position:absolute;
+top:8px;
+left:50%;
+transform:translateX(-50%);
+color:#f33
+}
 
-    .good {
-      color: #3ea86a;
-    }
+.e{
+position:absolute;
+right:10px;
+top:50%;
+transform:translateY(-50%)
+}
 
-    .bad {
-      color: #e07a5f;
-    }
+.s{
+position:absolute;
+bottom:8px;
+left:50%;
+transform:translateX(-50%)
+}
 
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      padding: 25px;
-    }
+.w{
+position:absolute;
+left:10px;
+top:50%;
+transform:translateY(-50%)
+}
 
-    .box {
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
-    }
+.fixed-marker{
+position:absolute;
+z-index:20;
+top:-2px;
+left:50%;
+transform:translateX(-50%);
+width:0;
+height:0;
+border-left:13px solid transparent;
+border-right:13px solid transparent;
+border-top:25px solid #d4af37
+}
 
-    .box .icon {
-      font-size: 55px;
-    }
+.qibla-pointer{
+position:absolute;
+z-index:15;
+left:50%;
+top:50%;
+width:0;
+height:0;
+transform:translate(-50%,-50%) rotate(0deg);
+will-change:transform
+}
 
-    .box h2 {
-      margin: 10px;
-    }
+.qibla-pointer:after{
+content:"";
+position:absolute;
+width:5px;
+height:130px;
+left:-2.5px;
+top:-145px;
+border-radius:5px;
+background:#d4af37;
+box-shadow:0 0 15px #d4af37
+}
 
-    .box p {
-      color: #888;
-      font-size: 13px;
-      line-height: 1.8;
-    }
+.qibla-pointer:before{
+content:"🕋";
+position:absolute;
+left:50%;
+top:-180px;
+transform:translateX(-50%);
+font-size:28px
+}
 
-    #start {
-      width: 100%;
-      padding: 16px;
-      border: 0;
-      border-radius: 14px;
-      background: #d4af37;
-      color: #000;
-      font-size: 16px;
-      font-weight: bold;
-    }
+.center{
+position:absolute;
+z-index:30;
+left:50%;
+top:50%;
+width:18px;
+height:18px;
+transform:translate(-50%,-50%);
+background:#fff;
+border:3px solid #222;
+border-radius:50%
+}
 
-    #error {
-      display: none;
-      color: #e07a5f;
-      font-size: 12px;
-      margin-top: 12px;
-      line-height: 1.8;
-    }
+.status{
+font-size:13px;
+color:#999;
+min-height:25px;
+line-height:1.8
+}
 
-    .aligned {
-      display: none;
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #181818;
-      border: 1px solid #d4af37;
-      color: #d4af37;
-      padding: 12px 20px;
-      border-radius: 30px;
-      z-index: 50;
-      white-space: nowrap;
-      font-size: 13px;
-    }
-  </style>
+.good{
+color:#3ea86a
+}
+
+.bad{
+color:#e06f5f
+}
+
+.aligned{
+display:none;
+margin:10px auto;
+padding:12px 20px;
+border:1px solid #d4af37;
+border-radius:30px;
+color:#d4af37;
+font-size:13px;
+width:max-content
+}
+
+.diagnostics{
+width:100%;
+max-width:400px;
+margin:15px auto;
+padding:15px;
+border:1px solid #222;
+border-radius:15px;
+background:#101010;
+text-align:right
+}
+
+.diagnostics h3{
+margin:0 0 12px;
+font-size:14px;
+color:#d4af37
+}
+
+.sensor{
+display:flex;
+justify-content:space-between;
+padding:7px 0;
+border-bottom:1px solid #222;
+font-size:12px
+}
+
+.sensor:last-child{
+border-bottom:0
+}
+
+.ok{
+color:#3ea86a
+}
+
+.no{
+color:#e06f5f
+}
+
+#calibrateBtn{
+width:100%;
+margin-top:12px;
+padding:12px;
+border:1px solid #555;
+border-radius:12px;
+background:#181818;
+color:#fff
+}
+
+.calibration{
+display:none;
+color:#d4af37;
+font-size:12px;
+line-height:1.8;
+margin-top:10px;
+text-align:center
+}
+</style>
 </head>
+
 <body>
-  <div class="page">
-    <div class="top">
-      <a href="./index.html">← الرئيسية</a>
-      <div class="title">بوصلة القبلة</div>
-      <div>🧭</div>
-    </div>
 
-    <div class="direction">
-      <div class="direction-name" id="direction">—</div>
-      <div class="heading" id="heading">—</div>
-    </div>
+<div class="start-screen" id="startScreen">
 
-    <div class="compass">
-      <div class="marker"></div>
-      <div class="dial" id="dial">
-        <div class="cardinal">
-          <span class="n">N</span>
-          <span class="e">E</span>
-          <span class="s">S</span>
-          <span class="w">W</span>
-        </div>
-      </div>
-      <div class="qibla" id="qibla"></div>
-      <div class="center"></div>
-      <div class="number" id="number">0°</div>
-    </div>
+<div class="start-box">
 
-    <div class="info">
-      <div class="qibla-text" id="qiblaText">تحديد اتجاه القبلة...</div>
-      <div class="qibla-angle" id="qiblaAngle">—</div>
-    </div>
+<div class="icon">🕋</div>
 
-    <div class="status" id="status">في انتظار تشغيل البوصلة</div>
-  </div>
+<h2>بوصلة القبلة V4</h2>
 
-  <div class="overlay" id="overlay">
-    <div class="box">
-      <div class="icon">🕋</div>
-      <h2>بوصلة القبلة</h2>
-      <p>اضغط تشغيل للسماح بالوصول إلى موقعك ومستشعرات البوصلة في هاتفك. <br>لأفضل دقة، ابتعد عن المعادن والأجهزة الإلكترونية.</p>
-      <button id="start">تشغيل البوصلة</button>
-      <div id="error"></div>
-    </div>
-  </div>
+<p>
+هذا الإصدار يفحص مستشعرات هاتفك تلقائيًا.
+<br>
+فعّل الموقع، ثم اسمح بالوصول إلى مستشعرات الحركة.
+</p>
 
-  <div class="aligned" id="aligned">🕋 أنت متجه نحو القبلة</div>
+<button id="startBtn">
+تشغيل البوصلة
+</button>
 
-  <script>
-    const KAABA = {
-      lat: 21.4225,
-      lng: 39.8262
-    };
+<div id="error"></div>
 
-    let qiblaBearing = null;
-    let heading = null;
-    let smoothHeading = null;
-    let lastHeading = null;
-    let stability = 0;
-    let aligned = false;
+</div>
 
-    const $ = id => document.getElementById(id);
+</div>
 
-    function angleDiff(a, b) {
-      return ((a - b + 540) % 360) - 180;
-    }
 
-    function calculateQibla(lat, lng) {
-      const r = Math.PI / 180;
-      const p1 = lat * r;
-      const p2 = KAABA.lat * r;
-      const dl = (KAABA.lng - lng) * r;
-      const y = Math.sin(dl) * Math.cos(p2);
-      const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
-      return (Math.atan2(y, x) / r + 360) % 360;
-    }
+<div class="page">
 
-    function smooth(old, value) {
-      if (old === null) return value;
-      let d = angleDiff(value, old);
-      let factor = 0.18;
-      if (Math.abs(d) > 20) factor = 0.35;
-      if (Math.abs(d) > 60) factor = 0.5;
-      return (old + d * factor + 360) % 360;
-    }
+<div class="top">
 
-    function getDirection(deg) {
-      const names = [
-        "الشمال",
-        "الشمال الشرقي",
-        "الشرق",
-        "الجنوب الشرقي",
-        "الجنوب",
-        "الجنوب الغربي",
-        "الغرب",
-        "الشمال الغربي"
-      ];
-      return names[Math.round(deg / 45) % 8];
-    }
+<a href="./index.html">
+← الرئيسية
+</a>
 
-    function updateCompass(raw) {
-      raw = (raw + 360) % 360;
-      if (lastHeading !== null) {
-        const d = Math.abs(angleDiff(raw, lastHeading));
-        stability = stability * 0.9 + d * 0.1;
-      }
-      lastHeading = raw;
-      smoothHeading = smooth(smoothHeading, raw);
-      heading = smoothHeading;
+<div class="title">
+بوصلة القبلة
+</div>
 
-      $("number").textContent = Math.round(heading) + "°";
-      $("heading").textContent = Math.round(heading) + "°";
-      $("direction").textContent = getDirection(heading);
-      $("dial").style.transform = `rotate(${-heading}deg)`;
+<div class="version">
+V4
+</div>
 
-      const relative = angleDiff(qiblaBearing, heading);
-      $("qibla").style.transform = `translate(-50%, -50%) rotate(${relative}deg)`;
+</div>
 
-      if (stability < 1.5) {
-        $("status").textContent = "✅ المستشعر مستقر — دقة عالية";
-        $("status").className = "status good";
-      } else if (stability < 5) {
-        $("status").textContent = "📡 استقرار متوسط — ثبّت الهاتف";
-        $("status").className = "status";
-      } else {
-        $("status").textContent = "⚠️ تذبذب مرتفع — حرّك الهاتف على شكل 8";
-        $("status").className = "status bad";
-      }
 
-      if (Math.abs(relative) <= 4) {
-        $("aligned").style.display = "block";
-        if (!aligned) {
-          aligned = true;
-          if (navigator.vibrate) {
-            navigator.vibrate([70, 40, 70]);
-          }
-        }
-      } else {
-        $("aligned").style.display = "none";
-        aligned = false;
-      }
-    }
+<div class="compass-area" id="app">
 
-    function startOrientation() {
-      window.addEventListener("deviceorientation", function (e) {
-        let value = null;
-        if (typeof e.webkitCompassHeading === "number") {
-          value = e.webkitCompassHeading;
-        } else if (typeof e.alpha === "number") {
-          value = 360 - e.alpha;
-        }
-        if (value !== null) {
-          updateCompass(value);
-        }
-      }, true);
-    }
+<div class="qibla-info">
 
-    async function requestSensorPermission() {
-      if (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function"
-      ) {
-        const permission = await DeviceOrientationEvent.requestPermission();
-        if (permission !== "granted") {
-          throw new Error("تم رفض صلاحية مستشعر البوصلة.");
-        }
-      }
-    }
+<div class="qibla-angle" id="qiblaAngle">
+جاري تحديد القبلة...
+</div>
 
-    function getLocation() {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
-        });
-      });
-    }
+<div class="direction" id="direction">
+—
+</div>
 
-    async function startCompass() {
-      const button = $("start");
-      const error = $("error");
-      try {
-        button.disabled = true;
-        button.textContent = "جاري التشغيل...";
-        if (!navigator.geolocation) {
-          throw new Error("GPS غير مدعوم في هذا المتصفح.");
-        }
-        const position = await getLocation();
-        qiblaBearing = calculateQibla(position.coords.latitude, position.coords.longitude);
-        $("qiblaAngle").textContent = "زاوية القبلة: " + Math.round(qiblaBearing) + "°";
-        $("qiblaText").textContent = "🕋 تم تحديد اتجاه القبلة";
-        await requestSensorPermission();
-        startOrientation();
-        $("overlay").style.display = "none";
-        $("status").textContent = "📡 البوصلة تعمل — حرّك الهاتف ببطء للمعايرة";
-      } catch (e) {
-        error.style.display = "block";
-        error.textContent = e.message || "تعذر تشغيل البوصلة. تأكد من تشغيل GPS والسماح بالمستشعر.";
-        button.disabled = false;
-        button.textContent = "إعادة المحاولة";
-      }
-    }
+<div class="heading" id="heading">
+—
+</div>
 
-    $("start").addEventListener("click", startCompass);
-  </script>
+</div>
+
+
+<div class="compass">
+
+<div class="outer"></div>
+
+<div class="fixed-marker"></div>
+
+<div class="dial" id="dial">
+
+<div class="cardinal">
+
+<span class="n">N</span>
+<span class="e">E</span>
+<span class="s">S</span>
+<span class="w">W</span>
+
+</div>
+
+</div>
+
+<div
+class="qibla-pointer"
+id="qiblaPointer">
+</div>
+
+<div class="center"></div>
+
+</div>
+
+
+<div class="status" id="status">
+جاري تشغيل المستشعر...
+</div>
+
+
+<div class="aligned" id="aligned">
+🕋 أنت متجه نحو القبلة
+</div>
+
+
+<div class="diagnostics">
+
+<h3>
+تشخيص مستشعرات الهاتف
+</h3>
+
+<div class="sensor">
+<span>GPS</span>
+<strong id="gpsState">جاري الفحص</strong>
+</div>
+
+<div class="sensor">
+<span>Device Orientation</span>
+<strong id="orientationState">جاري الفحص</strong>
+</div>
+
+<div class="sensor">
+<span>Absolute Orientation</span>
+<strong id="absoluteState">جاري الفحص</strong>
+</div>
+
+<div class="sensor">
+<span>Magnetometer</span>
+<strong id="magState">جاري الفحص</strong>
+</div>
+
+<div class="sensor">
+<span>Accelerometer</span>
+<strong id="accState">جاري الفحص</strong>
+</div>
+
+<div class="sensor">
+<span>Gyroscope</span>
+<strong id="gyroState">جاري الفحص</strong>
+</div>
+
+<button id="calibrateBtn">
+🔄 معايرة البوصلة
+</button>
+
+<div class="calibration" id="calibration">
+حرّك الهاتف ببطء على شكل رقم 8
+ثم أدره حول نفسه عدة مرات.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+const KAABA={
+lat:21.4225,
+lng:39.8262
+};
+
+let qiblaBearing=null;
+let smoothHeading=null;
+let lastHeading=null;
+let stability=0;
+let aligned=false;
+
+const $=id=>document.getElementById(id);
+
+
+function setState(id,ok,text){
+
+const el=$(id);
+
+el.textContent=text;
+
+el.className=ok?"ok":"no";
+
+}
+
+
+function angleDiff(a,b){
+
+return ((a-b+540)%360)-180;
+
+}
+
+
+function calculateQibla(lat,lng){
+
+const r=Math.PI/180;
+
+const p1=lat*r;
+
+const p2=KAABA.lat*r;
+
+const dl=(KAABA.lng-lng)*r;
+
+const y=
+Math.sin(dl)*Math.cos(p2);
+
+const x=
+Math.cos(p1)*Math.sin(p2)-
+Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+
+return
+(Math.atan2(y,x)/r+360)%360;
+
+}
+
+
+function smooth(old,value){
+
+if(old===null)
+return value;
+
+const d=angleDiff(value,old);
+
+let factor=.18;
+
+if(Math.abs(d)>20)
+factor=.35;
+
+if(Math.abs(d)>60)
+factor=.5;
+
+return
+(old+d*factor+360)%360;
+
+}
+
+
+function direction(deg){
+
+const names=[
+"الشمال",
+"الشمال الشرقي",
+"الشرق",
+"الجنوب الشرقي",
+"الجنوب",
+"الجنوب الغربي",
+"الغرب",
+"الشمال الغربي"
+];
+
+return names[Math.round(deg/45)%8];
+
+}
+
+
+function updateCompass(raw){
+
+raw=(raw+360)%360;
+
+if(lastHeading!==null){
+
+const d=
+Math.abs(angleDiff(raw,lastHeading));
+
+stability=
+stability*.9+d*.1;
+
+}
+
+lastHeading=raw;
+
+smoothHeading=
+smooth(smoothHeading,raw);
+
+const heading=smoothHeading;
+
+$("heading").textContent=
+Math.round(heading)+"°";
+
+$("direction").textContent=
+direction(heading);
+
+$("dial").style.transform=
+`rotate(${-heading}deg)`;
+
+const relative=
+angleDiff(qiblaBearing,heading);
+
+$("qiblaPointer").style.transform=
+`translate(-50%,-50%) rotate(${relative}deg)`;
+
+
+if(stability<2){
+
+$("status").textContent=
+"✅ المستشعر مستقر — القراءة جيدة";
+
+$("status").className=
+"status good";
+
+}
+
+else if(stability<6){
+
+$("status").textContent=
+"📡 استقرار متوسط — ثبّت الهاتف";
+
+$("status").className=
+"status";
+
+}
+
+else{
+
+$("status").textContent=
+"⚠️ تشويش مغناطيسي — ابتعد عن المعادن";
+
+$("status").className=
+"status bad";
+
+}
+
+
+if(Math.abs(relative)<=4){
+
+$("aligned").style.display=
+"block";
+
+if(!aligned){
+
+aligned=true;
+
+if(navigator.vibrate){
+
+navigator.vibrate(
+[70,40,70]
+);
+
+}
+
+}
+
+}else{
+
+$("aligned").style.display=
+"none";
+
+aligned=false;
+
+}
+
+}
+
+
+function startDeviceOrientation(){
+
+if(
+typeof DeviceOrientationEvent==="undefined"
+){
+
+setState(
+"orientationState",
+false,
+"غير مدعوم"
+);
+
+return;
+
+}
+
+
+setState(
+"orientationState",
+true,
+"متاح"
+);
+
+
+window.addEventListener(
+"deviceorientation",
+function(e){
+
+let heading=null;
+
+
+if(
+typeof e.webkitCompassHeading==="number"
+){
+
+heading=
+e.webkitCompassHeading;
+
+}
+
+
+else if(
+typeof e.alpha==="number"
+){
+
+heading=
+360-e.alpha;
+
+}
+
+
+if(heading!==null){
+
+updateCompass(heading);
+
+}
+
+},
+true
+);
+
+}
+
+
+async function testMagnetometer(){
+
+if(!("Magnetometer" in window)){
+
+setState(
+"magState",
+false,
+"غير مدعوم"
+);
+
+return;
+
+}
+
+
+try{
+
+const sensor=
+new Magnetometer({
+frequency:20
+});
+
+sensor.addEventListener(
+"reading",
+function(){
+
+setState(
+"magState",
+true,
+"يعمل"
+);
+
+});
+
+sensor.addEventListener(
+"error",
+function(){
+
+setState(
+"magState",
+false,
+"فشل"
+);
+
+});
+
+sensor.start();
+
+}catch(e){
+
+setState(
+"magState",
+false,
+"مرفوض"
+);
+
+}
+
+}
+
+
+async function testAccelerometer(){
+
+if(!("Accelerometer" in window)){
+
+setState(
+"accState",
+false,
+"غير مدعوم"
+);
+
+return;
+
+}
+
+
+try{
+
+const sensor=
+new Accelerometer({
+frequency:20
+});
+
+sensor.addEventListener(
+"reading",
+function(){
+
+setState(
+"accState",
+true,
+"يعمل"
+);
+
+});
+
+sensor.start();
+
+}catch(e){
+
+setState(
+"accState",
+false,
+"فشل"
+);
+
+}
+
+}
+
+
+async function testGyroscope(){
+
+if(!("Gyroscope" in window)){
+
+setState(
+"gyroState",
+false,
+"غير مدعوم"
+);
+
+return;
+
+}
+
+
+try{
+
+const sensor=
+new Gyroscope({
+frequency:20
+});
+
+sensor.addEventListener(
+"reading",
+function(){
+
+setState(
+"gyroState",
+true,
+"يعمل"
+);
+
+});
+
+sensor.start();
+
+}catch(e){
+
+setState(
+"gyroState",
+false,
+"فشل"
+);
+
+}
+
+}
+
+
+async function testAbsolute(){
+
+if(
+!("AbsoluteOrientationSensor"
+in window)
+){
+
+setState(
+"absoluteState",
+false,
+"غير مدعوم"
+);
+
+return;
+
+}
+
+
+try{
+
+const sensor=
+new AbsoluteOrientationSensor({
+frequency:20
+});
+
+sensor.addEventListener(
+"reading",
+function(){
+
+setState(
+"absoluteState",
+true,
+"يعمل"
+);
+
+});
+
+sensor.addEventListener(
+"error",
+function(){
+
+setState(
+"absoluteState",
+false,
+"فشل"
+);
+
+});
+
+sensor.start();
+
+}catch(e){
+
+setState(
+"absoluteState",
+false,
+"مرفوض"
+);
+
+}
+
+}
+
+
+function getGPS(){
+
+return new Promise(
+(resolve,reject)=>{
+
+if(!navigator.geolocation){
+
+reject(
+new Error("GPS غير مدعوم")
+);
+
+return;
+
+}
+
+navigator.geolocation.getCurrentPosition(
+
+resolve,
+
+reject,
+
+{
+enableHighAccuracy:true,
+timeout:15000,
+maximumAge:0
+}
+
+);
+
+}
+
+);
+
+
+}
+
+
+async function start(){
+
+const error=$("error");
+
+try{
+
+if(location.protocol!=="https:" &&
+location.hostname!=="localhost"){
+
+throw new Error(
+"يجب فتح الموقع عبر HTTPS حتى تعمل المستشعرات."
+);
+
+}
+
+
+$("startBtn").textContent=
+"جاري تحديد موقعك...";
+
+
+const position=
+await getGPS();
+
+
+setState(
+"gpsState",
+true,
+"يعمل"
+);
+
+
+qiblaBearing=
+calculateQibla(
+
+position.coords.latitude,
+
+position.coords.longitude
+
+);
+
+
+$("qiblaAngle").textContent=
+"🕋 زاوية القبلة: "+
+Math.round(qiblaBearing)+
+"°";
+
+
+if(
+typeof DeviceOrientationEvent!=="undefined" &&
+typeof DeviceOrientationEvent.requestPermission==="function"
+){
+
+const permission=
+await DeviceOrientationEvent.requestPermission();
+
+if(permission!=="granted"){
+
+throw new Error(
+"تم رفض صلاحية مستشعر الاتجاه."
+);
+
+}
+
+}
+
+
+$("startScreen").style.display=
+"none";
+
+$("app").style.display=
+"block";
+
+
+startDeviceOrientation();
+
+testAbsolute();
+
+testMagnetometer();
+
+testAccelerometer();
+
+testGyroscope();
+
+
+$("status").textContent=
+"📡 البوصلة تعمل — حرّك الهاتف ببطء";
+
+
+}catch(e){
+
+error.style.display=
+"block";
+
+error.textContent=
+e.message||
+"حدث خطأ أثناء تشغيل البوصلة.";
+
+$("startBtn").textContent=
+"إعادة المحاولة";
+
+}
+
+}
+
+
+$("startBtn").addEventListener(
+"click",
+start
+);
+
+
+$("calibrateBtn").addEventListener(
+"click",
+function(){
+
+$("calibration").style.display=
+"block";
+
+$("status").textContent=
+"🔄 جاري المعايرة... حرّك الهاتف على شكل 8";
+
+smoothHeading=null;
+
+lastHeading=null;
+
+stability=0;
+
+setTimeout(
+function(){
+
+$("calibration").style.display=
+"none";
+
+$("status").textContent=
+"✅ انتهت المعايرة";
+
+},
+8000
+);
+
+}
+);
+
+</script>
+
 </body>
 </html>
