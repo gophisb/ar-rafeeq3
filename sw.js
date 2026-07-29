@@ -1,555 +1,207 @@
 /* ============================================================
    الرفيق — sw.js
+   Service Worker
    الإصدار: 1.0.0
 
-   Service Worker
+   الوظائف:
    - تشغيل التطبيق بدون إنترنت
-   - تخزين الملفات الأساسية
-   - استراتيجية Cache First للملفات المحلية
-   - Network First للبيانات الخارجية
+   - تخزين ملفات التطبيق
+   - تخزين ملفات القرآن والتفسير والأذكار
    - تحديث آمن للكاش
-   - لا يحذف كاش الإصدارات القديمة إلا بعد تفعيل النسخة الجديدة
+   - عدم حذف الكاش القديم قبل نجاح الكاش الجديد
    ============================================================ */
 
 'use strict';
-
 
 /* ============================================================
    1) إعدادات الكاش
    ============================================================ */
 
-const CACHE_NAME = 'rafeeq-v1';
+const CACHE_VERSION = 'rafeeq-v1';
+const APP_CACHE = `${CACHE_VERSION}-app`;
+const DATA_CACHE = `${CACHE_VERSION}-data`;
 
-const APP_SHELL = [
+/* ============================================================
+   2) ملفات التطبيق الأساسية
+   ============================================================ */
 
+const APP_FILES = [
     './',
-
     './index.html',
-
-    './app.js',
-
-    './theme.js',
-
     './manifest.json',
-
+    './app.js',
+    './theme.js',
+    './prayer.html',
+    './quran.html',
+    './adhkar.html',
+    './hisnul.html',
+    './arbaeen.html',
+    './tafsir.html',
+    './qibla.html',
+    './more.html',
     './icon-192.png',
-
     './icon-512.png',
-
     './adhan.mp3'
-
 ];
 
-
 /* ============================================================
-   2) تثبيت Service Worker
+   3) ملفات البيانات المحلية
    ============================================================ */
 
-self.addEventListener(
-
-    'install',
-
-    event => {
-
-        console.log(
-            '⚙️ الرفيق — تثبيت Service Worker:',
-            CACHE_NAME
-        );
-
-
-        event.waitUntil(
-
-            caches.open(
-                CACHE_NAME
-            )
-
-            .then(
-
-                cache => {
-
-                    console.log(
-                        '📦 حفظ الملفات الأساسية'
-                    );
-
-
-                    return cache.addAll(
-                        APP_SHELL
-                    );
-
-                }
-
-            )
-
-            .then(
-
-                () => {
-
-                    /*
-                       لا نستخدم skipWaiting()
-                       بشكل إجباري حتى لا يتم
-                       استبدال نسخة التطبيق أثناء
-                       استخدام المستخدم لها.
-                    */
-
-                    console.log(
-                        '✅ تم تجهيز Service Worker'
-                    );
-
-                }
-
-            )
-
-            .catch(
-
-                error => {
-
-                    console.error(
-                        '❌ خطأ أثناء حفظ ملفات التطبيق:',
-                        error
-                    );
-
-                }
-
-            )
-
-        );
-
-    }
-
-);
-
+const DATA_FILES = [
+    './quran-local.json',
+    './tafsir-saadi.json'
+];
 
 /* ============================================================
-   3) تفعيل Service Worker الجديد
+   4) تثبيت Service Worker
    ============================================================ */
 
-self.addEventListener(
-
-    'activate',
-
-    event => {
-
-        console.log(
-            '🚀 الرفيق — تفعيل Service Worker:',
-            CACHE_NAME
-        );
-
-
-        event.waitUntil(
-
-            caches.keys()
-
-            .then(
-
-                cacheNames => {
-
-                    return Promise.all(
-
-                        cacheNames
-
-                            .filter(
-
-                                cacheName =>
-
-                                    cacheName.startsWith(
-                                        'rafeeq-'
-                                    ) &&
-
-                                    cacheName !==
-                                        CACHE_NAME
-
-                            )
-
-                            .map(
-
-                                oldCache => {
-
-                                    console.log(
-                                        '🗑️ حذف الكاش القديم:',
-                                        oldCache
-                                    );
-
-
-                                    return caches.delete(
-                                        oldCache
-                                    );
-
-                                }
-
-                            )
-
-                    );
-
-                }
-
-            )
-
-            .then(
-
-                () => {
-
-                    console.log(
-                        '✅ تم تنظيف الكاش القديم'
-                    );
-
-                }
-
-            )
-
-        );
-
-    }
-
-);
-
-
-/* ============================================================
-   4) استقبال طلبات الملفات
-   ============================================================ */
-
-self.addEventListener(
-
-    'fetch',
-
-    event => {
-
-        const request =
-            event.request;
-
-
-        /*
-           نتعامل فقط مع طلبات GET
-        */
-
-        if (
-            request.method !==
-            'GET'
-        ) {
-
-            return;
-
-        }
-
-
-        const url =
-            new URL(
-                request.url
-            );
-
-
-        /*
-           طلبات API الخارجية
-           مثل AlAdhan
-           نستخدم معها Network First
-        */
-
-        if (
-            url.hostname ===
-            'api.aladhan.com'
-        ) {
-
-            event.respondWith(
-
-                networkFirst(
-                    request
-                )
-
-            );
-
-            return;
-
-        }
-
-
-        /*
-           الملفات المحلية
-           نستخدم معها Cache First
-        */
-
-        event.respondWith(
-
-            cacheFirst(
-                request
-            )
-
-        );
-
-    }
-
-);
-
-
-/* ============================================================
-   5) Cache First
-   ============================================================ */
-
-async function cacheFirst(request) {
-
-    try {
-
-        const cachedResponse =
-            await caches.match(
-                request
-            );
-
-
-        if (
-            cachedResponse
-        ) {
-
-            return cachedResponse;
-
-        }
-
-
-        const networkResponse =
-            await fetch(
-                request
-            );
-
-
-        /*
-           حفظ الاستجابة الجديدة
-           إذا كانت صالحة
-        */
-
-        if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            networkResponse.type === 'basic'
-        ) {
-
-            const cache =
-                await caches.open(
-                    CACHE_NAME
-                );
-
-
-            cache.put(
-                request,
-                networkResponse.clone()
-            );
-
-        }
-
-
-        return networkResponse;
-
-    } catch (error) {
-
-        console.warn(
-            '📴 لا يوجد اتصال بالإنترنت:',
-            request.url
-        );
-
-
-        /*
-           إذا كان الطلب صفحة HTML
-           نحاول إظهار index.html
-        */
-
-        if (
-            request.destination ===
-            'document'
-        ) {
-
-            const offlinePage =
-                await caches.match(
-                    './index.html'
-                );
-
-
-            if (
-                offlinePage
-            ) {
-
-                return offlinePage;
-
-            }
-
-        }
-
-
-        /*
-           إنشاء استجابة Offline
-           عند عدم وجود الملف
-        */
-
-        return new Response(
-
-            'لا يوجد اتصال بالإنترنت',
-
-            {
-
-                status: 503,
-
-                headers: {
-
-                    'Content-Type':
-                        'text/plain; charset=utf-8'
-
-                }
-
-            }
-
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   6) Network First
-   ============================================================ */
-
-async function networkFirst(request) {
-
-    try {
-
-        const networkResponse =
-            await fetch(
-                request
-            );
-
-
-        /*
-           حفظ أحدث بيانات API
-        */
-
-        if (
-            networkResponse &&
-            networkResponse.ok
-        ) {
-
-            const cache =
-                await caches.open(
-                    CACHE_NAME
-                );
-
-
-            cache.put(
-
-                request,
-
-                networkResponse.clone()
-
-            );
-
-        }
-
-
-        return networkResponse;
-
-    } catch (error) {
-
-        console.warn(
-            '📴 فشل الاتصال بالخادم:',
-            request.url
-        );
-
-
-        /*
-           عند انقطاع الإنترنت
-           نستخدم آخر نسخة محفوظة
-        */
-
-        const cachedResponse =
-            await caches.match(
-                request
-            );
-
-
-        if (
-            cachedResponse
-        ) {
-
-            return cachedResponse;
-
-        }
-
-
-        return new Response(
-
-            JSON.stringify({
-
-                offline: true,
-
-                message:
-                    'لا يوجد اتصال بالإنترنت'
-
+self.addEventListener('install', event => {
+    console.log('📦 الرفيق: بدء تثبيت Service Worker', CACHE_VERSION);
+
+    event.waitUntil(
+        Promise.all([
+            caches.open(APP_CACHE).then(cache => {
+                return cache.addAll(APP_FILES);
             }),
+            caches.open(DATA_CACHE).then(cache => {
+                return cache.addAll(DATA_FILES);
+            })
+        ])
+        .then(() => {
+            console.log('✅ تم تخزين ملفات الرفيق بنجاح');
+            /* لا نستخدم skipWaiting() بشكل إجباري حتى لا يتم تبديل نسخة التطبيق فجأة أثناء الاستخدام. */
+        })
+        .catch(error => {
+            console.error('❌ فشل تثبيت ملفات الرفيق:', error);
+            throw error;
+        })
+    );
+});
 
-            {
+/* ============================================================
+   5) تفعيل Service Worker
+   ============================================================ */
 
-                status: 503,
+self.addEventListener('activate', event => {
+    console.log('🔄 الرفيق: تفعيل Service Worker');
 
-                headers: {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames
+                    .filter(cacheName => {
+                        return (
+                            cacheName.startsWith('rafeeq-') &&
+                            cacheName !== APP_CACHE &&
+                            cacheName !== DATA_CACHE
+                        );
+                    })
+                    .map(oldCache => {
+                        console.log('🗑️ حذف كاش قديم:', oldCache);
+                        return caches.delete(oldCache);
+                    })
+            );
+        })
+        .then(() => {
+            console.log('✅ تم تنظيف الإصدارات القديمة');
+            /* السماح للصفحات المفتوحة باستخدام Service Worker الجديد. */
+            return self.clients.claim();
+        })
+    );
+});
 
-                    'Content-Type':
-                        'application/json; charset=utf-8'
+/* ============================================================
+   6) استراتيجية جلب الملفات
+   ============================================================ */
 
-                }
+self.addEventListener('fetch', event => {
+    const request = event.request;
 
+    /* نتعامل فقط مع طلبات GET */
+    if (request.method !== 'GET') {
+        return;
+    }
+
+    event.respondWith(
+        caches.match(request).then(cachedResponse => {
+            /* إذا وجد الملف في الكاش نعيده فورًا. */
+            if (cachedResponse) {
+                return cachedResponse;
             }
 
-        );
+            /* إذا لم يوجد في الكاش نحاول تحميله من الإنترنت. */
+            return fetch(request)
+                .then(networkResponse => {
+                    /* التأكد من أن الرد صالح */
+                    if (
+                        !networkResponse ||
+                        networkResponse.status !== 200 ||
+                        networkResponse.type === 'opaque'
+                    ) {
+                        return networkResponse;
+                    }
 
-    }
+                    /* نسخ الرد قبل تخزينه */
+                    const responseClone = networkResponse.clone();
 
-}
+                    /* تحديد نوع الكاش */
+                    const requestURL = new URL(request.url);
+                    const isDataFile = requestURL.pathname.endsWith('.json');
+                    const cacheName = isDataFile ? DATA_CACHE : APP_CACHE;
 
+                    caches.open(cacheName).then(cache => {
+                        cache.put(request, responseClone);
+                    });
+
+                    return networkResponse;
+                })
+                .catch(error => {
+                    console.warn('⚠️ لا يوجد اتصال بالإنترنت:', request.url);
+
+                    /* إذا كانت الصفحة HTML ولم نستطع تحميلها نعيد الصفحة الرئيسية. */
+                    if (request.destination === 'document') {
+                        return caches.match('./index.html');
+                    }
+
+                    /* للملفات الأخرى نترك المتصفح يتعامل مع الخطأ. */
+                    throw error;
+                });
+        })
+    );
+});
 
 /* ============================================================
-   7) رسالة لتحديث التطبيق يدويًا
+   7) استقبال أوامر من التطبيق
    ============================================================ */
 
-self.addEventListener(
-
-    'message',
-
-    event => {
-
-        if (
-            event.data &&
-            event.data.type ===
-                'SKIP_WAITING'
-        ) {
-
-            self.skipWaiting();
-
-        }
-
+self.addEventListener('message', event => {
+    if (!event.data) {
+        return;
     }
 
-);
+    /* طلب تحديث Service Worker */
+    if (event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 
-
-/* ============================================================
-   8) التحكم في الصفحات بعد التفعيل
-   ============================================================ */
-
-self.addEventListener(
-
-    'activate',
-
-    event => {
-
+    /* طلب تنظيف الكاش يدويًا */
+    if (event.data.type === 'CLEAR_CACHE') {
         event.waitUntil(
-
-            self.clients.claim()
-
+            caches.keys().then(cacheNames => {
+                return Promise.all(
+                    cacheNames
+                        .filter(name => name.startsWith('rafeeq-'))
+                        .map(name => caches.delete(name))
+                );
+            })
         );
-
     }
-
-);
-
+});
 
 /* ============================================================
-   نهاية sw.js
+   8) نهاية Service Worker
    ============================================================ */
 
-console.log(
-    '🚀 الرفيق — sw.js جاهز'
-);
+console.log('🚀 الرفيق — Service Worker جاهز:', CACHE_VERSION);
