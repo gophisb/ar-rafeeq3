@@ -1,420 +1,1851 @@
-/* ============================================================
-   الرفيق — sw.js
-   Service Worker
-   الإصدار: 2.0.0
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 
-   الهدف:
-   - تحديث آمن للكاش
-   - تحميل style.css مع index.html
-   - دعم العمل بدون إنترنت
-   - التخلص من كاش الإصدارات القديمة
-   ============================================================ */
+<head>
 
-'use strict';
+    <meta charset="UTF-8">
 
-/* ============================================================
-   1) إعدادات الكاش
-   ============================================================ */
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
 
-const CACHE_VERSION = 'rafeeq-v2';
+    <meta
+        name="theme-color"
+        content="#080B10"
+    >
 
-const APP_CACHE = `${CACHE_VERSION}-app`;
-const DATA_CACHE = `${CACHE_VERSION}-data`;
+    <meta
+        name="description"
+        content="الرفيق — تطبيق إسلامي شامل لمواقيت الصلاة والقرآن والأذكار والتفسير والقبلة"
+    >
 
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
 
-/* ============================================================
-   2) ملفات التطبيق الأساسية
-   ============================================================ */
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
 
-const APP_FILES = [
-    './',
-    './index.html',
-    './style.css',
-    './manifest.json',
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
 
-    './app.js',
-    './theme.js',
+    <meta
+        name="apple-mobile-web-app-title"
+        content="الرفيق"
+    >
 
-    './prayer.html',
-    './quran.html',
-    './adhkar.html',
-    './hisnul.html',
-    './arbaeen.html',
-    './tafsir.html',
-    './qibla.html',
-    './more.html',
-
-    './icon-192.png',
-    './icon-512.png',
-
-    './adhan.mp3'
-];
+    <title>الرفيق — رفيقك إلى الخير</title>
 
 
-/* ============================================================
-   3) ملفات البيانات
-   ============================================================ */
+    <!-- ======================================================
+         PWA
+    ======================================================= -->
 
-const DATA_FILES = [
-    './quran-local.json',
-    './tafsir-saadi.json'
-];
+    <link
+        rel="manifest"
+        href="./manifest.json"
+    >
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="./icon-192.png"
+    >
+
+    <link
+        rel="apple-touch-icon"
+        href="./icon-192.png"
+    >
 
 
-/* ============================================================
-   4) تثبيت Service Worker الجديد
-   ============================================================ */
+    <!-- ======================================================
+         الخطوط
+    ======================================================= -->
 
-self.addEventListener('install', event => {
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
-    console.log(
-        '📦 الرفيق: تثبيت Service Worker الجديد',
-        CACHE_VERSION
-    );
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
 
-    event.waitUntil(
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-        Promise.all([
 
-            caches.open(APP_CACHE)
-                .then(cache => {
+    <!-- ======================================================
+         CSS
+    ======================================================= -->
 
-                    console.log(
-                        '📁 تخزين ملفات التطبيق...'
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+
+    <!-- ======================================================
+         تحسينات إضافية للواجهة
+         متوافقة مع style.css الحالي
+    ======================================================= -->
+
+    <style>
+
+        /* ==================================================
+           حماية الصفحة من الظهور قبل تحميل CSS
+        ================================================== */
+
+        html {
+            background: #080B10;
+        }
+
+
+        body {
+            overflow-x: hidden;
+        }
+
+
+        /* ==================================================
+           رأس الصفحة
+        ================================================== */
+
+        .brand-mark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: rgba(212,175,55,0.05);
+        }
+
+
+        .brand-mark svg {
+            width: 25px;
+            height: 25px;
+            stroke: var(--gold);
+            fill: none;
+        }
+
+
+        /* ==================================================
+           بطاقة الترحيب
+        ================================================== */
+
+        .welcome-card {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 16px;
+            padding: 22px 20px;
+            border-radius: 24px;
+            background:
+                radial-gradient(
+                    circle at 15% 20%,
+                    rgba(212,175,55,0.12),
+                    transparent 35%
+                ),
+                linear-gradient(
+                    135deg,
+                    rgba(15,92,62,0.38),
+                    rgba(8,11,16,0.9)
+                );
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-strong);
+        }
+
+
+        .welcome-card::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            left: -90px;
+            top: -100px;
+            border: 1px solid rgba(212,175,55,0.08);
+            box-shadow:
+                0 0 0 25px rgba(212,175,55,0.025),
+                0 0 0 50px rgba(212,175,55,0.018);
+            pointer-events: none;
+        }
+
+
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+        }
+
+
+        .welcome-kicker {
+            color: var(--gold-soft);
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .4px;
+            margin-bottom: 4px;
+        }
+
+
+        .welcome-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.7rem;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+
+
+        .welcome-subtitle {
+            color: var(--muted);
+            font-size: .75rem;
+            margin-top: 4px;
+        }
+
+
+        /* ==================================================
+           بطاقة الصلاة الرئيسية
+        ================================================== */
+
+        #prayerCard {
+            position: relative;
+        }
+
+
+        #prayerCard[hidden] {
+            display: none;
+        }
+
+
+        .prayer-top-label {
+            text-align: center;
+            color: var(--muted);
+            font-size: .72rem;
+            margin-bottom: 8px;
+        }
+
+
+        .next-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 99px;
+            color: var(--gold-soft);
+            background: rgba(212,175,55,0.07);
+            border: 1px solid var(--border);
+        }
+
+
+        /* ==================================================
+           بطاقة التاريخ
+        ================================================== */
+
+        .date-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+
+        .date-item {
+            padding: 13px 10px;
+            border-radius: 16px;
+            text-align: center;
+            background: var(--card);
+            border: 1px solid var(--border);
+        }
+
+
+        .date-item .date-icon {
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+
+        .date-item .date-label {
+            color: var(--muted);
+            font-size: .65rem;
+        }
+
+
+        .date-item .date-value {
+            color: var(--text);
+            font-size: .78rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+
+        /* ==================================================
+           اختيار المدينة
+        ================================================== */
+
+        .location-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: var(--card);
+            border: 1px solid var(--border);
+        }
+
+
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+
+        .location-icon {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: var(--gold);
+            background: rgba(212,175,55,0.08);
+        }
+
+
+        .location-icon svg {
+            width: 19px;
+            height: 19px;
+            stroke: currentColor;
+            fill: none;
+        }
+
+
+        .location-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        .location-text strong {
+            font-size: .75rem;
+        }
+
+
+        .location-text span {
+            color: var(--muted);
+            font-size: .62rem;
+        }
+
+
+        #citySelect {
+            min-width: 120px;
+            max-width: 170px;
+        }
+
+
+        /* ==================================================
+           حالة التحميل
+        ================================================== */
+
+        #status {
+            border-radius: 18px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+
+        /* ==================================================
+           بطاقة الأذان
+        ================================================== */
+
+        .adhan-play {
+            position: relative;
+        }
+
+
+        .adhan-play svg {
+            pointer-events: none;
+        }
+
+
+        #pauseIcon {
+            display: none;
+        }
+
+
+        /* ==================================================
+           عنوان الأقسام
+        ================================================== */
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 22px 2px 10px;
+        }
+
+
+        .section-heading h2 {
+            font-family: 'Amiri', serif;
+            color: var(--gold-soft);
+            font-size: 1.25rem;
+        }
+
+
+        .section-heading span {
+            color: var(--muted);
+            font-size: .65rem;
+        }
+
+
+        /* ==================================================
+           تحسين البطاقات
+        ================================================== */
+
+        .feat-card,
+        .quick {
+            transition:
+                transform .2s ease,
+                border-color .2s ease,
+                box-shadow .2s ease;
+        }
+
+
+        .feat-card:active,
+        .quick:active {
+            transform: scale(.97);
+        }
+
+
+        /* ==================================================
+           حالة عدم وجود رابط
+        ================================================== */
+
+        .disabled-card {
+            opacity: .65;
+            pointer-events: none;
+        }
+
+
+        /* ==================================================
+           زر التثبيت
+        ================================================== */
+
+        .install-card {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px;
+            margin-bottom: 16px;
+            border-radius: 18px;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(212,175,55,0.12),
+                    rgba(15,92,62,0.12)
+                );
+            border: 1px solid var(--border);
+        }
+
+
+        .install-card.visible {
+            display: flex;
+        }
+
+
+        .install-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+
+        .install-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(212,175,55,0.1);
+            color: var(--gold);
+        }
+
+
+        .install-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+        }
+
+
+        .install-text strong {
+            display: block;
+            font-size: .75rem;
+        }
+
+
+        .install-text span {
+            color: var(--muted);
+            font-size: .62rem;
+        }
+
+
+        .install-btn {
+            border: none;
+            cursor: pointer;
+            padding: 8px 13px;
+            border-radius: 99px;
+            font-family: inherit;
+            font-size: .7rem;
+            font-weight: 700;
+            color: #080B10;
+            background: linear-gradient(
+                150deg,
+                var(--gold),
+                #a9822a
+            );
+        }
+
+
+        /* ==================================================
+           الوضع النهاري
+        ================================================== */
+
+        body.day-mode .welcome-card {
+            background:
+                radial-gradient(
+                    circle at 15% 20%,
+                    rgba(212,175,55,0.14),
+                    transparent 35%
+                ),
+                linear-gradient(
+                    135deg,
+                    rgba(46,139,110,0.18),
+                    rgba(245,240,232,0.95)
+                );
+        }
+
+
+        /* ==================================================
+           شريط سفلي آمن للهاتف
+        ================================================== */
+
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+
+            .bottomnav {
+                bottom:
+                    calc(
+                        12px +
+                        env(safe-area-inset-bottom)
+                    );
+            }
+
+            body {
+                padding-bottom:
+                    calc(
+                        110px +
+                        env(safe-area-inset-bottom)
+                    );
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- ======================================================
+         الحاوية الرئيسية
+    ======================================================= -->
+
+    <main class="max">
+
+
+        <!-- ==================================================
+             رأس التطبيق
+        =================================================== -->
+
+        <header class="topbar">
+
+            <div class="brand-mark"
+                 aria-label="الرفيق">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M12 3v18"
+                    />
+
+                    <path
+                        d="M5 7h14"
+                    />
+
+                    <path
+                        d="M7 7l-3 6a3 3 0 0 0 6 0L7 7Z"
+                    />
+
+                    <path
+                        d="M17 7l-3 6a3 3 0 0 0 6 0l-3-6Z"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="titlebox">
+
+                <h1>الرفيق</h1>
+
+                <p>
+                    رفيقك إلى الخير
+                </p>
+
+            </div>
+
+
+            <div class="brand-mark"
+                 aria-hidden="true">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M12 2
+                           14.5 8
+                           21 9
+                           16 13
+                           17.5 20
+                           12 16
+                           6.5 20
+                           8 13
+                           3 9
+                           9.5 8Z"
+                    />
+
+                </svg>
+
+            </div>
+
+        </header>
+
+
+        <!-- ==================================================
+             خط بصري
+        =================================================== -->
+
+        <div class="skyline">
+
+            <svg
+                viewBox="0 0 500 80"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+            >
+
+                <path
+                    d="M0 70
+                       L45 70
+                       L45 48
+                       L60 48
+                       L60 70
+                       L90 70
+                       L90 38
+                       L105 38
+                       L105 70
+                       L145 70
+                       L145 52
+                       L160 52
+                       L160 70
+                       L190 70
+                       L190 25
+                       L205 25
+                       L205 70
+                       L250 70
+                       L250 42
+                       L265 42
+                       L265 70
+                       L305 70
+                       L305 32
+                       L320 32
+                       L320 70
+                       L360 70
+                       L360 50
+                       L375 50
+                       L375 70
+                       L410 70
+                       L410 35
+                       L425 35
+                       L425 70
+                       L500 70"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    opacity=".45"
+                />
+
+            </svg>
+
+        </div>
+
+
+        <!-- ==================================================
+             اختيار المدينة والتاريخ
+        =================================================== -->
+
+        <div class="location-card">
+
+            <div class="location-info">
+
+                <div class="location-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M12 21s7-6.2 7-12
+                               a7 7 0 1 0-14 0
+                               c0 5.8 7 12 7 12Z"
+                        />
+
+                        <circle
+                            cx="12"
+                            cy="9"
+                            r="2.5"
+                        />
+
+                    </svg>
+
+                </div>
+
+
+                <div class="location-text">
+
+                    <strong>
+                        مواقيت الصلاة
+                    </strong>
+
+                    <span>
+                        اختر موقعك
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <select
+                id="citySelect"
+                aria-label="اختر المدينة"
+            >
+
+                <option>
+                    جاري تحميل المدن...
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ==================================================
+             التاريخ
+        =================================================== -->
+
+        <div class="date-card">
+
+            <div class="date-item">
+
+                <div class="date-icon">
+                    🌙
+                </div>
+
+                <div class="date-label">
+                    التاريخ الهجري
+                </div>
+
+                <div
+                    class="date-value"
+                    id="hijriPill"
+                >
+                    جاري التحميل...
+                </div>
+
+            </div>
+
+
+            <div class="date-item">
+
+                <div class="date-icon">
+                    ☀️
+                </div>
+
+                <div class="date-label">
+                    اليوم
+                </div>
+
+                <div
+                    class="date-value"
+                    id="gregorianDisplay"
+                >
+                    اليوم
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             رسالة الحالة
+        =================================================== -->
+
+        <div
+            id="status"
+            role="status"
+            aria-live="polite"
+        >
+            جاري تحميل مواقيت الصلاة...
+        </div>
+
+
+        <!-- ==================================================
+             بطاقة الترحيب
+        =================================================== -->
+
+        <section class="welcome-card">
+
+            <div class="welcome-content">
+
+                <div class="welcome-kicker">
+                    بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ
+                </div>
+
+                <div class="welcome-title">
+                    اجعل يومك عامرًا بذكر الله
+                </div>
+
+                <div class="welcome-subtitle">
+                    مواقيتك، قرآنك، أذكارك ورفيقك في طريق الخير.
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             بطاقة الصلاة القادمة
+        =================================================== -->
+
+        <section
+            id="prayerCard"
+            class="card"
+            hidden
+        >
+
+            <div class="prayer-top-label">
+
+                <span class="next-badge">
+                    الصلاة القادمة
+                </span>
+
+            </div>
+
+
+            <div class="prayer-row">
+
+
+                <!-- الدائرة -->
+
+                <div class="medallion-wrap">
+
+                    <svg
+                        class="circle-bg"
+                        viewBox="0 0 176 176"
+                        aria-hidden="true"
+                    >
+
+                        <circle
+                            cx="88"
+                            cy="88"
+                            r="78"
+                            fill="none"
+                            stroke="rgba(212,175,55,0.12)"
+                            stroke-width="1"
+                        />
+
+                        <circle
+                            cx="88"
+                            cy="88"
+                            r="68"
+                            fill="none"
+                            stroke="rgba(212,175,55,0.08)"
+                            stroke-width="1"
+                            stroke-dasharray="3 7"
+                        />
+
+                    </svg>
+
+
+                    <div class="medal-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            stroke-width="1.4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+
+                            <path
+                                d="M12 3
+                                   14 8
+                                   19 9
+                                   15 12
+                                   16 18
+                                   12 15
+                                   8 18
+                                   9 12
+                                   5 9
+                                   10 8Z"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                </div>
+
+
+                <!-- معلومات الصلاة -->
+
+                <div class="prayer-info">
+
+                    <div class="lbl">
+                        الصلاة القادمة
+                    </div>
+
+                    <div
+                        class="name"
+                        id="nextName"
+                    >
+                        —
+                    </div>
+
+                    <div
+                        class="time"
+                        id="nextTime"
+                    >
+                        —
+                    </div>
+
+                    <div class="remain-lbl">
+                        متبقي على الأذان
+                    </div>
+
+                    <div
+                        class="countdown"
+                        id="countdown"
+                    >
+                        00:00:00
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- شريط التقدم -->
+
+            <div class="progress-track">
+
+                <div
+                    id="progressBar"
+                    class="progress-fill"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             بطاقة الأذان
+        =================================================== -->
+
+        <section class="adhan-card">
+
+
+            <div class="mosque-icon">
+
+                <svg
+                    viewBox="0 0 64 64"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M8 52h48"
+                    />
+
+                    <path
+                        d="M14 52V32"
+                    />
+
+                    <path
+                        d="M50 52V32"
+                    />
+
+                    <path
+                        d="M18 32
+                           Q32 14 46 32"
+                    />
+
+                    <path
+                        d="M24 52V37
+                           Q32 29 40 37V52"
+                    />
+
+                    <path
+                        d="M32 14V7"
+                    />
+
+                    <path
+                        d="M29 10h6"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="adhan-mid">
+
+                <div class="t1">
+                    الأذان القادم
+                </div>
+
+                <div
+                    class="t2"
+                    id="adhanTimeLabel"
+                >
+                    —
+                </div>
+
+                <div class="t3">
+                    اضغط للاستماع إلى الأذان
+                </div>
+
+            </div>
+
+
+            <button
+                id="adhanPlayBtn"
+                class="adhan-play"
+                type="button"
+                aria-label="تشغيل الأذان"
+            >
+
+                <!-- تشغيل -->
+
+                <svg
+                    id="playIcon"
+                    viewBox="0 0 24 24"
+                >
+
+                    <path
+                        d="M8 5v14l11-7Z"
+                    />
+
+                </svg>
+
+
+                <!-- إيقاف -->
+
+                <svg
+                    id="pauseIcon"
+                    viewBox="0 0 24 24"
+                    style="display:none"
+                >
+
+                    <path
+                        d="M7 5h4v14H7zM13 5h4v14h-4z"
+                    />
+
+                </svg>
+
+            </button>
+
+
+            <audio
+                id="adhanAudio"
+                preload="none"
+                src="./adhan.mp3"
+            ></audio>
+
+        </section>
+
+
+        <!-- ==================================================
+             التثبيت
+        =================================================== -->
+
+        <div
+            id="installCard"
+            class="install-card"
+        >
+
+            <div class="install-info">
+
+                <div class="install-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M12 3v12"
+                        />
+
+                        <path
+                            d="m7 10 5 5 5-5"
+                        />
+
+                        <path
+                            d="M5 21h14"
+                        />
+
+                    </svg>
+
+                </div>
+
+
+                <div class="install-text">
+
+                    <strong>
+                        ثبّت الرفيق على هاتفك
+                    </strong>
+
+                    <span>
+                        وصول أسرع وتجربة أفضل
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="installBtn"
+                class="install-btn"
+                type="button"
+            >
+                تثبيت
+            </button>
+
+        </div>
+
+
+        <!-- ==================================================
+             الخدمات الأساسية
+        =================================================== -->
+
+        <div class="section-heading">
+
+            <h2>
+                رفيقك في الخير
+            </h2>
+
+            <span>
+                خدمات إسلامية
+            </span>
+
+        </div>
+
+
+        <div class="grid2">
+
+
+            <!-- القرآن -->
+
+            <a
+                class="feat-card"
+                href="./quran.html"
+            >
+
+                <div class="icon-wrap">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M5 4
+                               a3 3 0 0 1 3-3h11v18H8
+                               a3 3 0 0 0-3 3Z"
+                        />
+
+                        <path
+                            d="M5 4v18"
+                        />
+
+                        <path
+                            d="M8 5h7"
+                        />
+
+                        <path
+                            d="M8 9h6"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="t">
+                    القرآن الكريم
+                </div>
+
+                <div class="s">
+                    تلاوة وتدبر
+                </div>
+
+            </a>
+
+
+            <!-- الأذكار -->
+
+            <a
+                class="feat-card"
+                href="./adhkar.html"
+            >
+
+                <div class="icon-wrap">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                        />
+
+                        <path
+                            d="M12 8v4l3 2"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="t">
+                    الأذكار
+                </div>
+
+                <div class="s">
+                    صباح ومساء
+                </div>
+
+            </a>
+
+
+            <!-- حصن المسلم -->
+
+            <a
+                class="feat-card"
+                href="./hisnul.html"
+            >
+
+                <div class="icon-wrap">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M12 3
+                               20 6v6
+                               c0 5-3.5 8-8 10
+                               C7.5 20 4 17 4 12V6Z"
+                        />
+
+                        <path
+                            d="m8 12 2.5 2.5L16 9"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="t">
+                    حصن المسلم
+                </div>
+
+                <div class="s">
+                    أذكار وأدعية
+                </div>
+
+            </a>
+
+
+            <!-- الأربعين -->
+
+            <a
+                class="feat-card"
+                href="./arbaeen.html"
+            >
+
+                <div class="icon-wrap">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M6 4h12v16H6z"
+                        />
+
+                        <path
+                            d="M9 8h6"
+                        />
+
+                        <path
+                            d="M9 12h6"
+                        />
+
+                        <path
+                            d="M9 16h4"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="t">
+                    الأربعون النووية
+                </div>
+
+                <div class="s">
+                    أحاديث نبوية
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- ==================================================
+             أدوات الرفيق
+        =================================================== -->
+
+        <div class="section-heading">
+
+            <h2>
+                أدوات الرفيق
+            </h2>
+
+            <span>
+                اكتشف المزيد
+            </span>
+
+        </div>
+
+
+        <div class="grid4">
+
+
+            <a
+                class="quick"
+                href="./tafsir.html"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M4 5h16"
+                    />
+
+                    <path
+                        d="M4 12h16"
+                    />
+
+                    <path
+                        d="M4 19h16"
+                    />
+
+                </svg>
+
+                <span>
+                    التفسير
+                </span>
+
+            </a>
+
+
+            <a
+                class="quick"
+                href="./qibla.html"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    />
+
+                    <path
+                        d="m12 7 2 5-2 5-2-5Z"
+                    />
+
+                </svg>
+
+                <span>
+                    القبلة
+                </span>
+
+            </a>
+
+
+            <a
+                class="quick"
+                href="./prayer.html"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    />
+
+                    <path
+                        d="M12 7v5l3 2"
+                    />
+
+                </svg>
+
+                <span>
+                    الصلاة
+                </span>
+
+            </a>
+
+
+            <a
+                class="quick"
+                href="./more.html"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="5"
+                        cy="12"
+                        r="1"
+                    />
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="1"
+                    />
+
+                    <circle
+                        cx="19"
+                        cy="12"
+                        r="1"
+                    />
+
+                </svg>
+
+                <span>
+                    المزيد
+                </span>
+
+            </a>
+
+
+        </div>
+
+
+        <!-- ==================================================
+             عبارة ختامية
+        =================================================== -->
+
+        <div class="mood-note">
+
+            ﴿ وَاذْكُرْ رَبَّكَ إِذَا نَسِيتَ ﴾
+
+        </div>
+
+
+    </main>
+
+
+    <!-- ======================================================
+         شريط التنقل السفلي
+    ======================================================= -->
+
+    <nav
+        class="bottomnav"
+        aria-label="التنقل الرئيسي"
+    >
+
+        <div class="bottomnav-inner">
+
+
+            <!-- الرئيسية -->
+
+            <a
+                class="navitem active"
+                href="./index.html"
+                aria-label="الرئيسية"
+            >
+
+                <div class="ic">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="m3 11 9-8 9 8"
+                        />
+
+                        <path
+                            d="M5 10v10h14V10"
+                        />
+
+                        <path
+                            d="M9 20v-6h6v6"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    الرئيسية
+                </span>
+
+            </a>
+
+
+            <!-- القرآن -->
+
+            <a
+                class="navitem"
+                href="./quran.html"
+            >
+
+                <div class="ic">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M5 4
+                               a3 3 0 0 1 3-3h11v18H8
+                               a3 3 0 0 0-3 3Z"
+                        />
+
+                        <path
+                            d="M5 4v18"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    القرآن
+                </span>
+
+            </a>
+
+
+            <!-- الأذكار -->
+
+            <a
+                class="navitem"
+                href="./adhkar.html"
+            >
+
+                <div class="ic">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                        />
+
+                        <path
+                            d="M12 8v4l3 2"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    الأذكار
+                </span>
+
+            </a>
+
+
+            <!-- القبلة -->
+
+            <a
+                class="navitem"
+                href="./qibla.html"
+            >
+
+                <div class="ic">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                        />
+
+                        <path
+                            d="m12 7 2 5-2 5-2-5Z"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    القبلة
+                </span>
+
+            </a>
+
+
+            <!-- المزيد -->
+
+            <a
+                class="navitem"
+                href="./more.html"
+            >
+
+                <div class="ic">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <circle
+                            cx="5"
+                            cy="12"
+                            r="1"
+                        />
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="1"
+                        />
+
+                        <circle
+                            cx="19"
+                            cy="12"
+                            r="1"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    المزيد
+                </span>
+
+            </a>
+
+
+        </div>
+
+    </nav>
+
+
+    <!-- ======================================================
+         JavaScript
+    ======================================================= -->
+
+    <script src="./app.js"></script>
+
+    <script src="./theme.js"></script>
+
+
+    <!-- ======================================================
+         التثبيت
+    ======================================================= -->
+
+    <script>
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            function () {
+
+                const installCard =
+                    document.getElementById(
+                        'installCard'
                     );
 
-                    return cache.addAll(APP_FILES);
-
-                }),
-
-            caches.open(DATA_CACHE)
-                .then(cache => {
-
-                    console.log(
-                        '📚 تخزين ملفات البيانات...'
+                const installBtn =
+                    document.getElementById(
+                        'installBtn'
                     );
 
-                    return cache.addAll(DATA_FILES);
 
-                })
+                if (
+                    !installCard ||
+                    !installBtn
+                ) {
 
-        ])
-
-        .then(() => {
-
-            console.log(
-                '✅ تم تخزين ملفات الرفيق بنجاح'
-            );
-
-            /*
-             * تفعيل النسخة الجديدة فورًا.
-             * هذا مهم حتى لا يبقى الإصدار القديم مسيطرًا.
-             */
-
-            return self.skipWaiting();
-
-        })
-
-        .catch(error => {
-
-            console.error(
-                '❌ فشل تثبيت Service Worker:',
-                error
-            );
-
-            throw error;
-
-        })
-
-    );
-
-});
-
-
-/* ============================================================
-   5) تفعيل Service Worker
-   ============================================================ */
-
-self.addEventListener('activate', event => {
-
-    console.log(
-        '🔄 تفعيل Service Worker:',
-        CACHE_VERSION
-    );
-
-    event.waitUntil(
-
-        caches.keys()
-
-            .then(cacheNames => {
-
-                return Promise.all(
-
-                    cacheNames
-
-                        .filter(cacheName => {
-
-                            return (
-
-                                cacheName.startsWith('rafeeq-') &&
-
-                                cacheName !== APP_CACHE &&
-
-                                cacheName !== DATA_CACHE
-
-                            );
-
-                        })
-
-                        .map(oldCache => {
-
-                            console.log(
-                                '🗑️ حذف الكاش القديم:',
-                                oldCache
-                            );
-
-                            return caches.delete(
-                                oldCache
-                            );
-
-                        })
-
-                );
-
-            })
-
-            .then(() => {
-
-                console.log(
-                    '✅ تم تنظيف الكاش القديم'
-                );
-
-                /*
-                 * جعل النسخة الجديدة تتحكم في الصفحات المفتوحة.
-                 */
-
-                return self.clients.claim();
-
-            })
-
-    );
-
-});
-
-
-/* ============================================================
-   6) التعامل مع طلبات الملفات
-   ============================================================ */
-
-self.addEventListener('fetch', event => {
-
-    const request = event.request;
-
-    /*
-     * نتعامل فقط مع GET
-     */
-
-    if (request.method !== 'GET') {
-
-        return;
-
-    }
-
-
-    event.respondWith(
-
-        caches.match(request)
-
-            .then(cachedResponse => {
-
-                /*
-                 * إذا كان الملف موجودًا في الكاش
-                 * نستخدمه مباشرة.
-                 */
-
-                if (cachedResponse) {
-
-                    return cachedResponse;
+                    return;
 
                 }
 
 
-                /*
-                 * إذا لم يكن موجودًا نحاول تحميله من الإنترنت.
-                 */
+                window.AppBridge?.on(
+                    'app-can-install',
+                    function () {
 
-                return fetch(request)
-
-                    .then(networkResponse => {
-
-                        /*
-                         * التحقق من الاستجابة.
-                         */
-
-                        if (
-
-                            !networkResponse ||
-
-                            networkResponse.status !== 200 ||
-
-                            networkResponse.type === 'opaque'
-
-                        ) {
-
-                            return networkResponse;
-
-                        }
-
-
-                        /*
-                         * نسخ الاستجابة قبل تخزينها.
-                         */
-
-                        const responseClone =
-                            networkResponse.clone();
-
-
-                        /*
-                         * تحديد نوع الكاش.
-                         */
-
-                        const requestURL =
-                            new URL(request.url);
-
-
-                        const isDataFile =
-                            requestURL.pathname.endsWith('.json');
-
-
-                        const cacheName =
-                            isDataFile
-                                ? DATA_CACHE
-                                : APP_CACHE;
-
-
-                        /*
-                         * حفظ الملف في الكاش.
-                         */
-
-                        caches.open(cacheName)
-
-                            .then(cache => {
-
-                                cache.put(
-                                    request,
-                                    responseClone
-                                );
-
-                            });
-
-
-                        return networkResponse;
-
-                    })
-
-                    .catch(error => {
-
-                        console.warn(
-                            '⚠️ فشل الاتصال:',
-                            request.url
+                        installCard.classList.add(
+                            'visible'
                         );
 
+                    }
+                );
 
-                        /*
-                         * إذا كانت صفحة HTML
-                         * نعيد index.html من الكاش.
-                         */
+
+                installBtn.addEventListener(
+                    'click',
+                    async function () {
+
+                        const result =
+                            await window.installApp?.();
+
 
                         if (
-                            request.destination === 'document'
+                            result === 'accepted'
                         ) {
 
-                            return caches.match(
-                                './index.html'
+                            installCard.classList.remove(
+                                'visible'
                             );
 
                         }
 
+                    }
+                );
 
-                        throw error;
-
-                    });
-
-            })
-
-    );
-
-});
-
-
-/* ============================================================
-   7) استقبال الأوامر من التطبيق
-   ============================================================ */
-
-self.addEventListener('message', event => {
-
-    if (!event.data) {
-
-        return;
-
-    }
-
-
-    /*
-     * طلب تفعيل النسخة الجديدة.
-     */
-
-    if (
-        event.data.type === 'SKIP_WAITING'
-    ) {
-
-        self.skipWaiting();
-
-    }
-
-
-    /*
-     * طلب تنظيف الكاش يدويًا.
-     */
-
-    if (
-        event.data.type === 'CLEAR_CACHE'
-    ) {
-
-        event.waitUntil(
-
-            caches.keys()
-
-                .then(cacheNames => {
-
-                    return Promise.all(
-
-                        cacheNames
-
-                            .filter(name =>
-                                name.startsWith('rafeeq-')
-                            )
-
-                            .map(name =>
-                                caches.delete(name)
-                            )
-
-                    );
-
-                })
-
+            }
         );
 
-    }
-
-});
+    </script>
 
 
-/* ============================================================
-   8) رسالة جاهزية
-   ============================================================ */
+</body>
 
-console.log(
-    '🚀 الرفيق — Service Worker جاهز',
-    CACHE_VERSION
-);
+</html>
