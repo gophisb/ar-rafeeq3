@@ -1,26 +1,116 @@
-{
-    "name": "الرفيق",
-    "short_name": "الرفيق",
-    "description": "رفيقك في السفر — قرآن، تفسير، أذكار، مواقيت",
-    "start_url": "./index.html",
-    "display": "standalone",
-    "background_color": "#1a2332",
-    "theme_color": "#1a2332",
-    "lang": "ar",
-    "dir": "rtl",
-    "orientation": "portrait-primary",
-    "icons": [
-        {
-            "src": "icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "icons/icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
+// ============================================================
+//  sw.js  –  Service Worker لتطبيق "الرفيق — رفيقك إلى الخير"
+//  يحفظ الملفات محلياً للتشغيل دون إنترنت، مع تحديث آمن
+// ============================================================
+
+// 🔹 إصدار الكاش – غيّر الرقم عند تحديث أي ملف لفرض التحديث
+const CACHE_NAME = 'al-rafiq-v1';
+
+// 🔹 قائمة الملفات التي سيتم تخزينها مسبقاً (جميع صفحات التطبيق وملحقاته)
+const urlsToCache = [
+  './',
+  './index.html',
+  './app.js',
+  './theme.js',
+  './manifest.json',
+
+  './prayer.html',
+  './quran.html',
+  './adhkar.html',
+  './hisnul.html',
+  './arbaeen.html',
+  './tafsir.html',
+  './qibla.html',
+  './more.html',
+
+  './adhan.mp3',
+
+  './icon-192.png',
+  './icon-512.png'
+];
+
+// ============================================================
+//  1.  مرحلة التثبيت  –  فتح الكاش وتخزين الملفات
+// ============================================================
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('[الرفيق] تم فتح الكاش، جارٍ التخزين...');
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        console.log('[الرفيق] تم تخزين جميع الملفات بنجاح');
+        return self.skipWaiting(); // تفعيل الـ SW فوراً دون انتظار
+      })
+      .catch(error => {
+        console.error('[الرفيق] فشل التخزين:', error);
+      })
+  );
+});
+
+// ============================================================
+//  2.  مرحلة التفعيل  –  حذف الكاش القديم (الإصدارات السابقة)
+// ============================================================
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            console.log('[الرفيق] حذف الكاش القديم:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+    .then(() => {
+      console.log('[الرفيق] تم التفعيل، الكاش الحالي:', CACHE_NAME);
+      return self.clients.claim(); // السيطرة على الصفحات المفتوحة فوراً
+    })
+  );
+});
+
+// ============================================================
+//  3.  التعامل مع الطلبات  –  استراتيجية "الكاش أولاً، ثم الشبكة"
+// ============================================================
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(cachedResponse => {
+        // إذا كان الملف موجوداً في الكاش، نعيده فوراً
+        if (cachedResponse) {
+          return cachedResponse;
         }
-    ]
-}
+
+        // وإلا نطلبه من الشبكة
+        return fetch(event.request)
+          .then(networkResponse => {
+            // نتحقق من صحة الاستجابة قبل تخزينها
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+
+            // نسخ الاستجابة لتخزينها في الكاش للاستخدام المستقبلي
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              })
+              .catch(err => console.warn('[الرفيق] تعذر تخزين:', event.request.url, err));
+
+            return networkResponse;
+          })
+          .catch(() => {
+            // (اختياري) يمكن عرض صفحة Offline بدلاً من الخطأ
+            console.warn('[الرفيق] تعذر جلب الملف:', event.request.url);
+            return new Response('⚠️ غير متصل بالإنترنت، والملف غير مخزن محلياً.', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
+          });
+      })
+  );
+});
