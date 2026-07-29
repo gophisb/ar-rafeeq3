@@ -1,233 +1,502 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2B5F5F">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="الرفيق">
-    <meta name="description" content="تطبيق الرفيق - رفيقك اليومي للقرآن والأذكار والصلاة والقبلة">
-    <link rel="manifest" href="./manifest.json">
-    <link rel="apple-touch-icon" href="./icon-192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-    <title>الرفيق</title>
-    <style>
-        /* === إعدادات عامة === */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            transition: background 0.3s, color 0.3s;
-        }
-        body.dark {
-            background: #1a1a2e;
-            color: #e0e0e0;
-        }
-        .container {
-            width: 100%;
-            max-width: 600px;
-            padding: 1.5rem 1rem;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        h1 {
-            font-size: 2.5rem;
-            color: #2B5F5F;
-            margin-bottom: 0.2rem;
-        }
-        .subtitle {
-            font-size: 1rem;
-            color: #666;
-        }
-        body.dark .subtitle {
-            color: #aaa;
-        }
 
-        /* === بطاقات === */
-        .card {
-            background: white;
-            border-radius: 1.2rem;
-            padding: 1.2rem;
-            margin-bottom: 1.2rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: background 0.3s;
-        }
-        body.dark .card {
-            background: #16213e;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #2B5F5F;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        .date-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.1rem;
-        }
-        .hijri {
-            font-weight: bold;
-            color: #8B5A2B;
-        }
-        .gregorian {
-            color: #555;
-        }
-        body.dark .gregorian {
-            color: #bbb;
-        }
-        .prayer-times {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.8rem;
-            font-size: 1rem;
-        }
-        .prayer-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem;
-            background: #f9f9f9;
-            border-radius: 0.8rem;
-        }
-        body.dark .prayer-item {
-            background: #0f3460;
-        }
-        .next-prayer {
-            background: #2B5F5F;
-            color: white;
-            font-weight: bold;
-            border-radius: 0.8rem;
-        }
-        .countdown {
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #e76f51;
-            margin-top: 0.5rem;
-        }
-        .nav-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.8rem;
-        }
-        .nav-btn {
-            background: #2B5F5F;
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            padding: 1rem 0.5rem;
-            border-radius: 1rem;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .nav-btn:hover {
-            background: #1d4d4d;
-        }
-        body.dark .nav-btn {
-            background: #0f3460;
-        }
-        body.dark .nav-btn:hover {
-            background: #0a2647;
-        }
-        .theme-toggle {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            background: #2B5F5F;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-    </style>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#080b11"
+    >
+
+    <meta
+        name="description"
+        content="الرفيق — رفيقك اليومي إلى الصلاة والذكر والقرآن والقبلة"
+    >
+
+    <link rel="manifest" href="./manifest.json">
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="الرفيق"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="192x192"
+        href="./icon-192.png"
+    >
+
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="512x512"
+        href="./icon-512.png"
+    >
+
+    <link
+        rel="apple-touch-icon"
+        href="./icon-192.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+    <title>الرفيق — رفيقك إلى الخير</title>
+
 </head>
+
 <body>
-    <button class="theme-toggle" id="themeToggle" aria-label="تغيير السمة">🌓</button>
-    <div class="container">
-        <header>
-            <h1>📿 الرفيق</h1>
-            <p class="subtitle">رفيقك في الذكر والصلاة والقرآن</p>
+
+    <div id="app">
+
+        <header class="app-header">
+
+            <div class="header-brand">
+
+                <div class="brand-icon">
+                    🌙
+                </div>
+
+                <div class="brand-text">
+
+                    <h1>
+                        الرفيق
+                    </h1>
+
+                    <p>
+                        ✧ رفيقك إلى الصلاة والذكر والقرآن ✧
+                    </p>
+
+                </div>
+
+                <button
+                    id="themeToggle"
+                    class="theme-toggle"
+                    type="button"
+                    aria-label="تغيير الوضع"
+                >
+                    ☀️
+                </button>
+
+            </div>
+
         </header>
 
-        <!-- التاريخ الهجري والميلادي -->
-        <div class="card" id="dateCard">
-            <div class="card-title">📅 التاريخ</div>
-            <div class="date-row">
-                <span class="hijri" id="hijriDate">جار التحميل...</span>
-                <span class="gregorian" id="gregorianDate">---</span>
-            </div>
-        </div>
 
-        <!-- مواقيت الصلاة والعد التنازلي -->
-        <div class="card" id="prayerCard">
-            <div class="card-title">🕌 مواقيت الصلاة</div>
-            <div class="prayer-times" id="prayerTimes">
-                <div class="prayer-item"><span>الفجر</span> <span id="fajr">--:--</span></div>
-                <div class="prayer-item"><span>الشروق</span> <span id="sunrise">--:--</span></div>
-                <div class="prayer-item"><span>الظهر</span> <span id="dhuhr">--:--</span></div>
-                <div class="prayer-item"><span>العصر</span> <span id="asr">--:--</span></div>
-                <div class="prayer-item"><span>المغرب</span> <span id="maghrib">--:--</span></div>
-                <div class="prayer-item"><span>العشاء</span> <span id="isha">--:--</span></div>
-            </div>
-            <div class="countdown" id="countdown">⏳ جار حساب العد التنازلي...</div>
-        </div>
+        <main class="main-content">
 
-        <!-- أزرار التنقل لباقي الصفحات -->
-        <div class="card">
-            <div class="card-title">📂 أقسام التطبيق</div>
-            <div class="nav-grid">
-                <a href="./prayer.html" class="nav-btn">🕌 الصلاة</a>
-                <a href="./quran.html" class="nav-btn">📖 القرآن</a>
-                <a href="./adhkar.html" class="nav-btn">🌿 الأذكار</a>
-                <a href="./hisnul.html" class="nav-btn">🛡️ حصن المسلم</a>
-                <a href="./arbaeen.html" class="nav-btn">📜 الأربعين</a>
-                <a href="./tafsir.html" class="nav-btn">📚 التفسير</a>
-                <a href="./qibla.html" class="nav-btn">🕋 القبلة</a>
-                <a href="./more.html" class="nav-btn">⚙️ المزيد</a>
+
+            <section class="top-controls">
+
+                <div
+                    class="date-pill"
+                    id="hijriPill"
+                >
+                    📅 جارٍ تحميل التاريخ...
+                </div>
+
+
+                <select
+                    id="citySelect"
+                    aria-label="اختر الولاية"
+                >
+
+                    <option value="Algiers">
+                        الجزائر
+                    </option>
+
+                </select>
+
+            </section>
+
+
+            <section class="welcome-section">
+
+                <h2>
+                    🌙 أهلاً بك في الرفيق
+                </h2>
+
+            </section>
+
+
+            <div
+                id="status"
+                class="status-message"
+                hidden
+            >
+                جاري تحميل مواقيت الصلاة...
             </div>
-        </div>
+
+
+            <section
+                id="prayerCard"
+                class="next-prayer-card"
+                hidden
+            >
+
+                <div class="next-prayer-content">
+
+                    <div class="next-prayer-info">
+
+                        <h3>
+                            الصلاة القادمة
+                        </h3>
+
+                        <div
+                            id="nextName"
+                            class="next-prayer-name"
+                        >
+                            —
+                        </div>
+
+                        <div
+                            id="nextTime"
+                            class="next-prayer-time"
+                        >
+                            —
+                        </div>
+
+                        <div class="countdown-label">
+                            باقي على الصلاة
+                        </div>
+
+                        <div
+                            id="countdown"
+                            class="countdown"
+                        >
+                            00:00:00
+                        </div>
+
+                    </div>
+
+
+                    <div class="next-prayer-icon">
+
+                        <div class="prayer-icon-circle">
+                            🕌
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="progress-bar">
+
+                    <div
+                        id="progressBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+            <section class="adhan-card">
+
+                <div class="adhan-icon">
+                    🕌
+                </div>
+
+                <div class="adhan-content">
+
+                    <h3>
+                        الأذان
+                    </h3>
+
+                    <div
+                        id="adhanTimeLabel"
+                        class="adhan-time-label"
+                    >
+                        —
+                    </div>
+
+                    <p>
+                        استماع وتنبيهات من صفحة المواقيت
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="adhanPlayBtn"
+                    class="adhan-play-button"
+                    type="button"
+                    aria-label="تشغيل الأذان"
+                >
+
+                    <span id="playIcon">
+                        ▶
+                    </span>
+
+                    <span
+                        id="pauseIcon"
+                        style="display:none;"
+                    >
+                        ⏸
+                    </span>
+
+                </button>
+
+
+                <audio
+                    id="adhanAudio"
+                    src="./adhan.mp3"
+                    preload="none"
+                ></audio>
+
+            </section>
+
+
+            <section class="sections-card">
+
+                <h2 class="section-title">
+                    📂 أقسام التطبيق
+                </h2>
+
+
+                <div class="sections-grid">
+
+
+                    <a
+                        href="./prayer.html"
+                        class="section-button"
+                    >
+                        🕌
+                        <span>
+                            الصلاة
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./quran.html"
+                        class="section-button"
+                    >
+                        📖
+                        <span>
+                            القرآن
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./adhkar.html"
+                        class="section-button"
+                    >
+                        🌿
+                        <span>
+                            الأذكار
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./hisnul.html"
+                        class="section-button"
+                    >
+                        🛡️
+                        <span>
+                            حصن المسلم
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./arbaeen.html"
+                        class="section-button"
+                    >
+                        📜
+                        <span>
+                            الأربعين
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./tafsir.html"
+                        class="section-button"
+                    >
+                        📚
+                        <span>
+                            التفسير
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./qibla.html"
+                        class="section-button"
+                    >
+                        🕋
+                        <span>
+                            القبلة
+                        </span>
+                    </a>
+
+
+                    <a
+                        href="./more.html"
+                        class="section-button"
+                    >
+                        ⚙️
+                        <span>
+                            المزيد
+                        </span>
+                    </a>
+
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <nav
+            class="bottom-nav"
+            aria-label="التنقل الرئيسي"
+        >
+
+            <a
+                href="./qibla.html"
+                class="bottom-nav-item"
+            >
+                <span class="bottom-icon">
+                    ◈
+                </span>
+
+                <span>
+                    القبلة
+                </span>
+            </a>
+
+
+            <a
+                href="./quran.html"
+                class="bottom-nav-item"
+            >
+                <span class="bottom-icon">
+                    📖
+                </span>
+
+                <span>
+                    القرآن
+                </span>
+            </a>
+
+
+            <a
+                href="./index.html"
+                class="bottom-nav-item active"
+            >
+                <span class="bottom-home-icon">
+                    ⌂
+                </span>
+
+                <span>
+                    الرئيسية
+                </span>
+            </a>
+
+
+            <a
+                href="./arbaeen.html"
+                class="bottom-nav-item"
+            >
+                <span class="bottom-icon">
+                    📜
+                </span>
+
+                <span>
+                    الحديث
+                </span>
+            </a>
+
+
+            <a
+                href="./adhkar.html"
+                class="bottom-nav-item"
+            >
+                <span class="bottom-icon">
+                    −
+                </span>
+
+                <span>
+                    الأذكار
+                </span>
+            </a>
+
+        </nav>
+
     </div>
 
-    <!-- تضمين ملفات الجافاسكربت -->
+
     <script src="./theme.js"></script>
+
     <script src="./app.js"></script>
 
-    <!-- تسجيل Service Worker -->
+
     <script>
+
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => {
-                        console.log('✅ الرفيق يعمل بدون إنترنت', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('❌ فشل تشغيل Service Worker:', error);
-                    });
-            });
+
+            window.addEventListener(
+                'load',
+                function () {
+
+                    navigator.serviceWorker
+                        .register('./sw.js')
+                        .then(function (registration) {
+
+                            console.log(
+                                '✅ الرفيق — Service Worker يعمل',
+                                registration.scope
+                            );
+
+                        })
+                        .catch(function (error) {
+
+                            console.error(
+                                '❌ فشل تسجيل Service Worker:',
+                                error
+                            );
+
+                        });
+
+                }
+            );
+
         }
+
     </script>
+
+
 </body>
+
 </html>
