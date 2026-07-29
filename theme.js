@@ -1,122 +1,471 @@
-// theme.js - التحكم في الوضع النهاري/الليلي للتطبيق
+/* ============================================================
+   الرفيق — theme.js
+   الإصدار: 1.0.0
 
-(function() {
-    'use strict';
+   نظام الوضع الليلي والنهاري
+   - حفظ الوضع في LocalStorage
+   - استعادة الوضع عند فتح التطبيق
+   - يعمل بدون إنترنت
+   - متوافق مع index.html الحالي
+   ============================================================ */
 
-    // ------------------------------------------------
-    // 1. الثوابت
-    // ------------------------------------------------
+'use strict';
 
-    const STORAGE_KEY = 'theme-preference';
-    const DAY_CLASS = 'day-mode';
 
-    // ------------------------------------------------
-    // 2. عناصر DOM
-    // ------------------------------------------------
+/* ============================================================
+   1) إعدادات الوضع
+   ============================================================ */
+
+const THEME_STORAGE_KEY = 'rafeeq_theme';
+
+
+/* ============================================================
+   2) تطبيق الوضع على الصفحة
+   ============================================================ */
+
+function applyTheme(theme) {
 
     const body = document.body;
 
-    // أيقونة الشمس/القمر في الشريط العلوي (آخر SVG في .topbar)
-    const themeToggle = document.querySelector('.topbar svg:last-child');
-
-    // ------------------------------------------------
-    // 3. دوال التحكم في الموضوع
-    // ------------------------------------------------
-
-    /**
-     * الحصول على الموضوع المفضل من التخزين المحلي أو تفضيل النظام
-     * @returns {string} 'day' أو 'night'
-     */
-    function getPreferredTheme() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved === 'day') return 'day';
-        if (saved === 'night') return 'night';
-        // في حالة عدم وجود تفضيل محفوظ، نستخدم تفضيل النظام
-        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'day' : 'night';
+    if (!body) {
+        return;
     }
 
-    /**
-     * تطبيق الموضوع المحدد على الصفحة
-     * @param {string} theme 'day' أو 'night'
-     */
-    function applyTheme(theme) {
-        if (theme === 'day') {
-            body.classList.add(DAY_CLASS);
-        } else {
-            body.classList.remove(DAY_CLASS);
-        }
-        localStorage.setItem(STORAGE_KEY, theme);
 
-        // تحديث شكل الأيقونة حسب الوضع (اختياري)
-        updateToggleIcon(theme);
-    }
+    if (theme === 'day') {
 
-    /**
-     * تبديل الموضوع بين النهاري والليلي
-     */
-    function toggleTheme() {
-        const isDay = body.classList.contains(DAY_CLASS);
-        applyTheme(isDay ? 'night' : 'day');
-    }
+        body.classList.add('day-mode');
 
-    /**
-     * تحديث أيقونة التبديل (شكل الشمس/القمر)
-     * @param {string} theme
-     */
-    function updateToggleIcon(theme) {
-        if (!themeToggle) return;
-        // يمكن تغيير محتوى SVG حسب الوضع
-        // لكننا سنكتفي بتغيير لونها أو إضافة تأثير بسيط
-        // في هذا التطبيق، الأيقونة ثابتة ولكن يمكننا تغيير fill أو stroke
-        const isDay = theme === 'day';
-        // نغير لون الأيقونة قليلاً للإشارة
-        const svgPaths = themeToggle.querySelectorAll('path, circle, line');
-        svgPaths.forEach(el => {
-            if (el.tagName === 'circle' && el.getAttribute('fill') === 'var(--gold)') {
-                // دائرة الشمس يمكن تغيير لونها
-                el.setAttribute('fill', isDay ? '#FDB813' : 'var(--gold)');
-            }
-        });
-    }
-
-    // ------------------------------------------------
-    // 4. تهيئة التطبيق
-    // ------------------------------------------------
-
-    function init() {
-        // تطبيق الموضوع المحفوظ أو تفضيل النظام
-        const theme = getPreferredTheme();
-        applyTheme(theme);
-
-        // إضافة مستمع للزر إذا كان موجوداً
-        if (themeToggle) {
-            themeToggle.style.cursor = 'pointer';
-            themeToggle.setAttribute('aria-label', 'تبديل المظهر (نهار/ليل)');
-            themeToggle.addEventListener('click', toggleTheme);
-        } else {
-            console.warn('⚠️ لم يتم العثور على زر تبديل المظهر في الشريط العلوي');
-        }
-
-        // الاستماع لتغير تفضيل النظام أثناء تشغيل التطبيق
-        // (فقط إذا لم يكن المستخدم قد حفظ تفضيلاً يدوياً)
-        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
-            if (!localStorage.getItem(STORAGE_KEY)) {
-                // إذا لم يكن هناك تفضيل محفوظ، نتبع النظام
-                applyTheme(e.matches ? 'day' : 'night');
-            }
-        });
-
-        console.log('🎨 theme.js تم تهيئته بنجاح');
-    }
-
-    // ------------------------------------------------
-    // 5. التشغيل عند تحميل DOM
-    // ------------------------------------------------
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
     } else {
-        init();
+
+        body.classList.remove('day-mode');
+
     }
 
-})();
+
+    // حفظ الوضع
+    try {
+
+        localStorage.setItem(
+            THEME_STORAGE_KEY,
+            theme
+        );
+
+    } catch (error) {
+
+        console.warn(
+            'تعذر حفظ إعدادات الوضع:',
+            error
+        );
+
+    }
+
+
+    // إرسال الحدث لباقي التطبيق
+    if (
+        window.AppBridge &&
+        typeof window.AppBridge.emit === 'function'
+    ) {
+
+        window.AppBridge.emit(
+            'theme-changed',
+            theme
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   3) قراءة الوضع المحفوظ
+   ============================================================ */
+
+function getSavedTheme() {
+
+    try {
+
+        const savedTheme =
+            localStorage.getItem(
+                THEME_STORAGE_KEY
+            );
+
+
+        if (
+            savedTheme === 'day' ||
+            savedTheme === 'night'
+        ) {
+
+            return savedTheme;
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            'تعذر قراءة الوضع المحفوظ:',
+            error
+        );
+
+    }
+
+
+    // الوضع الافتراضي
+    return 'night';
+
+}
+
+
+/* ============================================================
+   4) تبديل الوضع
+   ============================================================ */
+
+function toggleTheme() {
+
+    const body =
+        document.body;
+
+
+    if (!body) {
+        return;
+    }
+
+
+    const isDay =
+        body.classList.contains(
+            'day-mode'
+        );
+
+
+    if (isDay) {
+
+        applyTheme('night');
+
+    } else {
+
+        applyTheme('day');
+
+    }
+
+}
+
+
+/* ============================================================
+   5) جعل الوظائف متاحة للتطبيق
+   ============================================================ */
+
+window.RafeeqTheme = {
+
+    apply: applyTheme,
+
+    toggle: toggleTheme,
+
+    get: getSavedTheme
+
+};
+
+
+/* ============================================================
+   6) تشغيل الوضع مبكرًا
+   ============================================================ */
+
+function initializeTheme() {
+
+    const savedTheme =
+        getSavedTheme();
+
+
+    applyTheme(
+        savedTheme
+    );
+
+
+    console.log(
+        '🎨 الرفيق — الوضع الحالي:',
+        savedTheme
+    );
+
+}
+
+
+/* ============================================================
+   7) تشغيل عند جاهزية الصفحة
+   ============================================================ */
+
+if (
+    document.readyState ===
+    'loading'
+) {
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeTheme
+    );
+
+} else {
+
+    initializeTheme();
+
+}
+
+
+/* ============================================================
+   8) دعم زر تغيير الوضع
+   ============================================================ */
+
+/*
+   يمكن لأي زر في التطبيق استدعاء:
+
+   RafeeqTheme.toggle();
+
+   مثال:
+
+   <button onclick="RafeeqTheme.toggle()">
+       تغيير الوضع
+   </button>
+
+*/
+
+
+/* ============================================================
+   نهاية theme.js
+   ============================================================ */
+
+console.log(
+    '🚀 الرفيق — theme.js يعمل بنجاح'
+);/* ============================================================
+   الرفيق — theme.js
+   الإصدار: 1.0.0
+
+   نظام الوضع الليلي والنهاري
+   - حفظ الوضع في LocalStorage
+   - استعادة الوضع عند فتح التطبيق
+   - يعمل بدون إنترنت
+   - متوافق مع index.html الحالي
+   ============================================================ */
+
+'use strict';
+
+
+/* ============================================================
+   1) إعدادات الوضع
+   ============================================================ */
+
+const THEME_STORAGE_KEY = 'rafeeq_theme';
+
+
+/* ============================================================
+   2) تطبيق الوضع على الصفحة
+   ============================================================ */
+
+function applyTheme(theme) {
+
+    const body = document.body;
+
+    if (!body) {
+        return;
+    }
+
+
+    if (theme === 'day') {
+
+        body.classList.add('day-mode');
+
+    } else {
+
+        body.classList.remove('day-mode');
+
+    }
+
+
+    // حفظ الوضع
+    try {
+
+        localStorage.setItem(
+            THEME_STORAGE_KEY,
+            theme
+        );
+
+    } catch (error) {
+
+        console.warn(
+            'تعذر حفظ إعدادات الوضع:',
+            error
+        );
+
+    }
+
+
+    // إرسال الحدث لباقي التطبيق
+    if (
+        window.AppBridge &&
+        typeof window.AppBridge.emit === 'function'
+    ) {
+
+        window.AppBridge.emit(
+            'theme-changed',
+            theme
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   3) قراءة الوضع المحفوظ
+   ============================================================ */
+
+function getSavedTheme() {
+
+    try {
+
+        const savedTheme =
+            localStorage.getItem(
+                THEME_STORAGE_KEY
+            );
+
+
+        if (
+            savedTheme === 'day' ||
+            savedTheme === 'night'
+        ) {
+
+            return savedTheme;
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            'تعذر قراءة الوضع المحفوظ:',
+            error
+        );
+
+    }
+
+
+    // الوضع الافتراضي
+    return 'night';
+
+}
+
+
+/* ============================================================
+   4) تبديل الوضع
+   ============================================================ */
+
+function toggleTheme() {
+
+    const body =
+        document.body;
+
+
+    if (!body) {
+        return;
+    }
+
+
+    const isDay =
+        body.classList.contains(
+            'day-mode'
+        );
+
+
+    if (isDay) {
+
+        applyTheme('night');
+
+    } else {
+
+        applyTheme('day');
+
+    }
+
+}
+
+
+/* ============================================================
+   5) جعل الوظائف متاحة للتطبيق
+   ============================================================ */
+
+window.RafeeqTheme = {
+
+    apply: applyTheme,
+
+    toggle: toggleTheme,
+
+    get: getSavedTheme
+
+};
+
+
+/* ============================================================
+   6) تشغيل الوضع مبكرًا
+   ============================================================ */
+
+function initializeTheme() {
+
+    const savedTheme =
+        getSavedTheme();
+
+
+    applyTheme(
+        savedTheme
+    );
+
+
+    console.log(
+        '🎨 الرفيق — الوضع الحالي:',
+        savedTheme
+    );
+
+}
+
+
+/* ============================================================
+   7) تشغيل عند جاهزية الصفحة
+   ============================================================ */
+
+if (
+    document.readyState ===
+    'loading'
+) {
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeTheme
+    );
+
+} else {
+
+    initializeTheme();
+
+}
+
+
+/* ============================================================
+   8) دعم زر تغيير الوضع
+   ============================================================ */
+
+/*
+   يمكن لأي زر في التطبيق استدعاء:
+
+   RafeeqTheme.toggle();
+
+   مثال:
+
+   <button onclick="RafeeqTheme.toggle()">
+       تغيير الوضع
+   </button>
+
+*/
+
+
+/* ============================================================
+   نهاية theme.js
+   ============================================================ */
+
+console.log(
+    '🚀 الرفيق — theme.js يعمل بنجاح'
+);
