@@ -12,35 +12,15 @@
 
     <meta
         name="theme-color"
-        content="#080b11"
+        content="#080B10"
     >
 
     <meta
         name="description"
-        content="الرفيق — رفيقك اليومي إلى الصلاة والذكر والقرآن والقبلة"
+        content="الرفيق — رفيقك اليومي للصلاة والقرآن والأذكار والقبلة"
     >
 
     <link rel="manifest" href="./manifest.json">
-
-    <meta
-        name="mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-title"
-        content="الرفيق"
-    >
-
-    <meta
-        name="apple-mobile-web-app-status-bar-style"
-        content="black-translucent"
-    >
 
     <link
         rel="icon"
@@ -70,431 +50,867 @@
 
 </head>
 
+
 <body>
 
-    <div id="app">
 
-        <header class="app-header">
+<!-- =========================================================
+     الصفحة الرئيسية
+     ========================================================= -->
 
-            <div class="header-brand">
+<div class="max">
 
-                <div class="brand-icon">
-                    🌙
-                </div>
 
-                <div class="brand-text">
+    <!-- =====================================================
+         الشريط العلوي
+         ===================================================== -->
 
-                    <h1>
-                        الرفيق
-                    </h1>
+    <header class="topbar">
 
-                    <p>
-                        ✧ رفيقك إلى الصلاة والذكر والقرآن ✧
-                    </p>
+        <div class="titlebox">
 
-                </div>
+            <h1>
+                الرفيق
+            </h1>
 
-                <button
-                    id="themeToggle"
-                    class="theme-toggle"
-                    type="button"
-                    aria-label="تغيير الوضع"
-                >
-                    ☀️
-                </button>
+            <p>
+                ✧ رفيقك إلى الصلاة والذكر والقرآن ✧
+            </p>
 
-            </div>
+        </div>
 
-        </header>
 
+        <button
+            id="themeToggle"
+            type="button"
+            aria-label="تغيير الوضع"
+            style="background:none;border:0;cursor:pointer;color:var(--gold);font-size:1.3rem;"
+        >
+            ☀️
+        </button>
 
-        <main class="main-content">
+    </header>
 
 
-            <section class="top-controls">
+    <!-- =====================================================
+         منظر السماء / الزخرفة
+         ===================================================== -->
 
-                <div
-                    class="date-pill"
-                    id="hijriPill"
-                >
-                    📅 جارٍ تحميل التاريخ...
-                </div>
+    <div class="skyline">
 
-
-                <select
-                    id="citySelect"
-                    aria-label="اختر الولاية"
-                >
-
-                    <option value="Algiers">
-                        الجزائر
-                    </option>
-
-                </select>
-
-            </section>
-
-
-            <section class="welcome-section">
-
-                <h2>
-                    🌙 أهلاً بك في الرفيق
-                </h2>
-
-            </section>
-
-
-            <div
-                id="status"
-                class="status-message"
-                hidden
-            >
-                جاري تحميل مواقيت الصلاة...
-            </div>
-
-
-            <section
-                id="prayerCard"
-                class="next-prayer-card"
-                hidden
-            >
-
-                <div class="next-prayer-content">
-
-                    <div class="next-prayer-info">
-
-                        <h3>
-                            الصلاة القادمة
-                        </h3>
-
-                        <div
-                            id="nextName"
-                            class="next-prayer-name"
-                        >
-                            —
-                        </div>
-
-                        <div
-                            id="nextTime"
-                            class="next-prayer-time"
-                        >
-                            —
-                        </div>
-
-                        <div class="countdown-label">
-                            باقي على الصلاة
-                        </div>
-
-                        <div
-                            id="countdown"
-                            class="countdown"
-                        >
-                            00:00:00
-                        </div>
-
-                    </div>
-
-
-                    <div class="next-prayer-icon">
-
-                        <div class="prayer-icon-circle">
-                            🕌
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="progress-bar">
-
-                    <div
-                        id="progressBar"
-                        class="progress-fill"
-                    ></div>
-
-                </div>
-
-            </section>
-
-
-            <section class="adhan-card">
-
-                <div class="adhan-icon">
-                    🕌
-                </div>
-
-                <div class="adhan-content">
-
-                    <h3>
-                        الأذان
-                    </h3>
-
-                    <div
-                        id="adhanTimeLabel"
-                        class="adhan-time-label"
-                    >
-                        —
-                    </div>
-
-                    <p>
-                        استماع وتنبيهات من صفحة المواقيت
-                    </p>
-
-                </div>
-
-
-                <button
-                    id="adhanPlayBtn"
-                    class="adhan-play-button"
-                    type="button"
-                    aria-label="تشغيل الأذان"
-                >
-
-                    <span id="playIcon">
-                        ▶
-                    </span>
-
-                    <span
-                        id="pauseIcon"
-                        style="display:none;"
-                    >
-                        ⏸
-                    </span>
-
-                </button>
-
-
-                <audio
-                    id="adhanAudio"
-                    src="./adhan.mp3"
-                    preload="none"
-                ></audio>
-
-            </section>
-
-
-            <section class="sections-card">
-
-                <h2 class="section-title">
-                    📂 أقسام التطبيق
-                </h2>
-
-
-                <div class="sections-grid">
-
-
-                    <a
-                        href="./prayer.html"
-                        class="section-button"
-                    >
-                        🕌
-                        <span>
-                            الصلاة
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./quran.html"
-                        class="section-button"
-                    >
-                        📖
-                        <span>
-                            القرآن
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./adhkar.html"
-                        class="section-button"
-                    >
-                        🌿
-                        <span>
-                            الأذكار
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./hisnul.html"
-                        class="section-button"
-                    >
-                        🛡️
-                        <span>
-                            حصن المسلم
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./arbaeen.html"
-                        class="section-button"
-                    >
-                        📜
-                        <span>
-                            الأربعين
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./tafsir.html"
-                        class="section-button"
-                    >
-                        📚
-                        <span>
-                            التفسير
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./qibla.html"
-                        class="section-button"
-                    >
-                        🕋
-                        <span>
-                            القبلة
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="./more.html"
-                        class="section-button"
-                    >
-                        ⚙️
-                        <span>
-                            المزيد
-                        </span>
-                    </a>
-
-                </div>
-
-            </section>
-
-        </main>
-
-
-        <nav
-            class="bottom-nav"
-            aria-label="التنقل الرئيسي"
+        <svg
+            viewBox="0 0 460 80"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
         >
 
-            <a
-                href="./qibla.html"
-                class="bottom-nav-item"
-            >
-                <span class="bottom-icon">
-                    ◈
-                </span>
+            <path
+                d="M0 70
+                   L35 70
+                   L35 55
+                   L45 55
+                   L45 70
+                   L75 70
+                   L75 45
+                   L85 45
+                   L85 70
+                   L120 70
+                   L120 52
+                   L130 52
+                   L130 70
+                   L165 70
+                   L165 38
+                   L175 38
+                   L175 70
+                   L210 70
+                   L210 50
+                   L220 50
+                   L220 70
+                   L255 70
+                   L255 42
+                   L265 42
+                   L265 70
+                   L300 70
+                   L300 52
+                   L310 52
+                   L310 70
+                   L345 70
+                   L345 40
+                   L355 40
+                   L355 70
+                   L390 70
+                   L390 50
+                   L400 50
+                   L400 70
+                   L460 70"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                opacity="0.45"
+            />
 
-                <span>
-                    القبلة
-                </span>
-            </a>
-
-
-            <a
-                href="./quran.html"
-                class="bottom-nav-item"
-            >
-                <span class="bottom-icon">
-                    📖
-                </span>
-
-                <span>
-                    القرآن
-                </span>
-            </a>
-
-
-            <a
-                href="./index.html"
-                class="bottom-nav-item active"
-            >
-                <span class="bottom-home-icon">
-                    ⌂
-                </span>
-
-                <span>
-                    الرئيسية
-                </span>
-            </a>
-
-
-            <a
-                href="./arbaeen.html"
-                class="bottom-nav-item"
-            >
-                <span class="bottom-icon">
-                    📜
-                </span>
-
-                <span>
-                    الحديث
-                </span>
-            </a>
-
-
-            <a
-                href="./adhkar.html"
-                class="bottom-nav-item"
-            >
-                <span class="bottom-icon">
-                    −
-                </span>
-
-                <span>
-                    الأذكار
-                </span>
-            </a>
-
-        </nav>
+        </svg>
 
     </div>
 
 
-    <script src="./theme.js"></script>
+    <!-- =====================================================
+         التاريخ + اختيار الولاية
+         ===================================================== -->
 
-    <script src="./app.js"></script>
+    <div class="pillrow">
 
 
-    <script>
+        <!-- التاريخ الهجري والميلادي -->
 
-        if ('serviceWorker' in navigator) {
+        <div
+            class="pill"
+            id="hijriPill"
+        >
+            📅 جارٍ تحميل التاريخ...
+        </div>
 
-            window.addEventListener(
-                'load',
-                function () {
 
-                    navigator.serviceWorker
-                        .register('./sw.js')
-                        .then(function (registration) {
+        <!-- الولاية -->
 
-                            console.log(
-                                '✅ الرفيق — Service Worker يعمل',
-                                registration.scope
-                            );
+        <div class="pill">
 
-                        })
-                        .catch(function (error) {
+            <select
+                id="citySelect"
+                aria-label="اختر الولاية"
+            >
 
-                            console.error(
-                                '❌ فشل تسجيل Service Worker:',
-                                error
-                            );
+                <option value="Algiers">
+                    الجزائر
+                </option>
 
-                        });
+            </select>
 
-                }
-            );
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         رسالة الحالة
+         ===================================================== -->
+
+    <div
+        id="status"
+        hidden
+    >
+        جاري تحميل مواقيت الصلاة...
+    </div>
+
+
+    <!-- =====================================================
+         بطاقة الصلاة القادمة
+         ===================================================== -->
+
+    <section
+        id="prayerCard"
+        class="card"
+        hidden
+    >
+
+        <div class="prayer-row">
+
+
+            <!-- الميدالية -->
+
+            <div class="medallion-wrap">
+
+                <svg
+                    class="circle-bg"
+                    viewBox="0 0 176 176"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                >
+
+                    <circle
+                        cx="88"
+                        cy="88"
+                        r="78"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1"
+                        opacity="0.25"
+                    />
+
+                    <circle
+                        cx="88"
+                        cy="88"
+                        r="66"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1"
+                        stroke-dasharray="4 5"
+                        opacity="0.35"
+                    />
+
+                </svg>
+
+
+                <div class="medal-icon">
+
+                    <svg
+                        viewBox="0 0 64 64"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+
+                        <path
+                            d="M32 8
+                               C22 8 14 16 14 26
+                               C14 39 32 56 32 56
+                               C32 56 50 39 50 26
+                               C50 16 42 8 32 8Z"
+                            stroke-width="2"
+                        />
+
+                        <path
+                            d="M24 26
+                               L32 18
+                               L40 26
+                               L32 34
+                               Z"
+                            stroke-width="2"
+                        />
+
+                    </svg>
+
+                </div>
+
+            </div>
+
+
+            <!-- معلومات الصلاة -->
+
+            <div class="prayer-info">
+
+                <div class="lbl">
+                    الصلاة القادمة
+                </div>
+
+
+                <div
+                    id="nextName"
+                    class="name"
+                >
+                    —
+                </div>
+
+
+                <div
+                    id="nextTime"
+                    class="time"
+                >
+                    —
+                </div>
+
+
+                <div class="remain-lbl">
+                    الوقت المتبقي
+                </div>
+
+
+                <div
+                    id="countdown"
+                    class="countdown"
+                >
+                    00:00:00
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- شريط التقدم -->
+
+        <div class="progress-track">
+
+            <div
+                id="progressBar"
+                class="progress-fill"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         بطاقة الأذان
+         ===================================================== -->
+
+    <section class="adhan-card">
+
+
+        <button
+            id="adhanPlayBtn"
+            class="adhan-play"
+            type="button"
+            aria-label="تشغيل الأذان"
+        >
+
+            <span id="playIcon">
+                ▶
+            </span>
+
+            <span
+                id="pauseIcon"
+                style="display:none;"
+            >
+                ⏸
+            </span>
+
+        </button>
+
+
+        <div class="adhan-mid">
+
+            <div class="t1">
+                الأذان
+            </div>
+
+            <div
+                id="adhanTimeLabel"
+                class="t2"
+            >
+                —
+            </div>
+
+            <div class="t3">
+                اضغط للاستماع إلى الأذان
+            </div>
+
+        </div>
+
+
+        <div class="mosque-icon">
+
+            <svg
+                viewBox="0 0 64 64"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+
+                <path
+                    d="M8 52
+                       H56
+                       M14 52
+                       V34
+                       M50 52
+                       V34
+                       M20 52
+                       V30
+                       M44 52
+                       V30
+                       M32 12
+                       L18 30
+                       H46
+                       Z
+                       M32 12
+                       V6"
+                    stroke-width="2"
+                />
+
+            </svg>
+
+        </div>
+
+
+        <audio
+            id="adhanAudio"
+            src="./adhan.mp3"
+            preload="none"
+        ></audio>
+
+    </section>
+
+
+    <!-- =====================================================
+         البطاقات الرئيسية
+         ===================================================== -->
+
+    <div class="grid2">
+
+
+        <a
+            href="./quran.html"
+            class="feat-card"
+        >
+
+            <div class="icon-wrap">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <path
+                        d="M4 4
+                           H18
+                           C19.1 4 20 4.9 20 6
+                           V20
+                           H6
+                           C4.9 20 4 19.1 4 18
+                           Z"
+                        stroke-width="1.5"
+                    />
+
+                    <path
+                        d="M8 8
+                           H16
+                           M8 12
+                           H16
+                           M8 16
+                           H14"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <div class="t">
+                القرآن الكريم
+            </div>
+
+            <div class="s">
+                تلاوة وتدبر
+            </div>
+
+        </a>
+
+
+        <a
+            href="./adhkar.html"
+            class="feat-card"
+        >
+
+            <div class="icon-wrap">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <path
+                        d="M12 3
+                           C7 6 5 10 5 14
+                           C5 18 8 21 12 21
+                           C16 21 19 18 19 14
+                           C19 10 17 6 12 3Z"
+                        stroke-width="1.5"
+                    />
+
+                    <path
+                        d="M12 7
+                           V17
+                           M8 12
+                           H16"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <div class="t">
+                الأذكار
+            </div>
+
+            <div class="s">
+                أذكار الصباح والمساء
+            </div>
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         الوصول السريع
+         ===================================================== -->
+
+    <div class="grid4">
+
+
+        <a
+            href="./prayer.html"
+            class="quick"
+        >
+
+            <svg
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="8"
+                    stroke-width="1.5"
+                />
+
+                <path
+                    d="M12 7
+                       V12
+                       L15 14"
+                    stroke-width="1.5"
+                />
+
+            </svg>
+
+            <span>
+                الصلاة
+            </span>
+
+        </a>
+
+
+        <a
+            href="./qibla.html"
+            class="quick"
+        >
+
+            <svg
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+
+                <path
+                    d="M12 3
+                       L20 12
+                       L12 21
+                       L4 12
+                       Z"
+                    stroke-width="1.5"
+                />
+
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="2"
+                    stroke-width="1.5"
+                />
+
+            </svg>
+
+            <span>
+                القبلة
+            </span>
+
+        </a>
+
+
+        <a
+            href="./tafsir.html"
+            class="quick"
+        >
+
+            <svg
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+
+                <path
+                    d="M5 4
+                       H19
+                       V20
+                       H5
+                       Z"
+                    stroke-width="1.5"
+                />
+
+                <path
+                    d="M8 8
+                       H16
+                       M8 12
+                       H16
+                       M8 16
+                       H13"
+                    stroke-width="1.5"
+                />
+
+            </svg>
+
+            <span>
+                التفسير
+            </span>
+
+        </a>
+
+
+        <a
+            href="./hisnul.html"
+            class="quick"
+        >
+
+            <svg
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+
+                <path
+                    d="M12 3
+                       L19 6
+                       V11
+                       C19 16 16 19 12 21
+                       C8 19 5 16 5 11
+                       V6
+                       Z"
+                    stroke-width="1.5"
+                />
+
+            </svg>
+
+            <span>
+                حصن المسلم
+            </span>
+
+        </a>
+
+    </div>
+
+
+    <div class="mood-note">
+        🌙 جعل الله يومك عامرًا بالخير والطمأنينة
+    </div>
+
+
+</div>
+
+
+<!-- =========================================================
+     التنقل السفلي
+     ========================================================= -->
+
+<nav class="bottomnav">
+
+    <div class="bottomnav-inner">
+
+
+        <a
+            href="./adhkar.html"
+            class="navitem"
+        >
+
+            <div class="ic">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="7"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <span>
+                الأذكار
+            </span>
+
+        </a>
+
+
+        <a
+            href="./quran.html"
+            class="navitem"
+        >
+
+            <div class="ic">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <path
+                        d="M5 4
+                           H19
+                           V20
+                           H5
+                           Z"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <span>
+                القرآن
+            </span>
+
+        </a>
+
+
+        <a
+            href="./index.html"
+            class="navitem active"
+        >
+
+            <div class="ic">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <path
+                        d="M4 11
+                           L12 4
+                           L20 11
+                           V20
+                           H4
+                           Z"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <span>
+                الرئيسية
+            </span>
+
+        </a>
+
+
+        <a
+            href="./qibla.html"
+            class="navitem"
+        >
+
+            <div class="ic">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <path
+                        d="M12 3
+                           L20 12
+                           L12 21
+                           L4 12
+                           Z"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <span>
+                القبلة
+            </span>
+
+        </a>
+
+
+        <a
+            href="./more.html"
+            class="navitem"
+        >
+
+            <div class="ic">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        stroke-width="1.5"
+                    />
+
+                    <path
+                        d="M12 3
+                           V6
+                           M12 18
+                           V21
+                           M3 12
+                           H6
+                           M18 12
+                           H21"
+                        stroke-width="1.5"
+                    />
+
+                </svg>
+
+            </div>
+
+            <span>
+                المزيد
+            </span>
+
+        </a>
+
+
+    </div>
+
+</nav>
+
+
+<!-- =========================================================
+     JavaScript
+     ========================================================= -->
+
+<script src="./theme.js"></script>
+
+<script src="./app.js"></script>
+
+
+<!-- =========================================================
+     Service Worker
+     ========================================================= -->
+
+<script>
+
+if ('serviceWorker' in navigator) {
+
+    window.addEventListener(
+        'load',
+        function () {
+
+            navigator.serviceWorker
+                .register('./sw.js')
+                .then(function (registration) {
+
+                    console.log(
+                        '✅ الرفيق — Service Worker يعمل',
+                        registration.scope
+                    );
+
+                })
+                .catch(function (error) {
+
+                    console.error(
+                        '❌ فشل تسجيل Service Worker:',
+                        error
+                    );
+
+                });
 
         }
+    );
 
-    </script>
+}
+
+</script>
 
 
 </body>
