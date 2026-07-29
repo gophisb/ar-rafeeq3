@@ -2,16 +2,21 @@
    الرفيق — app.js
    الإصدار: 2.0.0
 
-   نظام:
-   ✅ مواقيت الصلاة
-   ✅ التاريخ الهجري والميلادي
-   ✅ العد التنازلي
-   ✅ اختيار الولاية / المدينة
-   ✅ العمل بدون إنترنت بعد تحميل البيانات
-   ✅ حفظ آخر مواقيت محليًا
-   ✅ تحديث تلقائي عند عودة الإنترنت
-   ✅ الأذان اليدوي
-   ✅ PWA والتثبيت
+   النظام الرئيسي للتطبيق
+
+   الوظائف:
+   - مواقيت الصلاة
+   - اختيار الولاية / المدينة
+   - التاريخ الهجري
+   - التاريخ الميلادي
+   - العد التنازلي للصلاة القادمة
+   - الأذان اليدوي
+   - التخزين المحلي
+   - العمل بدون إنترنت عند توفر البيانات المحفوظة
+   - PWA
+   - تسجيل Service Worker
+   - دعم التثبيت
+   - AppBridge
    ============================================================ */
 
 'use strict';
@@ -19,40 +24,61 @@
 
 /* ============================================================
    1) AppBridge
+   نظام اتصال داخلي بين أجزاء التطبيق
    ============================================================ */
 
-window.AppBridge = {
+window.AppBridge = window.AppBridge || {
 
     events: {},
 
     on(event, callback) {
 
-        if (!this.events[event]) {
+        if (
+            !this.events[event]
+        ) {
+
             this.events[event] = [];
+
         }
 
-        this.events[event].push(callback);
+        this.events[event].push(
+            callback
+        );
 
     },
 
+
     emit(event, data) {
 
-        if (!this.events[event]) {
+        if (
+            !this.events[event]
+        ) {
+
             return;
+
         }
 
-        this.events[event].forEach(callback => {
 
-            try {
-                callback(data);
-            } catch (error) {
-                console.error(
-                    '❌ AppBridge Error:',
-                    error
-                );
+        this.events[event].forEach(
+
+            callback => {
+
+                try {
+
+                    callback(data);
+
+                } catch (error) {
+
+                    console.error(
+                        '❌ AppBridge Error:',
+                        error
+                    );
+
+                }
+
             }
 
-        });
+        );
 
     }
 
@@ -68,8 +94,9 @@ window.appState = {
     deferredPrompt: null,
 
     currentCity:
-        localStorage.getItem('rafeeq_city') ||
-        'Algiers',
+        localStorage.getItem(
+            'rafeeq_city'
+        ) || 'Algiers',
 
     prayerData: null,
 
@@ -79,72 +106,168 @@ window.appState = {
 
     countdownTimer: null,
 
-    clockTimer: null,
-
-    isOnline:
-        navigator.onLine
+    clockTimer: null
 
 };
 
 
 /* ============================================================
-   3) المدن والولايات
+   3) المدن والولايات الجزائرية
    ============================================================ */
 
 const CITIES = [
 
     { name: 'الجزائر', api: 'Algiers' },
+
     { name: 'وهران', api: 'Oran' },
+
     { name: 'قسنطينة', api: 'Constantine' },
+
     { name: 'عنابة', api: 'Annaba' },
+
     { name: 'البليدة', api: 'Blida' },
+
     { name: 'سطيف', api: 'Setif' },
+
     { name: 'باتنة', api: 'Batna' },
+
     { name: 'بسكرة', api: 'Biskra' },
+
     { name: 'تلمسان', api: 'Tlemcen' },
+
     { name: 'بجاية', api: 'Bejaia' },
+
     { name: 'تيزي وزو', api: 'Tizi-Ouzou' },
+
     { name: 'جيجل', api: 'Jijel' },
+
     { name: 'سكيكدة', api: 'Skikda' },
+
     { name: 'قالمة', api: 'Guelma' },
+
     { name: 'سعيدة', api: 'Saida' },
-    { name: 'سيدي بلعباس', api: 'Sidi Bel Abbes' },
-    { name: 'مستغانم', api: 'Mostaganem' },
+
+    {
+        name: 'سيدي بلعباس',
+        api: 'Sidi Bel Abbes'
+    },
+
+    {
+        name: 'مستغانم',
+        api: 'Mostaganem'
+    },
+
     { name: 'الشلف', api: 'Chlef' },
+
     { name: 'البويرة', api: 'Bouira' },
-    { name: 'برج بوعريريج', api: 'Bordj Bou Arreridj' },
+
+    {
+        name: 'برج بوعريريج',
+        api: 'Bordj Bou Arreridj'
+    },
+
     { name: 'تبسة', api: 'Tebessa' },
+
     { name: 'خنشلة', api: 'Khenchela' },
-    { name: 'أم البواقي', api: 'Oum El Bouaghi' },
+
+    {
+        name: 'أم البواقي',
+        api: 'Oum El Bouaghi'
+    },
+
     { name: 'ميلة', api: 'Mila' },
+
     { name: 'المدية', api: 'Medea' },
-    { name: 'عين الدفلى', api: 'Ain Defla' },
+
+    {
+        name: 'عين الدفلى',
+        api: 'Ain Defla'
+    },
+
     { name: 'تيبازة', api: 'Tipaza' },
+
     { name: 'بومرداس', api: 'Boumerdes' },
+
     { name: 'الوادي', api: 'El Oued' },
+
     { name: 'ورقلة', api: 'Ouargla' },
+
     { name: 'غرداية', api: 'Ghardaia' },
+
     { name: 'أدرار', api: 'Adrar' },
+
     { name: 'بشار', api: 'Bechar' },
-    { name: 'تمنراست', api: 'Tamanrasset' },
+
+    {
+        name: 'تمنراست',
+        api: 'Tamanrasset'
+    },
+
     { name: 'إليزي', api: 'Illizi' },
+
     { name: 'تندوف', api: 'Tindouf' },
+
     { name: 'البيض', api: 'El Bayadh' },
+
     { name: 'النعامة', api: 'Naama' },
-    { name: 'تيسمسيلت', api: 'Tissemsilt' },
+
+    {
+        name: 'تيسمسيلت',
+        api: 'Tissemsilt'
+    },
+
     { name: 'الجلفة', api: 'Djelfa' },
+
     { name: 'الأغواط', api: 'Laghouat' },
-    { name: 'عين تموشنت', api: 'Ain Temouchent' },
+
+    {
+        name: 'عين تموشنت',
+        api: 'Ain Temouchent'
+    },
+
     { name: 'تيارت', api: 'Tiaret' },
-    { name: 'سوق أهراس', api: 'Souk Ahras' },
+
+    {
+        name: 'سوق أهراس',
+        api: 'Souk Ahras'
+    },
+
     { name: 'الطارف', api: 'El Tarf' },
-    { name: 'عين قزام', api: 'In Guezzam' },
-    { name: 'برج باجي مختار', api: 'Bordj Badji Mokhtar' },
-    { name: 'بني عباس', api: 'Beni Abbes' },
-    { name: 'تيميمون', api: 'Timimoun' },
-    { name: 'تقرت', api: 'Touggourt' },
-    { name: 'المغير', api: 'El Mghair' },
-    { name: 'المنيعة', api: 'El Meniaa' }
+
+    {
+        name: 'عين قزام',
+        api: 'In Guezzam'
+    },
+
+    {
+        name: 'برج باجي مختار',
+        api: 'Bordj Badji Mokhtar'
+    },
+
+    {
+        name: 'بني عباس',
+        api: 'Beni Abbes'
+    },
+
+    {
+        name: 'تيميمون',
+        api: 'Timimoun'
+    },
+
+    {
+        name: 'تقرت',
+        api: 'Touggourt'
+    },
+
+    {
+        name: 'المغير',
+        api: 'El Mghair'
+    },
+
+    {
+        name: 'المنيعة',
+        api: 'El Meniaa'
+    }
 
 ];
 
@@ -169,55 +292,47 @@ const PRAYER_NAMES = {
 
 
 /* ============================================================
-   5) الحصول على التاريخ المحلي بصيغة YYYY-MM-DD
-   ============================================================ */
-
-function getLocalDateKey(date = new Date()) {
-
-    const year =
-        date.getFullYear();
-
-    const month =
-        String(
-            date.getMonth() + 1
-        ).padStart(2, '0');
-
-    const day =
-        String(
-            date.getDate()
-        ).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-
-}
-
-
-/* ============================================================
-   6) تحويل الوقت إلى دقائق
+   5) تحويل الوقت إلى دقائق
    ============================================================ */
 
 function timeToMinutes(time) {
 
     if (!time) {
+
         return null;
+
     }
+
 
     const clean =
         String(time)
             .replace(/[^\d:]/g, '');
 
+
     const parts =
         clean.split(':');
 
-    if (parts.length < 2) {
+
+    if (
+        parts.length < 2
+    ) {
+
         return null;
+
     }
 
+
     const hours =
-        Number(parts[0]);
+        Number(
+            parts[0]
+        );
+
 
     const minutes =
-        Number(parts[1]);
+        Number(
+            parts[1]
+        );
+
 
     if (
         Number.isNaN(hours) ||
@@ -228,6 +343,7 @@ function timeToMinutes(time) {
 
     }
 
+
     return (
         hours * 60 +
         minutes
@@ -237,27 +353,32 @@ function timeToMinutes(time) {
 
 
 /* ============================================================
-   7) تنظيف وقت API
+   6) تنظيف وقت API
    ============================================================ */
 
 function cleanPrayerTime(time) {
 
     if (!time) {
+
         return '';
+
     }
 
+
     return String(time)
+
         .replace(
             /\s*\([^)]*\)/g,
             ''
         )
+
         .trim();
 
 }
 
 
 /* ============================================================
-   8) التاريخ الميلادي
+   7) الحصول على التاريخ الميلادي
    ============================================================ */
 
 function getGregorianDate() {
@@ -265,24 +386,28 @@ function getGregorianDate() {
     const now =
         new Date();
 
+
     try {
 
         return new Intl.DateTimeFormat(
+
             'ar-DZ',
+
             {
+
                 weekday: 'long',
+
                 year: 'numeric',
+
                 month: 'long',
+
                 day: 'numeric'
+
             }
+
         ).format(now);
 
     } catch (error) {
-
-        console.warn(
-            'تعذر عرض التاريخ الميلادي',
-            error
-        );
 
         return now.toLocaleDateString(
             'ar-DZ'
@@ -294,7 +419,7 @@ function getGregorianDate() {
 
 
 /* ============================================================
-   9) التاريخ الهجري
+   8) الحصول على التاريخ الهجري
    ============================================================ */
 
 function getHijriDate() {
@@ -302,72 +427,86 @@ function getHijriDate() {
     const now =
         new Date();
 
-    const calendars = [
 
-        'ar-SA-u-ca-islamic-umalqura',
+    try {
 
-        'ar-SA-u-ca-islamic',
+        return new Intl.DateTimeFormat(
 
-        'ar-DZ-u-ca-islamic'
+            'ar-SA-u-ca-islamic-umalqura',
 
-    ];
+            {
 
+                day: 'numeric',
 
-    for (
-        const locale of calendars
-    ) {
+                month: 'long',
 
-        try {
-
-            const result =
-                new Intl.DateTimeFormat(
-                    locale,
-                    {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                    }
-                ).format(now);
-
-            if (result) {
-
-                return result;
+                year: 'numeric'
 
             }
 
-        } catch (error) {
+        ).format(now);
 
-            console.warn(
-                'تعذر استخدام التقويم:',
-                locale
-            );
+    } catch (error) {
+
+        console.warn(
+
+            '⚠️ تعذر حساب التاريخ الهجري:',
+
+            error
+
+        );
+
+
+        /*
+           بديل تقريبي عند عدم دعم
+           المتصفح للتقويم الهجري
+        */
+
+        try {
+
+            return new Intl.DateTimeFormat(
+
+                'ar-SA-u-ca-islamic',
+
+                {
+
+                    day: 'numeric',
+
+                    month: 'long',
+
+                    year: 'numeric'
+
+                }
+
+            ).format(now);
+
+        } catch (fallbackError) {
+
+            return 'التاريخ الهجري غير متاح';
 
         }
 
     }
 
-
-    return 'التاريخ الهجري غير متاح';
-
 }
 
 
 /* ============================================================
-   10) عرض التاريخ الهجري والميلادي
+   9) عرض التاريخ الهجري والميلادي
    ============================================================ */
 
 function updateDates() {
 
-    const element =
+    const hijriElement =
         document.getElementById(
             'hijriPill'
         );
 
 
-    if (!element) {
+    if (!hijriElement) {
 
         console.warn(
-            '⚠️ hijriPill غير موجود'
+            '⚠️ عنصر hijriPill غير موجود'
         );
 
         return;
@@ -378,27 +517,30 @@ function updateDates() {
     const hijri =
         getHijriDate();
 
+
     const gregorian =
         getGregorianDate();
 
 
-    element.innerHTML =
+    hijriElement.innerHTML =
 
-        '🌙 ' +
+        '📅 ' +
+
         hijri +
 
         '<br>' +
 
         '<small>' +
-        '📅 ' +
+
         gregorian +
+
         '</small>';
 
 }
 
 
 /* ============================================================
-   11) إنشاء قائمة الولايات
+   10) إعداد قائمة المدن
    ============================================================ */
 
 function setupCitySelect() {
@@ -412,7 +554,7 @@ function setupCitySelect() {
     if (!select) {
 
         console.warn(
-            '⚠️ citySelect غير موجود'
+            '⚠️ عنصر citySelect غير موجود'
         );
 
         return;
@@ -423,74 +565,84 @@ function setupCitySelect() {
     select.innerHTML = '';
 
 
-    CITIES.forEach(city => {
+    CITIES.forEach(
 
-        const option =
-            document.createElement(
-                'option'
+        city => {
+
+            const option =
+                document.createElement(
+                    'option'
+                );
+
+
+            option.value =
+                city.api;
+
+
+            option.textContent =
+                city.name;
+
+
+            if (
+                city.api ===
+                window.appState.currentCity
+            ) {
+
+                option.selected =
+                    true;
+
+            }
+
+
+            select.appendChild(
+                option
             );
-
-
-        option.value =
-            city.api;
-
-
-        option.textContent =
-            city.name;
-
-
-        if (
-            city.api ===
-            window.appState.currentCity
-        ) {
-
-            option.selected =
-                true;
 
         }
 
-
-        select.appendChild(
-            option
-        );
-
-    });
+    );
 
 
     select.addEventListener(
+
         'change',
+
         async function () {
 
-            const selectedCity =
+            window.appState.currentCity =
                 this.value;
 
 
-            window.appState.currentCity =
-                selectedCity;
-
-
             localStorage.setItem(
+
                 'rafeeq_city',
-                selectedCity
+
+                this.value
+
             );
 
+
+            /*
+               عند تغيير الولاية:
+               نحذف بيانات الولاية القديمة
+               حتى لا نعرض مواقيت خاطئة.
+            */
 
             window.appState.prayerData =
                 null;
 
 
-            await loadPrayerTimes(
-                true
-            );
+            await loadPrayerTimes();
 
         }
+
     );
 
 }
 
 
 /* ============================================================
-   12) جلب مواقيت الصلاة
+   11) جلب مواقيت الصلاة من AlAdhan
    ============================================================ */
 
 async function fetchPrayerTimes(city) {
@@ -502,13 +654,19 @@ async function fetchPrayerTimes(city) {
     const day =
         String(
             today.getDate()
-        ).padStart(2, '0');
+        ).padStart(
+            2,
+            '0'
+        );
 
 
     const month =
         String(
             today.getMonth() + 1
-        ).padStart(2, '0');
+        ).padStart(
+            2,
+            '0'
+        );
 
 
     const year =
@@ -520,14 +678,20 @@ async function fetchPrayerTimes(city) {
         'https://api.aladhan.com/v1/timingsByCity/' +
 
         day +
+
         '-' +
+
         month +
+
         '-' +
+
         year +
 
         '?city=' +
 
-        encodeURIComponent(city) +
+        encodeURIComponent(
+            city
+        ) +
 
         '&country=Algeria' +
 
@@ -536,19 +700,20 @@ async function fetchPrayerTimes(city) {
 
     const response =
         await fetch(
-            url,
-            {
-                method: 'GET',
-                cache: 'no-store'
-            }
+            url
         );
 
 
-    if (!response.ok) {
+    if (
+        !response.ok
+    ) {
 
         throw new Error(
+
             'HTTP Error ' +
+
             response.status
+
         );
 
     }
@@ -564,7 +729,9 @@ async function fetchPrayerTimes(city) {
     ) {
 
         throw new Error(
+
             'بيانات مواقيت الصلاة غير صحيحة'
+
         );
 
     }
@@ -576,43 +743,58 @@ async function fetchPrayerTimes(city) {
 
 
 /* ============================================================
-   13) حفظ مواقيت الصلاة
+   12) حفظ مواقيت الصلاة
    ============================================================ */
 
 function savePrayerData(data) {
 
     try {
 
+        const today =
+            new Date();
+
+
         const cache = {
 
             date:
-                getLocalDateKey(),
+
+                today
+                    .toISOString()
+                    .slice(
+                        0,
+                        10
+                    ),
 
             city:
-                window.appState.currentCity,
+
+                window.appState
+                    .currentCity,
 
             data:
+
                 data
 
         };
 
 
         localStorage.setItem(
+
             'rafeeq_prayer_cache',
-            JSON.stringify(cache)
+
+            JSON.stringify(
+                cache
+            )
+
         );
-
-
-        console.log(
-            '💾 تم حفظ مواقيت الصلاة محليًا'
-        );
-
 
     } catch (error) {
 
         console.warn(
-            'تعذر حفظ المواقيت:',
+
+            '⚠️ تعذر حفظ مواقيت الصلاة:',
+
             error
+
         );
 
     }
@@ -621,7 +803,7 @@ function savePrayerData(data) {
 
 
 /* ============================================================
-   14) قراءة المواقيت المحفوظة
+   13) قراءة البيانات المحفوظة
    ============================================================ */
 
 function getCachedPrayerData() {
@@ -630,17 +812,23 @@ function getCachedPrayerData() {
 
         const saved =
             localStorage.getItem(
+
                 'rafeeq_prayer_cache'
+
             );
 
 
         if (!saved) {
+
             return null;
+
         }
 
 
         const cache =
-            JSON.parse(saved);
+            JSON.parse(
+                saved
+            );
 
 
         if (
@@ -665,13 +853,16 @@ function getCachedPrayerData() {
 
         return cache.data;
 
-
     } catch (error) {
 
         console.warn(
-            'خطأ في قراءة التخزين المحلي:',
+
+            '⚠️ خطأ في قراءة البيانات المحلية:',
+
             error
+
         );
+
 
         return null;
 
@@ -681,10 +872,10 @@ function getCachedPrayerData() {
 
 
 /* ============================================================
-   15) تحميل مواقيت الصلاة
+   14) تحميل مواقيت الصلاة
    ============================================================ */
 
-async function loadPrayerTimes(forceRefresh = false) {
+async function loadPrayerTimes() {
 
     const status =
         document.getElementById(
@@ -703,7 +894,9 @@ async function loadPrayerTimes(forceRefresh = false) {
         status.hidden =
             false;
 
+
         status.textContent =
+
             'جاري تحميل مواقيت الصلاة...';
 
     }
@@ -711,74 +904,13 @@ async function loadPrayerTimes(forceRefresh = false) {
 
     try {
 
-        let data =
-            null;
+        const data =
+            await fetchPrayerTimes(
 
+                window.appState
+                    .currentCity
 
-        /*
-         * عند وجود إنترنت:
-         * نحاول جلب البيانات الجديدة
-         */
-
-        if (
-            navigator.onLine ||
-            forceRefresh
-        ) {
-
-            try {
-
-                data =
-                    await fetchPrayerTimes(
-                        window.appState.currentCity
-                    );
-
-
-                savePrayerData(
-                    data
-                );
-
-
-                console.log(
-                    '🌐 تم تحميل المواقيت من الإنترنت'
-                );
-
-
-            } catch (networkError) {
-
-                console.warn(
-                    'تعذر الاتصال بالخادم:',
-                    networkError
-                );
-
-            }
-
-        }
-
-
-        /*
-         * إذا فشل الإنترنت:
-         * نستخدم النسخة المحلية
-         */
-
-        if (!data) {
-
-            data =
-                getCachedPrayerData();
-
-        }
-
-
-        /*
-         * لا توجد بيانات
-         */
-
-        if (!data) {
-
-            throw new Error(
-                'لا توجد بيانات محفوظة للمواقيت'
             );
-
-        }
 
 
         window.appState.prayerData =
@@ -786,7 +918,12 @@ async function loadPrayerTimes(forceRefresh = false) {
 
 
         window.appState.prayerDate =
-            getLocalDateKey();
+            new Date();
+
+
+        savePrayerData(
+            data
+        );
 
 
         if (status) {
@@ -809,29 +946,74 @@ async function loadPrayerTimes(forceRefresh = false) {
 
 
         console.log(
-            '✅ مواقيت الصلاة جاهزة'
-        );
 
+            '✅ تم تحميل مواقيت الصلاة من الإنترنت'
+
+        );
 
     } catch (error) {
 
         console.error(
+
             '❌ فشل تحميل مواقيت الصلاة:',
+
             error
+
         );
 
 
-        if (status) {
+        /*
+           محاولة استخدام النسخة المحفوظة
+        */
 
-            status.hidden =
-                false;
+        const cached =
+            getCachedPrayerData();
 
-            status.textContent =
-                navigator.onLine
 
-                    ? 'تعذر تحميل مواقيت الصلاة.'
+        if (cached) {
 
-                    : 'أنت غير متصل بالإنترنت. افتح التطبيق مرة واحدة مع الإنترنت لحفظ المواقيت.';
+            window.appState.prayerData =
+                cached;
+
+
+            if (status) {
+
+                status.hidden =
+                    true;
+
+            }
+
+
+            if (prayerCard) {
+
+                prayerCard.hidden =
+                    false;
+
+            }
+
+
+            updatePrayerDisplay();
+
+
+            console.log(
+
+                '📴 تم استخدام مواقيت الصلاة المحفوظة محليًا'
+
+            );
+
+        } else {
+
+            if (status) {
+
+                status.hidden =
+                    false;
+
+
+                status.textContent =
+
+                    'تعذر تحميل مواقيت الصلاة. افتح التطبيق مع الإنترنت مرة واحدة لحفظ المواقيت.';
+
+            }
 
         }
 
@@ -841,17 +1023,20 @@ async function loadPrayerTimes(forceRefresh = false) {
 
 
 /* ============================================================
-   16) تحديد الصلاة القادمة
+   15) تحديد الصلاة القادمة
    ============================================================ */
 
 function getNextPrayer() {
 
     const data =
-        window.appState.prayerData;
+        window.appState
+            .prayerData;
 
 
     if (!data) {
+
         return null;
+
     }
 
 
@@ -878,11 +1063,7 @@ function getNextPrayer() {
 
         now.getHours() * 60 +
 
-        now.getMinutes() +
-
-        (
-            now.getSeconds() / 60
-        );
+        now.getMinutes();
 
 
     for (
@@ -891,7 +1072,9 @@ function getNextPrayer() {
 
         const time =
             cleanPrayerTime(
+
                 data.timings[key]
+
             );
 
 
@@ -902,22 +1085,35 @@ function getNextPrayer() {
 
 
         if (
+
             minutes !== null &&
-            minutes > currentMinutes
+
+            minutes >
+
+                currentMinutes
+
         ) {
 
             return {
 
-                key,
+                key:
+
+                    key,
 
                 name:
+
                     PRAYER_NAMES[key],
 
-                time,
+                time:
 
-                minutes,
+                    time,
+
+                minutes:
+
+                    minutes,
 
                 tomorrow:
+
                     false
 
             };
@@ -928,13 +1124,15 @@ function getNextPrayer() {
 
 
     /*
-     * انتهت صلوات اليوم
-     * الصلاة القادمة هي فجر الغد
-     */
+       إذا انتهت صلوات اليوم
+       فالصلاة القادمة فجر الغد
+    */
 
     const fajr =
         cleanPrayerTime(
+
             data.timings.Fajr
+
         );
 
 
@@ -946,18 +1144,29 @@ function getNextPrayer() {
 
     return {
 
-        key: 'Fajr',
+        key:
 
-        name: 'الفجر',
+            'Fajr',
 
-        time: fajr,
+        name:
+
+            'الفجر',
+
+        time:
+
+            fajr,
 
         minutes:
-            fajrMinutes !== null
-                ? fajrMinutes
-                : 0,
 
-        tomorrow: true
+            fajrMinutes !== null
+
+                ? fajrMinutes + 1440
+
+                : 1440,
+
+        tomorrow:
+
+            true
 
     };
 
@@ -965,60 +1174,7 @@ function getNextPrayer() {
 
 
 /* ============================================================
-   17) إنشاء وقت الهدف للصلاة
-   ============================================================ */
-
-function getPrayerTargetDate(prayer) {
-
-    const now =
-        new Date();
-
-
-    const target =
-        new Date();
-
-
-    const minutes =
-        prayer.minutes;
-
-
-    const hours =
-        Math.floor(
-            minutes / 60
-        );
-
-
-    const mins =
-        minutes % 60;
-
-
-    target.setHours(
-        hours,
-        mins,
-        0,
-        0
-    );
-
-
-    if (
-        prayer.tomorrow ||
-        target <= now
-    ) {
-
-        target.setDate(
-            target.getDate() + 1
-        );
-
-    }
-
-
-    return target;
-
-}
-
-
-/* ============================================================
-   18) تحديث الصلاة القادمة
+   16) تحديث الصلاة القادمة
    ============================================================ */
 
 function updatePrayerDisplay() {
@@ -1028,7 +1184,9 @@ function updatePrayerDisplay() {
 
 
     if (!next) {
+
         return;
+
     }
 
 
@@ -1048,12 +1206,6 @@ function updatePrayerDisplay() {
         );
 
 
-    const adhanTimeLabel =
-        document.getElementById(
-            'adhanTimeLabel'
-        );
-
-
     if (name) {
 
         name.textContent =
@@ -1068,6 +1220,14 @@ function updatePrayerDisplay() {
             next.time;
 
     }
+
+
+    const adhanTimeLabel =
+        document.getElementById(
+
+            'adhanTimeLabel'
+
+        );
 
 
     if (adhanTimeLabel) {
@@ -1089,7 +1249,7 @@ function updatePrayerDisplay() {
 
 
 /* ============================================================
-   19) العد التنازلي
+   17) حساب العد التنازلي
    ============================================================ */
 
 function updateCountdown() {
@@ -1107,7 +1267,8 @@ function updateCountdown() {
 
 
     const next =
-        window.appState.nextPrayer;
+        window.appState
+            .nextPrayer;
 
 
     if (
@@ -1120,14 +1281,77 @@ function updateCountdown() {
     }
 
 
-    const target =
-        getPrayerTargetDate(
-            next
-        );
-
-
     const now =
         new Date();
+
+
+    const target =
+        new Date();
+
+
+    let targetMinutes =
+        next.minutes;
+
+
+    /*
+       إذا كانت الصلاة فجر الغد
+       فإن minutes تحتوي على +1440
+    */
+
+    if (
+        next.tomorrow &&
+        targetMinutes < 1440
+    ) {
+
+        targetMinutes +=
+            1440;
+
+    }
+
+
+    const targetHours =
+
+        Math.floor(
+
+            targetMinutes / 60
+
+        ) % 24;
+
+
+    const targetMins =
+
+        targetMinutes % 60;
+
+
+    target.setHours(
+
+        targetHours,
+
+        targetMins,
+
+        0,
+
+        0
+
+    );
+
+
+    /*
+       إذا كان الهدف قد مر
+       ننتقل إلى اليوم التالي
+    */
+
+    if (
+        target <= now
+    ) {
+
+        target.setDate(
+
+            target.getDate() + 1
+
+        );
+
+    }
 
 
     const difference =
@@ -1136,11 +1360,6 @@ function updateCountdown() {
 
         now.getTime();
 
-
-    /*
-     * إذا انتهى العد:
-     * نعيد حساب الصلاة القادمة
-     */
 
     if (
         difference <= 0
@@ -1156,23 +1375,27 @@ function updateCountdown() {
     const totalSeconds =
 
         Math.floor(
+
             difference / 1000
+
         );
 
 
     const hours =
 
         Math.floor(
+
             totalSeconds / 3600
+
         );
 
 
     const minutes =
 
         Math.floor(
-            (
-                totalSeconds % 3600
-            ) / 60
+
+            (totalSeconds % 3600) / 60
+
         );
 
 
@@ -1184,22 +1407,36 @@ function updateCountdown() {
     countdown.textContent =
 
         String(hours)
-            .padStart(2, '0') +
+
+            .padStart(
+                2,
+                '0'
+            ) +
 
         ':' +
 
         String(minutes)
-            .padStart(2, '0') +
+
+            .padStart(
+                2,
+                '0'
+            ) +
 
         ':' +
 
         String(seconds)
-            .padStart(2, '0');
+
+            .padStart(
+                2,
+                '0'
+            );
 
 
     /*
-     * شريط تقدم تقريبي
-     */
+       شريط التقدم الأساسي
+       سيتم تطويره لاحقًا ليحسب
+       نسبة الوقت بين الصلاتين
+    */
 
     if (progressBar) {
 
@@ -1212,17 +1449,21 @@ function updateCountdown() {
 
 
 /* ============================================================
-   20) تشغيل الساعة والتاريخ
+   18) تشغيل الساعة والتاريخ
    ============================================================ */
 
 function startClock() {
 
     if (
-        window.appState.clockTimer
+        window.appState
+            .clockTimer
     ) {
 
         clearInterval(
-            window.appState.clockTimer
+
+            window.appState
+                .clockTimer
+
         );
 
     }
@@ -1234,6 +1475,7 @@ function startClock() {
     window.appState.clockTimer =
 
         setInterval(
+
             () => {
 
                 updateDates();
@@ -1241,39 +1483,49 @@ function startClock() {
                 updateCountdown();
 
             },
+
             1000
+
         );
 
 }
 
 
 /* ============================================================
-   21) نظام الأذان
+   19) نظام الأذان اليدوي
    ============================================================ */
 
 function setupAdhan() {
 
     const audio =
         document.getElementById(
+
             'adhanAudio'
+
         );
 
 
     const button =
         document.getElementById(
+
             'adhanPlayBtn'
+
         );
 
 
     const playIcon =
         document.getElementById(
+
             'playIcon'
+
         );
 
 
     const pauseIcon =
         document.getElementById(
+
             'pauseIcon'
+
         );
 
 
@@ -1283,7 +1535,9 @@ function setupAdhan() {
     ) {
 
         console.warn(
+
             '⚠️ عناصر الأذان غير موجودة'
+
         );
 
         return;
@@ -1292,7 +1546,9 @@ function setupAdhan() {
 
 
     button.addEventListener(
+
         'click',
+
         async () => {
 
             try {
@@ -1307,6 +1563,7 @@ function setupAdhan() {
                     if (playIcon) {
 
                         playIcon.style.display =
+
                             'none';
 
                     }
@@ -1315,9 +1572,17 @@ function setupAdhan() {
                     if (pauseIcon) {
 
                         pauseIcon.style.display =
+
                             'block';
 
                     }
+
+
+                    console.log(
+
+                        '🔊 بدأ تشغيل الأذان'
+
+                    );
 
                 } else {
 
@@ -1327,6 +1592,7 @@ function setupAdhan() {
                     if (playIcon) {
 
                         playIcon.style.display =
+
                             'block';
 
                     }
@@ -1335,36 +1601,54 @@ function setupAdhan() {
                     if (pauseIcon) {
 
                         pauseIcon.style.display =
+
                             'none';
 
                     }
+
+
+                    console.log(
+
+                        '⏸️ تم إيقاف الأذان'
+
+                    );
 
                 }
 
             } catch (error) {
 
                 console.error(
+
                     '❌ تعذر تشغيل الأذان:',
+
                     error
+
                 );
 
+
                 alert(
+
                     'تعذر تشغيل الأذان. تأكد من وجود ملف adhan.mp3 داخل مجلد التطبيق.'
+
                 );
 
             }
 
         }
+
     );
 
 
     audio.addEventListener(
+
         'ended',
+
         () => {
 
             if (playIcon) {
 
                 playIcon.style.display =
+
                     'block';
 
             }
@@ -1373,77 +1657,45 @@ function setupAdhan() {
             if (pauseIcon) {
 
                 pauseIcon.style.display =
+
                     'none';
 
             }
 
         }
+
+    );
+
+
+    audio.addEventListener(
+
+        'error',
+
+        () => {
+
+            console.error(
+
+                '❌ خطأ في ملف adhan.mp3:',
+
+                audio.error
+
+            );
+
+        }
+
     );
 
 }
 
 
 /* ============================================================
-   22) مراقبة الإنترنت
+   20) PWA — التقاط طلب التثبيت
    ============================================================ */
 
 window.addEventListener(
-    'online',
-    async () => {
 
-        window.appState.isOnline =
-            true;
-
-
-        console.log(
-            '🌐 عاد الاتصال بالإنترنت'
-        );
-
-
-        /*
-         * تحديث المواقيت تلقائيًا
-         */
-
-        await loadPrayerTimes(
-            true
-        );
-
-
-        window.AppBridge.emit(
-            'online'
-        );
-
-    }
-);
-
-
-window.addEventListener(
-    'offline',
-    () => {
-
-        window.appState.isOnline =
-            false;
-
-
-        console.log(
-            '📴 التطبيق يعمل الآن بدون إنترنت'
-        );
-
-
-        window.AppBridge.emit(
-            'offline'
-        );
-
-    }
-);
-
-
-/* ============================================================
-   23) PWA — طلب التثبيت
-   ============================================================ */
-
-window.addEventListener(
     'beforeinstallprompt',
+
     event => {
 
         event.preventDefault();
@@ -1454,34 +1706,45 @@ window.addEventListener(
 
 
         window.AppBridge.emit(
+
             'app-can-install'
+
         );
 
 
         console.log(
+
             '📱 الرفيق جاهز للتثبيت'
+
         );
 
     }
+
 );
 
 
 /* ============================================================
-   24) PWA — تنفيذ التثبيت
+   21) تنفيذ تثبيت التطبيق
    ============================================================ */
 
 window.installApp =
+
     async function () {
 
         const promptEvent =
-            window.appState.deferredPrompt;
+
+            window.appState
+                .deferredPrompt;
 
 
         if (!promptEvent) {
 
             console.warn(
-                '⚠️ التثبيت غير متاح حاليًا'
+
+                '⚠️ طلب التثبيت غير متاح حاليًا'
+
             );
+
 
             return 'not-ready';
 
@@ -1494,11 +1757,12 @@ window.installApp =
 
 
             const result =
+
                 await promptEvent.userChoice;
 
 
-            window.appState.deferredPrompt =
-                null;
+            window.appState
+                .deferredPrompt = null;
 
 
             if (
@@ -1506,8 +1770,18 @@ window.installApp =
                 'accepted'
             ) {
 
-                window.AppBridge.emit(
-                    'app-installed-success'
+                console.log(
+
+                    '✅ وافق المستخدم على تثبيت التطبيق'
+
+                );
+
+            } else {
+
+                console.log(
+
+                    'ℹ️ تم إلغاء تثبيت التطبيق'
+
                 );
 
             }
@@ -1515,12 +1789,14 @@ window.installApp =
 
             return result.outcome;
 
-
         } catch (error) {
 
             console.error(
-                '❌ خطأ في تثبيت التطبيق:',
+
+                '❌ خطأ أثناء تثبيت التطبيق:',
+
                 error
+
             );
 
 
@@ -1532,151 +1808,238 @@ window.installApp =
 
 
 /* ============================================================
-   25) بعد تثبيت التطبيق
+   22) عند تثبيت التطبيق
    ============================================================ */
 
 window.addEventListener(
+
     'appinstalled',
+
     () => {
 
-        window.appState.deferredPrompt =
-            null;
+        window.appState
+            .deferredPrompt = null;
 
 
         window.AppBridge.emit(
+
             'app-installed-success'
+
         );
 
 
         console.log(
+
             '✅ تم تثبيت الرفيق بنجاح'
+
         );
 
     }
+
 );
 
 
 /* ============================================================
-   26) تشغيل التطبيق
+   23) تسجيل Service Worker
+   ============================================================ */
+
+function registerServiceWorker() {
+
+    if (
+        !('serviceWorker' in navigator)
+    ) {
+
+        console.warn(
+
+            '⚠️ المتصفح لا يدعم Service Worker'
+
+        );
+
+        return;
+
+    }
+
+
+    window.addEventListener(
+
+        'load',
+
+        () => {
+
+            navigator.serviceWorker
+
+                .register(
+
+                    './sw.js',
+
+                    {
+
+                        scope:
+                            './'
+
+                    }
+
+                )
+
+                .then(
+
+                    registration => {
+
+                        console.log(
+
+                            '✅ تم تسجيل Service Worker بنجاح:',
+
+                            registration.scope
+
+                        );
+
+
+                        /*
+                           مراقبة وجود نسخة جديدة
+                        */
+
+                        registration.addEventListener(
+
+                            'updatefound',
+
+                            () => {
+
+                                const newWorker =
+
+                                    registration
+                                        .installing;
+
+
+                                if (!newWorker) {
+
+                                    return;
+
+                                }
+
+
+                                newWorker.addEventListener(
+
+                                    'statechange',
+
+                                    () => {
+
+                                        if (
+
+                                            newWorker.state ===
+
+                                            'installed' &&
+
+                                            navigator.serviceWorker
+                                                .controller
+
+                                        ) {
+
+                                            console.log(
+
+                                                '🔄 توجد نسخة جديدة من التطبيق'
+
+                                            );
+
+                                        }
+
+                                    }
+
+                                );
+
+                            }
+
+                        );
+
+                    }
+
+                )
+
+                .catch(
+
+                    error => {
+
+                        console.error(
+
+                            '❌ فشل تسجيل Service Worker:',
+
+                            error
+
+                        );
+
+                    }
+
+                );
+
+        }
+
+    );
+
+}
+
+
+/* ============================================================
+   24) تشغيل التطبيق
    ============================================================ */
 
 document.addEventListener(
+
     'DOMContentLoaded',
+
     async () => {
 
         console.log(
-            '🚀 الرفيق — app.js v2.0.0 يعمل'
+
+            '🚀 الرفيق — app.js v2.0.0 يعمل بنجاح'
+
         );
 
+
+        /*
+           1. إعداد المدن
+        */
 
         setupCitySelect();
 
 
+        /*
+           2. إعداد الأذان
+        */
+
         setupAdhan();
 
+
+        /*
+           3. تشغيل الساعة والتاريخ
+        */
 
         startClock();
 
 
         /*
-         * تحميل المواقيت:
-         * من الإنترنت أو من التخزين المحلي
-         */
+           4. تسجيل Service Worker
+        */
+
+        registerServiceWorker();
+
+
+        /*
+           5. تحميل مواقيت الصلاة
+        */
 
         await loadPrayerTimes();
 
 
-        /*
-         * تحديث الصلاة القادمة
-         * كل دقيقة لضمان الانتقال الصحيح
-         */
+        console.log(
 
-        if (
-            window.appState.countdownTimer
-        ) {
+            '✅ تم تشغيل جميع أنظمة الرفيق'
 
-            clearInterval(
-                window.appState.countdownTimer
-            );
-
-        }
-
-
-        window.appState.countdownTimer =
-
-            setInterval(
-                () => {
-
-                    const currentDate =
-                        getLocalDateKey();
-
-
-                    /*
-                     * إذا تغير اليوم
-                     * نعيد تحميل مواقيت اليوم
-                     */
-
-                    if (
-                        window.appState.prayerDate !==
-                        currentDate
-                    ) {
-
-                        loadPrayerTimes(
-                            true
-                        );
-
-                        return;
-
-                    }
-
-
-                    updatePrayerDisplay();
-
-                },
-                60000
-            );
+        );
 
     }
-);
 
-
-/* ============================================================
-   27) تنظيف المؤقتات عند إغلاق الصفحة
-   ============================================================ */
-
-window.addEventListener(
-    'pagehide',
-    () => {
-
-        if (
-            window.appState.clockTimer
-        ) {
-
-            clearInterval(
-                window.appState.clockTimer
-            );
-
-        }
-
-
-        if (
-            window.appState.countdownTimer
-        ) {
-
-            clearInterval(
-                window.appState.countdownTimer
-            );
-
-        }
-
-    }
 );
 
 
 /* ============================================================
    نهاية app.js
    ============================================================ */
-
-console.log(
-    '✅ الرفيق — app.js تم تحميله بنجاح'
-);
