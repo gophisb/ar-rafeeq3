@@ -34,7 +34,16 @@
     <script>
         (function() {
             var quranData = null;
-            var tafsirData = null;          // سيكون كائن: { "1": { "1": "نص التفسير", "2": "..." }, ... }
+
+            /*
+             * tafsir-saadi.json الجديد يستخدم مفاتيح مسطحة:
+             * "1:1", "1:2", "2:255", ...
+             *
+             * هذا الكود يدعم أيضًا البنية القديمة المتداخلة احتياطياً:
+             * { "1": { "1": "نص التفسير" } }
+             */
+            var tafsirData = null;
+
             var flatAyahs = [];
             var container = document.getElementById('quranContent');
             var searchInput = document.getElementById('searchInput');
@@ -51,35 +60,45 @@
                     .replace(/ة/g, 'ه');
             }
 
-            // تحميل التفسير
+            // تحميل التفسير المحلي
             function loadTafsir() {
                 return fetch('./tafsir-saadi.json')
-                    .then(function(r) { return r.json(); })
+                    .then(function(r) {
+                        if (!r.ok) throw new Error('تعذر تحميل tafsir-saadi.json');
+                        return r.json();
+                    })
                     .then(function(data) {
                         tafsirData = data;
-                        console.log('✅ تم تحميل تفسير السعدي');
+                        console.log('✅ تم تحميل تفسير السعدي محلياً');
                     })
-                    .catch(function() {
-                        console.warn('⚠️ تفسير السعدي غير متوفر محلياً');
+                    .catch(function(error) {
+                        tafsirData = null;
+                        console.warn('⚠️ تفسير السعدي غير متوفر محلياً', error);
                     });
             }
 
             function loadQuran() {
                 container.innerHTML = '<p class="no-results">جاري تحميل القرآن والتفسير...</p>';
-                // تحميل القرآن والتفسير معاً
+
                 Promise.all([
-                    fetch('./quran-local.json').then(function(r) { return r.json(); }),
+                    fetch('./quran-local.json').then(function(r) {
+                        if (!r.ok) throw new Error('تعذر تحميل quran-local.json');
+                        return r.json();
+                    }),
                     loadTafsir()
                 ])
                 .then(function(results) {
                     var raw = results[0];
                     var surahs = normalizeSurahs(raw);
+
                     if (!surahs || surahs.length === 0) {
                         container.innerHTML = '<p class="no-results">❌ بنية الملف غير مدعومة.</p>';
                         return;
                     }
+
                     quranData = surahs;
                     flatAyahs = [];
+
                     quranData.forEach(function(s, sIdx) {
                         s.ayahs.forEach(function(txt, aIdx) {
                             flatAyahs.push({
@@ -91,9 +110,11 @@
                             });
                         });
                     });
+
                     displaySurahList();
                 })
-                .catch(function() {
+                .catch(function(error) {
+                    console.error(error);
                     container.innerHTML = '<p class="no-results">❌ فشل تحميل الملفات.</p>';
                 });
             }
@@ -103,32 +124,43 @@
                     return data.map(function(s) {
                         var rawAyahs = s.ayahs || s.a;
                         var ayahs = [];
+
                         if (Array.isArray(rawAyahs)) {
                             ayahs = rawAyahs.map(function(a) {
                                 if (typeof a === 'string') return a;
                                 return a.t || a.text || a.verse || a.aya || '';
                             });
                         }
-                        return { name: s.name || '', ayahs: ayahs };
+
+                        return {
+                            name: s.name || '',
+                            ayahs: ayahs
+                        };
                     });
                 }
+
                 if (data && typeof data === 'object' && !Array.isArray(data)) {
                     var inner = data.quran || data.surahs || data.surah || data.data || data.suras;
                     if (inner && Array.isArray(inner)) return normalizeSurahs(inner);
                 }
+
                 return null;
             }
 
             function displaySurahList() {
                 if (!quranData) return;
+
                 searchStatus.textContent = '';
-                var h = '<ul class="surah-list">';
+
+                var h = '<ul class="surah-list>';
+
                 quranData.forEach(function(s, i) {
                     h += '<li class="surah-item" onclick="window.showSurah(' + i + ')">';
                     h += '<span class="surah-name">' + (i + 1) + '. ' + s.name + '</span>';
                     h += '<span style="color:var(--muted);font-size:0.8rem;">' + s.ayahs.length + ' آيات</span>';
                     h += '</li>';
                 });
+
                 h += '</ul>';
                 container.innerHTML = h;
             }
@@ -137,34 +169,90 @@
             window.showSurah = function(index) {
                 var s = quranData[index];
                 if (!s) return;
+
                 searchStatus.textContent = '';
+
                 var h = '<button class="back-btn" onclick="displaySurahList()">← فهرس السور</button>';
                 h += '<h2 style="color:var(--gold);text-align:center;margin:16px 0;font-family:Amiri,serif;">' + s.name + '</h2>';
+
                 s.ayahs.forEach(function(txt, j) {
                     var surahNum = index + 1;
                     var ayahNum = j + 1;
+
                     h += '<div class="ayah-text" id="ayah-' + surahNum + '-' + ayahNum + '">';
                     h += '<span class="ayah-number">' + ayahNum + '</span>';
                     h += txt;
-                    // زر التفسير
                     h += ' <button class="tafsir-btn" onclick="window.toggleTafsir(' + surahNum + ',' + ayahNum + ')">تفسير</button>';
                     h += '<div id="tafsir-' + surahNum + '-' + ayahNum + '" style="display:none;"></div>';
                     h += '</div>';
                 });
+
                 container.innerHTML = h;
                 window.scrollTo(0, 0);
             };
+
+            /*
+             * الحصول على تفسير آية واحدة.
+             * الصيغة الأساسية في الملف الجديد:
+             * tafsirData["2:2"]
+             */
+            function getTafsir(surah, ayah) {
+                if (!tafsirData || typeof tafsirData !== 'object') {
+                    return null;
+                }
+
+                var key = surah + ':' + ayah;
+
+                // الصيغة الجديدة: {"2:2": "..."}
+                if (Object.prototype.hasOwnProperty.call(tafsirData, key)) {
+                    var direct = tafsirData[key];
+                    return typeof direct === 'string' ? direct : null;
+                }
+
+                // احتياط للصيغة القديمة: {"2":{"2":"..."}}
+                if (
+                    tafsirData[surah] &&
+                    typeof tafsirData[surah] === 'object' &&
+                    Object.prototype.hasOwnProperty.call(tafsirData[surah], ayah)
+                ) {
+                    var nested = tafsirData[surah][ayah];
+                    return typeof nested === 'string' ? nested : null;
+                }
+
+                // احتياط إضافي إذا كان الملف يحتوي على {tafsir:[...]}
+                if (Array.isArray(tafsirData.tafsir)) {
+                    var surahIndex = surah - 1;
+                    var ayahIndex = ayah - 1;
+
+                    if (
+                        Array.isArray(tafsirData.tafsir[surahIndex]) &&
+                        typeof tafsirData.tafsir[surahIndex][ayahIndex] === 'string'
+                    ) {
+                        return tafsirData.tafsir[surahIndex][ayahIndex];
+                    }
+                }
+
+                return null;
+            }
 
             // إظهار/إخفاء التفسير
             window.toggleTafsir = function(surah, ayah) {
                 var box = document.getElementById('tafsir-' + surah + '-' + ayah);
                 if (!box) return;
+
                 if (box.style.display === 'none' || box.style.display === '') {
-                    if (!tafsirData || !tafsirData[surah] || !tafsirData[surah][ayah]) {
+                    var text = getTafsir(surah, ayah);
+
+                    if (!text) {
                         box.innerHTML = '<div class="tafsir-box">التفسير غير متوفر لهذه الآية.</div>';
                     } else {
-                        box.innerHTML = '<div class="tafsir-box">' + tafsirData[surah][ayah] + '</div>';
+                        var tafsirBox = document.createElement('div');
+                        tafsirBox.className = 'tafsir-box';
+                        tafsirBox.textContent = text;
+                        box.innerHTML = '';
+                        box.appendChild(tafsirBox);
                     }
+
                     box.style.display = 'block';
                 } else {
                     box.style.display = 'none';
@@ -173,21 +261,27 @@
 
             function performSearch(term) {
                 if (!quranData) return;
+
                 if (!term) {
                     displaySurahList();
                     return;
                 }
+
                 var normalizedTerm = normalizeArabic(term);
                 var results = [];
                 var count = 0;
+
                 for (var i = 0; i < flatAyahs.length; i++) {
                     var item = flatAyahs[i];
+
                     if (item.normalized.indexOf(normalizedTerm) !== -1) {
                         count++;
+
                         var highlighted = item.text.replace(
                             new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'g'),
                             '<span class="highlight">$1</span>'
                         );
+
                         results.push(
                             '<div class="ayah-text">' +
                             '<strong style="color:var(--gold);">' + item.surahName + ' ' + item.ayahNum + ':</strong> ' +
@@ -198,19 +292,27 @@
                         );
                     }
                 }
-                container.innerHTML = results.length > 0 ? results.join('') : '<p class="no-results">لا توجد نتائج مطابقة.</p>';
+
+                container.innerHTML = results.length > 0
+                    ? results.join('')
+                    : '<p class="no-results">لا توجد نتائج مطابقة.</p>';
+
                 searchStatus.textContent = count > 0 ? 'تم العثور على ' + count + ' نتيجة' : '';
             }
 
             searchInput.addEventListener('input', function() {
                 var term = this.value.trim();
+
                 if (debounceTimer) clearTimeout(debounceTimer);
+
                 if (!term) {
                     displaySurahList();
                     searchStatus.textContent = '';
                     return;
                 }
+
                 searchStatus.textContent = '...';
+
                 debounceTimer = setTimeout(function() {
                     performSearch(term);
                 }, 250);
@@ -220,4 +322,4 @@
         })();
     </script>
 </body>
-</html>             
+</html>
