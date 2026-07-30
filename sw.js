@@ -1,65 +1,125 @@
-/* ============================================================
-   الرفيق — sw.js
-   FORCE CACHE RESET — الإصدار 3
-   ============================================================ */
+/* =========================================================
+   الرفيق — Service Worker
+   الإصدار: 10
+   الهدف:
+   - تحديث quran.html و tafsir.html وملفات JSON
+   - حذف الكاش القديم
+   - دعم العمل بدون إنترنت
+   - عدم فشل تثبيت Service Worker بسبب ملف كبير
+   ========================================================= */
 
 'use strict';
 
-const CACHE_VERSION = 'rafeeq-v3';
-const CACHE_NAME = `${CACHE_VERSION}-app`;
+const CACHE_NAME = 'rafeeq-v10';
 
-const FILES_TO_CACHE = [
+/* ---------------------------------------------------------
+   الملفات الأساسية التي يمكن تخزينها في الكاش
+   --------------------------------------------------------- */
+const APP_FILES = [
     './',
     './index.html',
-    './style.css',
-    './app.js',
-    './theme.js',
-    './manifest.json',
-
-    './prayer.html',
     './quran.html',
+    './tafsir.html',
     './adhkar.html',
     './hisnul.html',
     './arbaeen.html',
-    './tafsir.html',
+    './prayer.html',
     './qibla.html',
     './more.html',
-
-    './quran-local.json',
-    './tafsir-saadi.json',
-
+    './style.css',
+    './theme.js',
+    './app.js',
+    './manifest.json',
     './icon-192.png',
-    './icon-512.png',
-    './adhan.mp3'
+    './icon-512.png'
+];
+
+/* ---------------------------------------------------------
+   ملفات البيانات
+   يتم تحديثها عند الاتصال بالإنترنت ثم تحفظ للعمل بدون إنترنت
+   --------------------------------------------------------- */
+const DATA_FILES = [
+    './quran-local.json',
+    './tafsir-saadi.json'
 ];
 
 
-/* ============================================================
+/* =========================================================
    INSTALL
-   ============================================================ */
+   ========================================================= */
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
 
-    console.log('🚀 تثبيت الرفيق:', CACHE_VERSION);
+    console.log('🚀 تثبيت الرفيق:', CACHE_NAME);
 
     event.waitUntil(
 
         caches.open(CACHE_NAME)
 
-            .then(cache => {
+            .then(async (cache) => {
 
-                return cache.addAll(FILES_TO_CACHE);
+                /*
+                 * نستخدم ملفًا ملفًا حتى لا يفشل التثبيت كله
+                 * إذا تعذر تحميل أحد الملفات.
+                 */
+
+                for (const file of APP_FILES) {
+
+                    try {
+
+                        const response = await fetch(file, {
+                            cache: 'no-store'
+                        });
+
+                        if (response.ok) {
+                            await cache.put(file, response.clone());
+                        }
+
+                    } catch (error) {
+
+                        console.warn(
+                            '⚠️ تعذر تخزين:',
+                            file
+                        );
+
+                    }
+
+                }
+
+                /*
+                 * نحاول أيضًا تخزين ملفات البيانات الكبيرة،
+                 * لكن فشلها لا يمنع تثبيت Service Worker.
+                 */
+
+                for (const file of DATA_FILES) {
+
+                    try {
+
+                        const response = await fetch(file, {
+                            cache: 'no-store'
+                        });
+
+                        if (response.ok) {
+                            await cache.put(file, response.clone());
+                        }
+
+                    } catch (error) {
+
+                        console.warn(
+                            '⚠️ تعذر تخزين ملف البيانات:',
+                            file
+                        );
+
+                    }
+
+                }
 
             })
 
-            .then(() => {
-
-                console.log(
-                    '✅ تم تحميل ملفات الواجهة الجديدة'
-                );
+            .finally(() => {
 
                 /*
-                 * تفعيل النسخة الجديدة فورًا
+                 * تفعيل النسخة الجديدة مباشرة
                  */
 
                 return self.skipWaiting();
@@ -71,26 +131,22 @@ self.addEventListener('install', event => {
 });
 
 
-/* ============================================================
+/* =========================================================
    ACTIVATE
-   حذف جميع نسخ الرفيق القديمة
-   ============================================================ */
+   حذف جميع إصدارات الكاش القديمة
+   ========================================================= */
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
 
     event.waitUntil(
 
         caches.keys()
 
-            .then(cacheNames => {
+            .then((cacheNames) => {
 
                 return Promise.all(
 
-                    cacheNames.map(cacheName => {
-
-                        /*
-                         * حذف أي كاش قديم للرفيق
-                         */
+                    cacheNames.map((cacheName) => {
 
                         if (
                             cacheName.startsWith('rafeeq-') &&
@@ -102,9 +158,7 @@ self.addEventListener('activate', event => {
                                 cacheName
                             );
 
-                            return caches.delete(
-                                cacheName
-                            );
+                            return caches.delete(cacheName);
 
                         }
 
@@ -118,12 +172,8 @@ self.addEventListener('activate', event => {
 
             .then(() => {
 
-                console.log(
-                    '✅ تم تنظيف جميع نسخ الكاش القديمة'
-                );
-
                 /*
-                 * السيطرة على الصفحات المفتوحة
+                 * يجعل النسخة الجديدة تتحكم في التطبيق فورًا
                  */
 
                 return self.clients.claim();
@@ -135,124 +185,181 @@ self.addEventListener('activate', event => {
 });
 
 
-/* ============================================================
-   FETCH
-   ============================================================ */
+/* =========================================================
+   تحديد الملفات التي يجب تحديثها دائمًا عند وجود إنترنت
+   ========================================================= */
 
-self.addEventListener('fetch', event => {
+function isImportantFile(request) {
+
+    const url = new URL(request.url);
+
+    const path = url.pathname;
+
+    return (
+
+        path.endsWith('/quran.html') ||
+
+        path.endsWith('/tafsir.html') ||
+
+        path.endsWith('/index.html') ||
+
+        path.endsWith('/quran-local.json') ||
+
+        path.endsWith('/tafsir-saadi.json')
+
+    );
+
+}
+
+
+/* =========================================================
+   FETCH
+   ========================================================= */
+
+self.addEventListener('fetch', (event) => {
 
     const request = event.request;
 
     /*
-     * GET فقط
+     * نهتم بطلبات GET فقط
      */
 
-    if (
-        request.method !== 'GET'
-    ) {
-
+    if (request.method !== 'GET') {
         return;
-
     }
 
 
     event.respondWith(
 
-        caches.match(request)
+        caches.open(CACHE_NAME)
 
-            .then(cachedResponse => {
+            .then(async (cache) => {
 
-                /*
-                 * الملف موجود محليًا
-                 */
 
-                if (
-                    cachedResponse
-                ) {
+                /* ------------------------------------------------
+                   1. الملفات المهمة:
+                   Network First
+                   ------------------------------------------------ */
+
+                if (isImportantFile(request)) {
+
+                    try {
+
+                        const networkResponse = await fetch(
+                            request,
+                            {
+                                cache: 'no-store'
+                            }
+                        );
+
+                        /*
+                         * إذا نجح الاتصال نحفظ النسخة الجديدة
+                         */
+
+                        if (
+                            networkResponse &&
+                            networkResponse.ok
+                        ) {
+
+                            await cache.put(
+                                request,
+                                networkResponse.clone()
+                            );
+
+                        }
+
+                        return networkResponse;
+
+                    } catch (error) {
+
+                        console.warn(
+                            '📴 لا يوجد اتصال، استخدام الكاش:',
+                            request.url
+                        );
+
+                        /*
+                         * عند عدم وجود الإنترنت:
+                         * استخدم النسخة المحلية
+                         */
+
+                        const cachedResponse =
+                            await cache.match(request);
+
+                        if (cachedResponse) {
+
+                            return cachedResponse;
+
+                        }
+
+                        /*
+                         * إذا لم توجد النسخة:
+                         * نحاول البحث بالمسار النسبي
+                         */
+
+                        const relativePath =
+                            './' +
+                            request.url.split('/').pop();
+
+                        const fallback =
+                            await cache.match(relativePath);
+
+                        if (fallback) {
+
+                            return fallback;
+
+                        }
+
+                        throw error;
+
+                    }
+
+                }
+
+
+                /* ------------------------------------------------
+                   2. بقية الملفات:
+                   Cache First
+                   ------------------------------------------------ */
+
+                const cachedResponse =
+                    await cache.match(request);
+
+                if (cachedResponse) {
 
                     return cachedResponse;
 
                 }
 
 
-                /*
-                 * الملف غير موجود
-                 * نحاول الإنترنت
-                 */
+                /* ------------------------------------------------
+                   3. الملف غير موجود في الكاش:
+                   نطلبه من الإنترنت
+                   ------------------------------------------------ */
 
-                return fetch(request)
+                try {
 
-                    .then(response => {
+                    const networkResponse =
+                        await fetch(request);
 
-                        /*
-                         * لا نخزن الردود غير الصالحة
-                         */
+                    if (
+                        networkResponse &&
+                        networkResponse.ok
+                    ) {
 
-                        if (
-                            !response ||
-                            response.status !== 200
-                        ) {
-
-                            return response;
-
-                        }
-
-
-                        /*
-                         * نسخ الرد
-                         */
-
-                        const responseClone =
-                            response.clone();
-
-
-                        /*
-                         * حفظ الملف
-                         */
-
-                        caches.open(CACHE_NAME)
-
-                            .then(cache => {
-
-                                cache.put(
-                                    request,
-                                    responseClone
-                                );
-
-                            });
-
-
-                        return response;
-
-                    })
-
-                    .catch(() => {
-
-                        /*
-                         * إذا انقطع الإنترنت
-                         * نعيد الصفحة الرئيسية
-                         */
-
-                        if (
-                            request.destination === 'document'
-                        ) {
-
-                            return caches.match(
-                                './index.html'
-                            );
-
-                        }
-
-
-                        /*
-                         * البحث عن الملف في الكاش
-                         */
-
-                        return caches.match(
-                            request
+                        await cache.put(
+                            request,
+                            networkResponse.clone()
                         );
 
-                    });
+                    }
+
+                    return networkResponse;
+
+                } catch (error) {
+
+                    throw error;
+
+                }
 
             })
 
@@ -261,75 +368,65 @@ self.addEventListener('fetch', event => {
 });
 
 
-/* ============================================================
-   MESSAGES
-   ============================================================ */
+/* =========================================================
+   استقبال أوامر من التطبيق
+   ========================================================= */
 
-self.addEventListener(
-    'message',
-    event => {
+self.addEventListener('message', (event) => {
 
-        if (
-            !event.data
-        ) {
-
-            return;
-
-        }
+    if (!event.data) {
+        return;
+    }
 
 
-        /*
-         * تحديث فوري
-         */
+    /* ---------------------------------------------
+       تفعيل النسخة الجديدة فورًا
+       --------------------------------------------- */
 
-        if (
-            event.data.type === 'SKIP_WAITING'
-        ) {
+    if (
+        event.data.type === 'SKIP_WAITING'
+    ) {
 
-            self.skipWaiting();
-
-        }
-
-
-        /*
-         * حذف جميع الكاش
-         */
-
-        if (
-            event.data.type === 'CLEAR_CACHE'
-        ) {
-
-            event.waitUntil(
-
-                caches.keys()
-
-                    .then(cacheNames => {
-
-                        return Promise.all(
-
-                            cacheNames.map(
-                                cacheName =>
-                                    caches.delete(
-                                        cacheName
-                                    )
-                            )
-
-                        );
-
-                    })
-
-            );
-
-        }
+        self.skipWaiting();
 
     }
-);
 
 
-/* ============================================================
-   READY
-   ============================================================ */
+    /* ---------------------------------------------
+       مسح جميع الكاشات
+       --------------------------------------------- */
+
+    if (
+        event.data.type === 'CLEAR_CACHE'
+    ) {
+
+        event.waitUntil(
+
+            caches.keys()
+
+                .then((cacheNames) => {
+
+                    return Promise.all(
+
+                        cacheNames.map((cacheName) => {
+
+                            return caches.delete(
+                                cacheName
+                            );
+
+                        })
+
+                    );
+
+                })
+
+        );
+
+    }
+
+});
+
 
 console.log(
-    '🟢 الرفيق — Service Worker v3 جاهز'
+    '🟢 الرفيق — Service Worker v10 يعمل بنجاح'
 );
