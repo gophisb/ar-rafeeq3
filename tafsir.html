@@ -4,13 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تفسير السعدي — الرفيق</title>
+
 <link rel="stylesheet" href="./style.css">
 <script src="./theme.js"></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="icon" type="image/svg+xml"
+href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+
 <style>
-  .container{max-width:720px;margin:0 auto;padding:16px;}
+  .container{max-width:760px;margin:0 auto;padding:16px;}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;}
   .back{color:var(--primary);text-decoration:none;font-size:14px;font-weight:600;}
   h1{text-align:center;font-size:26px;color:var(--primary);margin:6px 0 2px;}
@@ -21,33 +23,92 @@
 
   .surah-row{display:flex;align-items:center;gap:14px;padding:15px 16px;
     background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;
-    cursor:pointer;text-decoration:none;color:inherit;}
+    cursor:pointer;color:inherit;}
   .surah-num{flex-shrink:0;width:34px;height:34px;border-radius:10px;
     background:linear-gradient(155deg,var(--primary),var(--primary-dark));color:#fff;
     display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
-  .surah-name{flex:1;font-family:'Amiri',serif;font-size:19px;font-weight:700;color:var(--text);}
-  .chev{color:var(--muted);font-size:14px;}
+  .surah-name{flex:1;font-size:19px;font-weight:700;color:var(--text);}
+  .surah-count{color:var(--muted);font-size:12px;}
+  .chev{color:var(--muted);font-size:18px;}
 
   .reader{display:none;}
   .reader.open{display:block;}
   .reader-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .reader-head button{background:var(--card);border:1px solid var(--line);color:var(--primary);
     border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;}
-  .reader-title{font-family:'Amiri',serif;font-size:26px;color:var(--gold);text-align:center;margin-bottom:16px;}
-  .tafsir-text{font-size:17px;line-height:2.3;color:var(--text);background:var(--card);
-    border:1px solid var(--line);border-radius:14px;padding:20px;white-space:pre-line;}
-  .tafsir-text b{color:var(--gold);}
+  .reader-title{font-size:26px;color:var(--gold);text-align:center;margin-bottom:16px;font-weight:700;}
+
+  .ayah-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:12px;
+  }
+
+  .ayah-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+
+  .ayah-number{
+    width:34px;
+    height:34px;
+    flex-shrink:0;
+    border-radius:50%;
+    background:var(--primary);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .ayah-label{
+    color:var(--primary);
+    font-weight:700;
+    font-size:13px;
+  }
+
+  .tafsir-text{
+    font-size:17px;
+    line-height:2.25;
+    color:var(--text);
+    white-space:pre-line;
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:35px 10px;
+  }
 
   #status{text-align:center;color:var(--muted);padding:40px 0;}
   footer{text-align:center;padding:24px 0 10px;color:var(--muted);font-size:12px;line-height:1.7;}
+
+  .error{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+    color:var(--text);
+    line-height:1.9;
+    text-align:center;
+  }
 </style>
 </head>
+
 <body>
 <div class="container">
+
   <div class="topbar">
     <a class="back" href="./index.html">→ الرئيسية</a>
     <span style="font-size:22px;">📚</span>
   </div>
+
   <h1>تفسير السعدي</h1>
   <p class="sub">تيسير الكريم الرحمن في تفسير كلام المنان</p>
   <div class="credit-badge">📖 الشيخ عبد الرحمن بن ناصر السعدي رحمه الله</div>
@@ -61,56 +122,178 @@
       <button id="backToList">→ فهرس السور</button>
       <div></div>
     </div>
+
     <div class="reader-title" id="readerTitle">—</div>
-    <div class="tafsir-text" id="tafsirText"></div>
+    <div id="tafsirContent"></div>
   </div>
 
   <footer>الرفيق — تفسير السعدي كاملاً بدون إنترنت</footer>
 </div>
 
 <script>
+"use strict";
+
 let SURAH_NAMES = [];
-let TAFSIR = [];
+let TAFSIR = {};
 
-Promise.all([
-  fetch('./quran-local.json').then(r => r.json()),
-  fetch('./tafsir-saadi.json').then(r => r.json())
-]).then(([quran, tafsirData]) => {
-  SURAH_NAMES = quran.map(s => s.name);
-  TAFSIR = tafsirData.tafsir;
-  document.getElementById('status').hidden = true;
-  renderList();
-}).catch(() => {
-  document.getElementById('status').textContent =
-    'تعذّر تحميل التفسير. تأكد من وجود quran-local.json و tafsir-saadi.json بجانب هذه الصفحة.';
-});
+const statusEl = document.getElementById("status");
+const surahListEl = document.getElementById("surahList");
+const readerEl = document.getElementById("reader");
+const readerTitleEl = document.getElementById("readerTitle");
+const tafsirContentEl = document.getElementById("tafsirContent");
+const backToListBtn = document.getElementById("backToList");
 
-function renderList(){
-  const wrap = document.getElementById('surahList');
-  wrap.innerHTML = SURAH_NAMES.map((name, i) => `
-    <a class="surah-row" data-i="${i}">
-      <div class="surah-num">${i+1}</div>
-      <div class="surah-name">${name}</div>
-      <div class="chev">‹</div>
-    </a>
-  `).join('');
-  wrap.querySelectorAll('.surah-row').forEach(row=>{
-    row.addEventListener('click', () => openSurah(parseInt(row.dataset.i, 10)));
+async function loadData() {
+  try {
+    const [quranResponse, tafsirResponse] = await Promise.all([
+      fetch("./quran-local.json", { cache: "no-store" }),
+      fetch("./tafsir-saadi.json", { cache: "no-store" })
+    ]);
+
+    if (!quranResponse.ok) {
+      throw new Error("تعذر تحميل quran-local.json");
+    }
+
+    if (!tafsirResponse.ok) {
+      throw new Error("تعذر تحميل tafsir-saadi.json");
+    }
+
+    const quran = await quranResponse.json();
+    const tafsirData = await tafsirResponse.json();
+
+    if (!Array.isArray(quran)) {
+      throw new Error("صيغة quran-local.json غير متوقعة.");
+    }
+
+    if (!tafsirData || typeof tafsirData !== "object" || Array.isArray(tafsirData)) {
+      throw new Error("صيغة tafsir-saadi.json غير متوقعة.");
+    }
+
+    SURAH_NAMES = quran.map((surah, index) => {
+      if (typeof surah?.name === "string") return surah.name;
+      if (surah?.name?.ar) return surah.name.ar;
+      return `السورة ${index + 1}`;
+    });
+
+    TAFSIR = tafsirData;
+
+    statusEl.hidden = true;
+    renderSurahList();
+
+  } catch (error) {
+    console.error(error);
+    statusEl.innerHTML = `
+      <div class="error">
+        <strong>تعذّر تحميل تفسير السعدي.</strong><br>
+        تأكد من وجود الملفين بجانب <b>tafsir.html</b>:<br>
+        <b>quran-local.json</b><br>
+        <b>tafsir-saadi.json</b>
+      </div>
+    `;
+  }
+}
+
+function getSurahTafsirCount(surahNumber) {
+  const prefix = surahNumber + ":";
+  return Object.keys(TAFSIR).filter(key => key.startsWith(prefix)).length;
+}
+
+function renderSurahList() {
+  surahListEl.innerHTML = "";
+
+  SURAH_NAMES.forEach((name, index) => {
+    const surahNumber = index + 1;
+    const row = document.createElement("div");
+    row.className = "surah-row";
+
+    const num = document.createElement("div");
+    num.className = "surah-num";
+    num.textContent = surahNumber;
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "surah-name";
+    nameEl.textContent = name;
+
+    const count = document.createElement("div");
+    count.className = "surah-count";
+    count.textContent = `${getSurahTafsirCount(surahNumber)} آية`;
+
+    const chev = document.createElement("div");
+    chev.className = "chev";
+    chev.textContent = "‹";
+
+    row.append(num, nameEl, count, chev);
+
+    row.addEventListener("click", () => openSurah(surahNumber));
+    surahListEl.appendChild(row);
   });
 }
 
-function openSurah(i){
-  document.getElementById('surahList').style.display = 'none';
-  document.getElementById('reader').classList.add('open');
-  document.getElementById('readerTitle').textContent = `سورة ${SURAH_NAMES[i]}`;
-  document.getElementById('tafsirText').textContent = TAFSIR[i] || 'لا يتوفر تفسير لهذه السورة.';
-  window.scrollTo(0,0);
+function openSurah(surahNumber) {
+  surahListEl.style.display = "none";
+  readerEl.classList.add("open");
+
+  const surahName = SURAH_NAMES[surahNumber - 1] || `السورة ${surahNumber}`;
+  readerTitleEl.textContent = `سورة ${surahName}`;
+
+  tafsirContentEl.innerHTML = "";
+
+  const keys = Object.keys(TAFSIR)
+    .filter(key => key.startsWith(surahNumber + ":"))
+    .sort((a, b) => {
+      const ayahA = parseInt(a.split(":")[1], 10);
+      const ayahB = parseInt(b.split(":")[1], 10);
+      return ayahA - ayahB;
+    });
+
+  if (!keys.length) {
+    tafsirContentEl.innerHTML =
+      '<div class="empty">لا يتوفر تفسير لهذه السورة.</div>';
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  keys.forEach(key => {
+    const ayahNumber = parseInt(key.split(":")[1], 10);
+    const text = TAFSIR[key];
+
+    const card = document.createElement("div");
+    card.className = "ayah-card";
+
+    const head = document.createElement("div");
+    head.className = "ayah-head";
+
+    const number = document.createElement("div");
+    number.className = "ayah-number";
+    number.textContent = ayahNumber;
+
+    const label = document.createElement("div");
+    label.className = "ayah-label";
+    label.textContent = `الآية ${ayahNumber}`;
+
+    head.append(number, label);
+
+    const tafsir = document.createElement("div");
+    tafsir.className = "tafsir-text";
+    tafsir.textContent = text || "لا يتوفر تفسير لهذه الآية.";
+
+    card.append(head, tafsir);
+    fragment.appendChild(card);
+  });
+
+  tafsirContentEl.appendChild(fragment);
+  window.scrollTo(0, 0);
 }
 
-document.getElementById('backToList').addEventListener('click', () => {
-  document.getElementById('reader').classList.remove('open');
-  document.getElementById('surahList').style.display = '';
+backToListBtn.addEventListener("click", () => {
+  readerEl.classList.remove("open");
+  surahListEl.style.display = "";
+  window.scrollTo(0, 0);
 });
+
+loadData();
 </script>
 </body>
 </html>
