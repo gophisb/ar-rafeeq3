@@ -56,16 +56,15 @@
         }
 
         .surah-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .surah-item {
             width: 100%;
             box-sizing: border-box;
             padding: 14px;
-            margin-bottom: 8px;
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -74,6 +73,7 @@
             justify-content: space-between;
             gap: 12px;
             cursor: pointer;
+            transition: transform .15s ease, border-color .15s ease;
         }
 
         .surah-item:active {
@@ -141,6 +141,10 @@
             font-size: 1.16rem;
         }
 
+        .ayah-line {
+            display: inline;
+        }
+
         .ayah-number {
             display: inline-flex;
             align-items: center;
@@ -171,8 +175,9 @@
             font-family: inherit;
         }
 
-        .tafsir-btn:active {
-            transform: scale(0.97);
+        .tafsir-btn:disabled {
+            opacity: .65;
+            cursor: wait;
         }
 
         .tafsir-box {
@@ -231,11 +236,13 @@
         type="text"
         placeholder="🔍 ابحث عن كلمة أو آية..."
         autocomplete="off"
+        inputmode="search"
     >
 
     <div
         id="searchStatus"
         class="search-status"
+        aria-live="polite"
     ></div>
 
     <div id="quranContent">
@@ -252,13 +259,15 @@
     "use strict";
 
     /* =========================================================
-       المتغيرات
+       الحالة — مصممة لتقليل الذاكرة والعمل عند البداية
     ========================================================= */
 
     let quranData = [];
     let tafsirData = null;
-    let flatAyahs = [];
+    let tafsirPromise = null;
+    let searchIndex = null;
     let searchTimer = null;
+    let currentView = "list";
 
     const container =
         document.getElementById("quranContent");
@@ -271,7 +280,7 @@
 
 
     /* =========================================================
-       تنظيف النص العربي
+       تطبيع عربي — يستخدم فقط عند الحاجة
     ========================================================= */
 
     function normalizeArabic(text) {
@@ -292,7 +301,7 @@
 
 
     /* =========================================================
-       استخراج النص
+       استخراج النص من بنية الآية
     ========================================================= */
 
     function extractText(value) {
@@ -328,12 +337,8 @@
                 candidate &&
                 typeof candidate === "object"
             ) {
-                const nested =
-                    extractText(candidate);
-
-                if (nested) {
-                    return nested;
-                }
+                const nested = extractText(candidate);
+                if (nested) return nested;
             }
         }
 
@@ -419,18 +424,16 @@
             typeof source === "object"
         ) {
 
-            const possible =
-                [
-                    source.quran,
-                    source.surahs,
-                    source.suras,
-                    source.data,
-                    source.chapters,
-                    source.items
-                ];
+            const possible = [
+                source.quran,
+                source.surahs,
+                source.suras,
+                source.data,
+                source.chapters,
+                source.items
+            ];
 
             for (const candidate of possible) {
-
                 if (Array.isArray(candidate)) {
                     source = candidate;
                     break;
@@ -438,377 +441,226 @@
             }
         }
 
-
-        /*
-         * دعم كائن يحتوي على:
-         * 1
-         * 2
-         * 3
-         * ...
-         */
-
         if (
             !Array.isArray(source) &&
             source &&
             typeof source === "object"
         ) {
 
-            const keys =
-                Object.keys(source)
-                    .filter(key => /^\d+$/.test(key));
+            const keys = Object.keys(source)
+                .filter(key => /^\d+$/.test(key))
+                .sort((a, b) => Number(a) - Number(b));
 
             if (keys.length > 0) {
-
-                keys.sort(
-                    (a, b) => Number(a) - Number(b)
-                );
-
-                source =
-                    keys.map(
-                        key => source[key]
-                    );
+                source = keys.map(key => source[key]);
             }
         }
-
 
         if (!Array.isArray(source)) {
             return [];
         }
 
-
         return source
-            .map((surah, index) => {
-
-                return {
-
-                    number:
-                        Number(
-                            surah?.number ||
-                            surah?.id ||
-                            index + 1
-                        ) || index + 1,
-
-                    name:
-                        getSurahName(
-                            surah,
-                            index
-                        ),
-
-                    ayahs:
-                        getAyahs(surah)
-
-                };
-
-            })
-            .filter(
-                surah =>
-                    surah.ayahs.length > 0
-            );
+            .map((surah, index) => ({
+                number:
+                    Number(
+                        surah?.number ||
+                        surah?.id ||
+                        index + 1
+                    ) || index + 1,
+                name:
+                    getSurahName(surah, index),
+                ayahs:
+                    getAyahs(surah)
+            }))
+            .filter(surah => surah.ayahs.length > 0);
     }
 
 
     /* =========================================================
-       تحميل التفسير
+       تحميل التفسير عند الحاجة فقط
+       لا يحدث أثناء فتح صفحة القرآن.
     ========================================================= */
 
-    async function loadTafsir() {
+    async function ensureTafsirLoaded() {
 
-        try {
-
-            const response =
-                await fetch(
-                    "./tafsir-saadi.json",
-                    {
-                        cache: "no-store"
-                    }
-                );
-
-            if (!response.ok) {
-                throw new Error(
-                    "HTTP " + response.status
-                );
-            }
-
-            tafsirData =
-                await response.json();
-
-            console.log(
-                "✅ تم تحميل تفسير السعدي"
-            );
-
-        } catch (error) {
-
-            tafsirData = null;
-
-            console.warn(
-                "⚠️ تعذر تحميل تفسير السعدي:",
-                error
-            );
+        if (tafsirData) {
+            return tafsirData;
         }
-    }
 
+        if (tafsirPromise) {
+            return tafsirPromise;
+        }
 
-    /* =========================================================
-       بناء البحث
-    ========================================================= */
+        tafsirPromise = fetch("./tafsir-saadi.json")
+            .then(function (response) {
 
-    function buildSearchIndex() {
+                if (!response.ok) {
+                    throw new Error(
+                        "تعذر تحميل tafsir-saadi.json (HTTP " +
+                        response.status +
+                        ")"
+                    );
+                }
 
-        flatAyahs = [];
+                return response.json();
+            })
+            .then(function (data) {
 
-        quranData.forEach(
-            (surah, surahIndex) => {
+                tafsirData = data;
 
-                surah.ayahs.forEach(
-                    (text, ayahIndex) => {
-
-                        flatAyahs.push({
-
-                            surahIndex,
-
-                            surahNumber:
-                                surah.number,
-
-                            surahName:
-                                surah.name,
-
-                            ayahNumber:
-                                ayahIndex + 1,
-
-                            text,
-
-                            normalized:
-                                normalizeArabic(
-                                    text
-                                )
-
-                        });
-
-                    }
+                console.log(
+                    "✅ تم تحميل تفسير السعدي عند الطلب"
                 );
 
-            }
-        );
-    }
+                return tafsirData;
+            })
+            .catch(function (error) {
 
+                tafsirPromise = null;
 
-    /* =========================================================
-       عرض السور
-    ========================================================= */
-
-    function renderSurahList() {
-
-        container.innerHTML = "";
-
-        searchStatus.textContent = "";
-
-        const list =
-            document.createElement("div");
-
-        list.className =
-            "surah-list";
-
-
-        quranData.forEach(
-            (surah, index) => {
-
-                const row =
-                    document.createElement("div");
-
-                row.className =
-                    "surah-item";
-
-
-                const main =
-                    document.createElement("div");
-
-                main.className =
-                    "surah-main";
-
-
-                const number =
-                    document.createElement("span");
-
-                number.className =
-                    "surah-number";
-
-                number.textContent =
-                    surah.number;
-
-
-                const name =
-                    document.createElement("span");
-
-                name.className =
-                    "surah-name";
-
-                name.textContent =
-                    surah.name;
-
-
-                const count =
-                    document.createElement("span");
-
-                count.className =
-                    "surah-count";
-
-                count.textContent =
-                    surah.ayahs.length +
-                    " آيات";
-
-
-                main.appendChild(number);
-                main.appendChild(name);
-
-                row.appendChild(main);
-                row.appendChild(count);
-
-                /*
-                 * مهم:
-                 * هذا الحدث خاص بهذه السورة فقط.
-                 */
-
-                row.addEventListener(
-                    "click",
-                    function () {
-
-                        openSurah(index);
-
-                    }
+                console.error(
+                    "❌ تعذر تحميل تفسير السعدي:",
+                    error
                 );
 
-                list.appendChild(row);
-            }
-        );
+                throw error;
+            });
 
-
-        container.appendChild(list);
+        return tafsirPromise;
     }
 
 
     /* =========================================================
-       جلب تفسير آية واحدة
+       استخراج تفسير آية — يدعم البنى المعروفة
     ========================================================= */
 
-    function getTafsir(
-        surahNumber,
-        ayahNumber
-    ) {
+    function getTafsirFromData(data, surahNumber, ayahNumber) {
 
-        if (!tafsirData) {
+        if (!data || typeof data !== "object") {
             return null;
         }
 
+        const s = String(surahNumber);
+        const a = String(ayahNumber);
+        const key = s + ":" + a;
 
-        /*
-         * الصيغة الأساسية:
-         *
-         * {
-         *   "2:255": "..."
-         * }
-         */
-
-        const key =
-            String(surahNumber) +
-            ":" +
-            String(ayahNumber);
-
-
+        /* 1) مفاتيح مسطحة: {"2:255":"..."} */
         if (
-            Object.prototype.hasOwnProperty.call(
-                tafsirData,
-                key
-            )
+            Object.prototype.hasOwnProperty.call(data, key)
         ) {
 
-            if (
-                typeof tafsirData[key] ===
-                "string"
-            ) {
+            const value = data[key];
 
-                return tafsirData[key];
-            }
+            return typeof value === "string"
+                ? value
+                : extractText(value) || null;
         }
 
-
-        /*
-         * صيغة متداخلة:
-         *
-         * {
-         *   "2": {
-         *       "255": "..."
-         *   }
-         * }
-         */
-
+        /* 2) بنية متداخلة: {"2":{"255":"..."}} */
         if (
-            tafsirData[String(surahNumber)] &&
-            typeof
-                tafsirData[String(surahNumber)]
-                === "object"
+            data[s] &&
+            typeof data[s] === "object" &&
+            Object.prototype.hasOwnProperty.call(data[s], a)
         ) {
 
-            const value =
-                tafsirData[
-                    String(surahNumber)
-                ][
-                    String(ayahNumber)
-                ];
+            const value = data[s][a];
 
-            if (typeof value === "string") {
-                return value;
-            }
+            return typeof value === "string"
+                ? value
+                : extractText(value) || null;
         }
 
+        /* 3) {tafsir:[ [..], [..] ]} */
+        if (Array.isArray(data.tafsir)) {
 
-        /*
-         * الصيغة الأصلية التي كان ملفك المرفوع
-         * يستخدمها:
-         *
-         * {
-         *   "tafsir": [
-         *      [ ... ],
-         *      [ ... ]
-         *   ]
-         * }
-         */
-
-        if (
-            Array.isArray(
-                tafsirData.tafsir
-            )
-        ) {
-
-            const sIndex =
+            const surahIndex =
                 Number(surahNumber) - 1;
 
-            const aIndex =
+            const ayahIndex =
                 Number(ayahNumber) - 1;
 
-            if (
-                Array.isArray(
-                    tafsirData.tafsir[sIndex]
-                ) &&
-                typeof
-                    tafsirData.tafsir[sIndex][aIndex]
-                    === "string"
-            ) {
+            const surahData =
+                data.tafsir[surahIndex];
 
-                return
-                    tafsirData.tafsir[sIndex][aIndex];
+            if (Array.isArray(surahData)) {
+
+                const value =
+                    surahData[ayahIndex];
+
+                if (typeof value === "string") {
+                    return value;
+                }
+
+                const extracted =
+                    extractText(value);
+
+                if (extracted) {
+                    return extracted;
+                }
             }
         }
 
+        /* 4) {data:[...]}, {verses:[...]} أو مصفوفة سجلات */
+        const records =
+            Array.isArray(data)
+                ? data
+                : (
+                    Array.isArray(data.data)
+                        ? data.data
+                        : (
+                            Array.isArray(data.verses)
+                                ? data.verses
+                                : null
+                        )
+                );
+
+        if (records) {
+
+            for (const record of records) {
+
+                if (!record || typeof record !== "object") {
+                    continue;
+                }
+
+                const rs =
+                    Number(
+                        record.surah ||
+                        record.surahNumber ||
+                        record.chapter ||
+                        record.chapterNumber
+                    );
+
+                const ra =
+                    Number(
+                        record.ayah ||
+                        record.ayahNumber ||
+                        record.verse ||
+                        record.verseNumber
+                    );
+
+                if (rs === Number(s) && ra === Number(a)) {
+
+                    return (
+                        typeof record.tafsir === "string"
+                            ? record.tafsir
+                            : extractText(record.text) ||
+                              extractText(record.content) ||
+                              null
+                    );
+                }
+            }
+        }
 
         return null;
     }
 
 
     /* =========================================================
-       إظهار التفسير
+       إظهار التفسير — التحميل مؤجل حتى الضغط
     ========================================================= */
 
-    function toggleTafsir(
+    async function showTafsir(
         surahNumber,
         ayahNumber,
         box,
@@ -816,70 +668,201 @@
     ) {
 
         if (
-            box.style.display ===
-            "block"
+            box.dataset.open === "1"
         ) {
 
-            box.style.display =
-                "none";
-
-            button.textContent =
-                "تفسير";
-
+            box.style.display = "none";
+            box.dataset.open = "0";
+            button.textContent = "تفسير";
             return;
         }
 
-
-        const text =
-            getTafsir(
-                surahNumber,
-                ayahNumber
-            );
-
-
+        box.style.display = "block";
+        box.dataset.open = "1";
         box.innerHTML = "";
+        button.disabled = true;
+        button.textContent = "جاري تحميل التفسير...";
 
-
-        const tafsirBox =
+        const loading =
             document.createElement("div");
 
-        tafsirBox.className =
-            "tafsir-box";
+        loading.className = "tafsir-box";
+        loading.textContent = "جاري تحميل تفسير السعدي...";
 
+        box.appendChild(loading);
 
-        if (text) {
+        try {
+
+            const data =
+                await ensureTafsirLoaded();
+
+            const text =
+                getTafsirFromData(
+                    data,
+                    surahNumber,
+                    ayahNumber
+                );
+
+            box.innerHTML = "";
+
+            const tafsirBox =
+                document.createElement("div");
+
+            tafsirBox.className = "tafsir-box";
 
             tafsirBox.textContent =
-                text;
-
-        } else if (!tafsirData) {
-
-            tafsirBox.textContent =
-                "تعذر تحميل ملف تفسير السعدي. تأكد من وجود tafsir-saadi.json بجانب quran.html.";
-
-        } else {
-
-            tafsirBox.textContent =
+                text ||
                 "التفسير غير متوفر لهذه الآية.";
+
+            box.appendChild(tafsirBox);
+
+            button.textContent = "إخفاء التفسير";
+
+        } catch (error) {
+
+            box.innerHTML = "";
+
+            const tafsirBox =
+                document.createElement("div");
+
+            tafsirBox.className = "tafsir-box";
+
+            tafsirBox.textContent =
+                "تعذر تحميل تفسير السعدي. تأكد من وجود tafsir-saadi.json بجانب quran.html.";
+
+            box.appendChild(tafsirBox);
+
+            button.textContent = "إعادة محاولة التفسير";
         }
 
-
-        box.appendChild(
-            tafsirBox
-        );
-
-
-        box.style.display =
-            "block";
-
-
-        button.textContent =
-            "إخفاء التفسير";
+        button.disabled = false;
     }
 
 
     /* =========================================================
-       فتح سورة كاملة
+       عنصر زر التفسير
+    ========================================================= */
+
+    function createTafsirButton(
+        surahNumber,
+        ayahNumber
+    ) {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.className = "tafsir-btn";
+        button.textContent = "تفسير";
+
+        const box =
+            document.createElement("div");
+
+        box.style.display = "none";
+        box.dataset.open = "0";
+
+        button.addEventListener(
+            "click",
+            function () {
+                showTafsir(
+                    surahNumber,
+                    ayahNumber,
+                    box,
+                    button
+                );
+            }
+        );
+
+        return {
+            button,
+            box
+        };
+    }
+
+
+    /* =========================================================
+       عرض فهرس السور
+    ========================================================= */
+
+    function renderSurahList() {
+
+        currentView = "list";
+        searchStatus.textContent = "";
+        container.innerHTML = "";
+
+        const list =
+            document.createElement("div");
+
+        list.className = "surah-list";
+
+        const fragment =
+            document.createDocumentFragment();
+
+        quranData.forEach(function (surah, index) {
+
+            const row =
+                document.createElement("div");
+
+            row.className = "surah-item";
+            row.setAttribute("role", "button");
+            row.setAttribute("tabindex", "0");
+
+            const main =
+                document.createElement("div");
+
+            main.className = "surah-main";
+
+            const number =
+                document.createElement("span");
+
+            number.className = "surah-number";
+            number.textContent = surah.number;
+
+            const name =
+                document.createElement("span");
+
+            name.className = "surah-name";
+            name.textContent = surah.name;
+
+            const count =
+                document.createElement("span");
+
+            count.className = "surah-count";
+            count.textContent =
+                surah.ayahs.length + " آيات";
+
+            main.appendChild(number);
+            main.appendChild(name);
+            row.appendChild(main);
+            row.appendChild(count);
+
+            const open = function () {
+                openSurah(index);
+            };
+
+            row.addEventListener("click", open);
+
+            row.addEventListener("keydown", function (event) {
+
+                if (
+                    event.key === "Enter" ||
+                    event.key === " "
+                ) {
+                    event.preventDefault();
+                    open();
+                }
+            });
+
+            fragment.appendChild(row);
+        });
+
+        list.appendChild(fragment);
+        container.appendChild(list);
+    }
+
+
+    /* =========================================================
+       فتح سورة
     ========================================================= */
 
     function openSurah(index) {
@@ -887,364 +870,238 @@
         const surah =
             quranData[index];
 
-        if (!surah) {
-            return;
-        }
+        if (!surah) return;
 
-
+        currentView = "surah";
+        searchStatus.textContent = "";
         container.innerHTML = "";
-
-
-        /*
-         * زر الرجوع
-         */
 
         const back =
             document.createElement("button");
 
         back.type = "button";
-
-        back.className =
-            "back-btn";
-
-        back.textContent =
-            "← فهرس السور";
-
+        back.className = "back-btn";
+        back.textContent = "← فهرس السور";
 
         back.addEventListener(
             "click",
             function () {
-
+                searchInput.value = "";
                 renderSurahList();
-
-                window.scrollTo(
-                    0,
-                    0
-                );
+                window.scrollTo(0, 0);
             }
         );
 
-
-        container.appendChild(
-            back
-        );
-
-
-        /*
-         * عنوان السورة
-         */
+        container.appendChild(back);
 
         const title =
             document.createElement("h2");
 
-        title.className =
-            "section-title";
+        title.className = "section-title";
+        title.textContent = "سورة " + surah.name;
 
-        title.textContent =
-            "سورة " +
-            surah.name;
-
-
-        container.appendChild(
-            title
-        );
-
-
-        /*
-         * الآيات
-         */
+        container.appendChild(title);
 
         const fragment =
             document.createDocumentFragment();
 
+        surah.ayahs.forEach(function (text, index) {
 
-        surah.ayahs.forEach(
-            (text, index) => {
+            const ayahNumber = index + 1;
 
-                const ayahNumber =
-                    index + 1;
+            const card =
+                document.createElement("div");
 
+            card.className = "ayah-card";
 
-                const card =
-                    document.createElement(
-                        "div"
-                    );
+            const number =
+                document.createElement("span");
 
-                card.className =
-                    "ayah-card";
+            number.className = "ayah-number";
+            number.textContent = ayahNumber;
 
+            const verse =
+                document.createElement("span");
 
-                const number =
-                    document.createElement(
-                        "span"
-                    );
+            verse.className = "ayah-line";
+            verse.textContent = text;
 
-                number.className =
-                    "ayah-number";
-
-                number.textContent =
-                    ayahNumber;
-
-
-                const verse =
-                    document.createElement(
-                        "span"
-                    );
-
-                verse.textContent =
-                    text;
-
-
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-                button.type =
-                    "button";
-
-                button.className =
-                    "tafsir-btn";
-
-                button.textContent =
-                    "تفسير";
-
-
-                const box =
-                    document.createElement(
-                        "div"
-                    );
-
-                box.style.display =
-                    "none";
-
-
-                button.addEventListener(
-                    "click",
-                    function () {
-
-                        toggleTafsir(
-                            surah.number,
-                            ayahNumber,
-                            box,
-                            button
-                        );
-
-                    }
+            const tafsir =
+                createTafsirButton(
+                    surah.number,
+                    ayahNumber
                 );
 
+            card.appendChild(number);
+            card.appendChild(verse);
+            card.appendChild(tafsir.button);
+            card.appendChild(tafsir.box);
 
-                card.appendChild(
-                    number
-                );
+            fragment.appendChild(card);
+        });
 
-                card.appendChild(
-                    verse
-                );
-
-                card.appendChild(
-                    button
-                );
-
-                card.appendChild(
-                    box
-                );
-
-
-                fragment.appendChild(
-                    card
-                );
-
-            }
-        );
-
-
-        container.appendChild(
-            fragment
-        );
-
-
-        window.scrollTo(
-            0,
-            0
-        );
+        container.appendChild(fragment);
+        window.scrollTo(0, 0);
     }
 
 
     /* =========================================================
-       البحث
+       بناء فهرس البحث عند أول استخدام فقط
+    ========================================================= */
+
+    function ensureSearchIndex() {
+
+        if (searchIndex) {
+            return searchIndex;
+        }
+
+        const index = [];
+
+        for (
+            let surahIndex = 0;
+            surahIndex < quranData.length;
+            surahIndex++
+        ) {
+
+            const surah = quranData[surahIndex];
+
+            for (
+                let ayahIndex = 0;
+                ayahIndex < surah.ayahs.length;
+                ayahIndex++
+            ) {
+
+                const text =
+                    surah.ayahs[ayahIndex];
+
+                index.push({
+                    surahIndex,
+                    surahNumber: surah.number,
+                    surahName: surah.name,
+                    ayahNumber: ayahIndex + 1,
+                    text,
+                    normalized: normalizeArabic(text)
+                });
+            }
+        }
+
+        searchIndex = index;
+
+        console.log(
+            "🔎 تم بناء فهرس البحث عند الطلب:",
+            searchIndex.length,
+            "آية"
+        );
+
+        return searchIndex;
+    }
+
+
+    /* =========================================================
+       عرض نتائج البحث
     ========================================================= */
 
     function performSearch(term) {
 
+        if (!quranData.length) {
+            return;
+        }
+
         const query =
             normalizeArabic(term);
 
-
         if (!query) {
-
             renderSurahList();
-
             return;
         }
 
+        const index =
+            ensureSearchIndex();
 
-        const results =
-            flatAyahs.filter(
-                item =>
-                    item.normalized.includes(
-                        query
-                    )
-            );
+        const results = [];
 
+        for (const item of index) {
+
+            if (
+                item.normalized.includes(query)
+            ) {
+                results.push(item);
+            }
+        }
 
         searchStatus.textContent =
             results.length
-                ? "تم العثور على " +
-                  results.length +
-                  " نتيجة"
+                ? "تم العثور على " + results.length + " نتيجة"
                 : "";
-
-
-        if (!results.length) {
-
-            container.innerHTML =
-                '<p class="no-results">لا توجد نتائج مطابقة.</p>';
-
-            return;
-        }
-
 
         container.innerHTML = "";
 
+        if (!results.length) {
+
+            const empty =
+                document.createElement("p");
+
+            empty.className = "no-results";
+            empty.textContent =
+                "لا توجد نتائج مطابقة.";
+
+            container.appendChild(empty);
+            return;
+        }
 
         const fragment =
             document.createDocumentFragment();
 
+        for (const item of results) {
 
-        results.forEach(
-            item => {
+            const card =
+                document.createElement("div");
 
-                const card =
-                    document.createElement(
-                        "div"
-                    );
+            card.className = "ayah-card";
 
-                card.className =
-                    "ayah-card";
+            const title =
+                document.createElement("div");
 
+            title.className = "result-title";
+            title.textContent =
+                "سورة " +
+                item.surahName +
+                " — الآية " +
+                item.ayahNumber;
 
-                const title =
-                    document.createElement(
-                        "div"
-                    );
+            const number =
+                document.createElement("span");
 
-                title.className =
-                    "result-title";
+            number.className = "ayah-number";
+            number.textContent = item.ayahNumber;
 
-                title.textContent =
-                    "سورة " +
-                    item.surahName +
-                    " — الآية " +
-                    item.ayahNumber;
+            const verse =
+                document.createElement("span");
 
+            verse.className = "ayah-line";
+            verse.textContent = item.text;
 
-                const number =
-                    document.createElement(
-                        "span"
-                    );
-
-                number.className =
-                    "ayah-number";
-
-                number.textContent =
-                    item.ayahNumber;
-
-
-                const verse =
-                    document.createElement(
-                        "span"
-                    );
-
-                verse.textContent =
-                    item.text;
-
-
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-                button.type =
-                    "button";
-
-                button.className =
-                    "tafsir-btn";
-
-                button.textContent =
-                    "تفسير";
-
-
-                const box =
-                    document.createElement(
-                        "div"
-                    );
-
-                box.style.display =
-                    "none";
-
-
-                button.addEventListener(
-                    "click",
-                    function () {
-
-                        toggleTafsir(
-                            item.surahNumber,
-                            item.ayahNumber,
-                            box,
-                            button
-                        );
-
-                    }
+            const tafsir =
+                createTafsirButton(
+                    item.surahNumber,
+                    item.ayahNumber
                 );
 
+            card.appendChild(title);
+            card.appendChild(number);
+            card.appendChild(verse);
+            card.appendChild(tafsir.button);
+            card.appendChild(tafsir.box);
 
-                card.appendChild(
-                    title
-                );
+            fragment.appendChild(card);
+        }
 
-                card.appendChild(
-                    number
-                );
-
-                card.appendChild(
-                    verse
-                );
-
-                card.appendChild(
-                    button
-                );
-
-                card.appendChild(
-                    box
-                );
-
-
-                fragment.appendChild(
-                    card
-                );
-            }
-        );
-
-
-        container.appendChild(
-            fragment
-        );
+        container.appendChild(fragment);
     }
 
 
     /* =========================================================
-       البحث الفوري
+       البحث — Debounce خفيف
     ========================================================= */
 
     searchInput.addEventListener(
@@ -1254,45 +1111,27 @@
             const term =
                 this.value.trim();
 
-
             if (searchTimer) {
-
-                clearTimeout(
-                    searchTimer
-                );
+                clearTimeout(searchTimer);
             }
 
-
             if (!term) {
-
                 renderSurahList();
-
                 return;
             }
 
-
-            searchStatus.textContent =
-                "...";
-
+            searchStatus.textContent = "...";
 
             searchTimer =
-                setTimeout(
-                    function () {
-
-                        performSearch(
-                            term
-                        );
-
-                    },
-                    200
-                );
-
+                setTimeout(function () {
+                    performSearch(term);
+                }, 180);
         }
     );
 
 
     /* =========================================================
-       تحميل القرآن
+       تحميل القرآن — التفسير لا يُحمّل هنا
     ========================================================= */
 
     async function start() {
@@ -1301,56 +1140,42 @@
 
             const response =
                 await fetch(
-                    "./quran-local.json",
-                    {
-                        cache: "no-store"
-                    }
+                    "./quran-local.json"
                 );
 
-
             if (!response.ok) {
-
                 throw new Error(
                     "quran-local.json HTTP " +
                     response.status
                 );
             }
 
-
             const data =
                 await response.json();
-
 
             quranData =
                 normalizeQuran(data);
 
-
             if (!quranData.length) {
-
                 throw new Error(
                     "لم يتم العثور على سور أو آيات داخل quran-local.json"
                 );
             }
 
-
             /*
-             * القرآن يظهر أولًا.
+             * مهم جدًا:
+             * لا نبني فهرس البحث هنا.
+             * ولا نحمل التفسير هنا.
              */
 
-            buildSearchIndex();
+            searchIndex = null;
+            tafsirData = null;
+            tafsirPromise = null;
+
             renderSurahList();
 
-
-            /*
-             * ثم التفسير.
-             * فشل التفسير لا يعطل القرآن.
-             */
-
-            await loadTafsir();
-
-
             console.log(
-                "✅ القرآن محمل:",
+                "✅ القرآن جاهز:",
                 quranData.length,
                 "سورة"
             );
@@ -1358,19 +1183,44 @@
         } catch (error) {
 
             console.error(
-                "خطأ تحميل القرآن:",
+                "❌ خطأ تحميل القرآن:",
                 error
             );
 
-
             container.innerHTML =
-                '<div class="error-box">' +
-                '<strong>تعذر تحميل القرآن.</strong><br><br>' +
-                'تأكد من وجود quran-local.json بجانب quran.html.' +
-                '</div>';
+                "";
+
+            const errorBox =
+                document.createElement("div");
+
+            errorBox.className = "error-box";
+
+            const strong =
+                document.createElement("strong");
+
+            strong.textContent =
+                "تعذر تحميل القرآن.";
+
+            errorBox.appendChild(strong);
+
+            errorBox.appendChild(
+                document.createElement("br")
+            );
+
+            errorBox.appendChild(
+                document.createTextNode(
+                    "تأكد من وجود quran-local.json بجانب quran.html."
+                )
+            );
+
+            container.appendChild(errorBox);
         }
     }
 
+
+    /* =========================================================
+       بدء الصفحة
+    ========================================================= */
 
     start();
 
