@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>القرآن الكريم — الرفيق</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+.quran-container{max-width:720px;margin:0 auto;padding:16px}
+.quran-header{text-align:center;padding:20px 0 12px}
+.quran-header h2{margin:0;color:var(--gold);font-family:'Amiri',serif}
+.search-box{width:100%;box-sizing:border-box;padding:12px 14px;margin:14px 0 8px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:1rem;outline:none}
+.search-box:focus{border-color:var(--gold)}
+.search-status{text-align:center;color:var(--muted);font-size:.8rem;min-height:1.2em;margin-bottom:8px}
+.surah-list{list-style:none;padding:0;margin:0}
+.surah-item{padding:14px;margin-bottom:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.surah-item:active{transform:scale(.99)}
+.surah-main{display:flex;align-items:center;min-width:0}
+.surah-number{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:0 0 30px;margin-left:8px;border-radius:50%;background:rgba(212,175,55,.1);color:var(--gold);font-size:.75rem}
+.surah-name{color:var(--gold);font-family:'Amiri',serif;font-size:1.2rem;font-weight:700}
+.surah-count{color:var(--muted);font-size:.75rem;white-space:nowrap}
+.back-btn{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:8px 18px;border-radius:99px;margin-bottom:12px;cursor:pointer;font-family:inherit}
+.section-title{margin:8px 0 18px;text-align:center;color:var(--gold);font-family:'Amiri',serif}
+.ayah-card{padding:14px 0;border-bottom:1px solid rgba(255,255,255,.07);line-height:2.15;font-family:'Amiri',serif;font-size:1.16rem}
+.ayah-number{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 5px;margin-left:8px;border:1px solid rgba(212,175,55,.35);border-radius:50%;color:var(--gold);font-size:.78rem;line-height:1;vertical-align:middle;font-family:sans-serif}
+.tafsir-btn{background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:.72rem;cursor:pointer;margin-right:8px;vertical-align:middle;font-family:inherit}
+.tafsir-box{background:rgba(15,92,62,.2);border-right:3px solid var(--gold);padding:14px;margin:10px 0 3px;border-radius:10px;font-size:.98rem;line-height:2;color:var(--text);font-family:'Amiri',serif;white-space:pre-wrap}
+.no-results{text-align:center;padding:40px 16px;color:var(--muted)}
+.error-box{text-align:center;padding:18px;border-radius:14px;background:var(--card);border:1px solid var(--border);color:var(--text);line-height:1.9}
+</style>
+</head>
+<body>
+<div class="quran-container">
+<div class="quran-header"><h2>📖 القرآن الكريم</h2></div>
+<input id="searchInput" class="search-box" type="text" placeholder="🔍 ابحث عن كلمة أو آية..." autocomplete="off">
+<div id="searchStatus" class="search-status"></div>
+<div id="quranContent"><p class="no-results">جاري تحميل القرآن...</p></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var quranData=[];
+var tafsirData=null;
+var flatAyahs=[];
+var container=document.getElementById('quranContent');
+var searchInput=document.getElementById('searchInput');
+var searchStatus=document.getElementById('searchStatus');
+var searchTimer=null;
+
+function textOf(v){
+    if(typeof v==='string') return v.trim();
+    if(!v || typeof v!=='object') return '';
+    var a=[v.ar,v.text,v.verse,v.aya,v.t,v.content,v.text_ar];
+    for(var i=0;i<a.length;i++){
+        if(typeof a[i]==='string' && a[i].trim()) return a[i].trim();
+        if(a[i] && typeof a[i]==='object'){
+            var x=textOf(a[i]);
+            if(x) return x;
+        }
+    }
+    return '';
+}
+
+function surahName(s,i){
+    if(!s || typeof s!=='object') return 'السورة '+(i+1);
+    if(typeof s.name==='string' && s.name.trim()) return s.name.trim();
+    if(s.name && typeof s.name==='object' && typeof s.name.ar==='string' && s.name.ar.trim()) return s.name.ar.trim();
+    if(typeof s.title==='string' && s.title.trim()) return s.title.trim();
+    return 'السورة '+(i+1);
+}
+
+function extractAyahs(s){
+    if(!s || typeof s!=='object') return [];
+    var a=s.ayahs||s.verses||s.a||s.ayat||s.items;
+    if(!Array.isArray(a)) return [];
+    return a.map(textOf).filter(Boolean);
+}
+
+function normalizeSource(data){
+    var src=data;
+    if(!Array.isArray(src) && src && typeof src==='object'){
+        var c=[src.quran,src.surahs,src.suras,src.data,src.chapters,src.items];
+        for(var i=0;i<c.length;i++){ if(Array.isArray(c[i])){src=c[i];break;} }
+    }
+    if(!Array.isArray(src) && src && typeof src==='object'){
+        var keys=Object.keys(src).filter(function(k){return /^\d+$/.test(k);});
+        if(keys.length>0){
+            keys.sort(function(a,b){return Number(a)-Number(b);});
+            src=keys.map(function(k){return src[k];});
+        }
+    }
+    if(!Array.isArray(src)) return [];
+    return src.map(function(s,i){
+        return {
+            number:Number(s&& (s.number||s.id)) || (i+1),
+            name:surahName(s,i),
+            ayahs:extractAyahs(s)
+        };
+    }).filter(function(s){return s.ayahs.length>0;});
+}
+
+function normalizeArabic(t){
+    return String(t||'')
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g,'')
+      .replace(/ـ/g,'')
+      .replace(/[إأٱآا]/g,'ا')
+      .replace(/[ؤئ]/g,'ء')
+      .replace(/ى/g,'ي')
+      .replace(/ة/g,'ه')
+      .replace(/\s+/g,' ')
+      .trim()
+      .toLowerCase();
+}
+
+function loadTafsir(){
+    return fetch('./tafsir-saadi.json',{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(d){tafsirData=d;})
+      .catch(function(e){console.warn('tafsir-saadi.json:',e);tafsirData=null;});
+}
+
+function buildFlat(){
+    flatAyahs=[];
+    quranData.forEach(function(s,si){
+        s.ayahs.forEach(function(t,ai){
+            flatAyahs.push({
+                surahIndex:si,
+                surahNumber:s.number,
+                surahName:s.name,
+                ayahNumber:ai+1,
+                text:t,
+                normalized:normalizeArabic(t)
+            });
+        });
+    });
+}
+
+function showList(){
+    var frag=document.createDocumentFragment();
+    quranData.forEach(function(s,index){
+        var row=document.createElement('div');
+        row.className='surah-item';
+
+        var main=document.createElement('div');
+        main.className='surah-main';
+
+        var n=document.createElement('span');
+        n.className='surah-number';
+        n.textContent=s.number;
+
+        var name=document.createElement('span');
+        name.className='surah-name';
+        name.textContent=s.name;
+
+        main.appendChild(n);
+        main.appendChild(name);
+
+        var count=document.createElement('span');
+        count.className='surah-count';
+        count.textContent=s.ayahs.length+' آيات';
+
+        row.appendChild(main);
+        row.appendChild(count);
+
+        row.addEventListener('click',function(){
+            showSurah(index);
+        });
+
+        frag.appendChild(row);
+    });
+
+    container.innerHTML='';
+    container.appendChild(frag);
+    searchStatus.textContent='';
+}
+
+function getTafsir(surah,ayah){
+    if(!tafsirData) return null;
+    var key=String(surah)+':'+String(ayah);
+
+    if(Object.prototype.hasOwnProperty.call(tafsirData,key) && typeof tafsirData[key]==='string'){
+        return tafsirData[key];
+    }
+
+    if(tafsirData[String(surah)] && typeof tafsirData[String(surah)]==='object'){
+        var n=tafsirData[String(surah)][String(ayah)];
+        if(typeof n==='string') return n;
+    }
+
+    if(Array.isArray(tafsirData.tafsir)){
+        var s=Number(surah)-1;
+        var a=Number(ayah)-1;
+        if(Array.isArray(tafsirData.tafsir[s]) && typeof tafsirData.tafsir[s][a]==='string'){
+            return tafsirData.tafsir[s][a];
+        }
+    }
+    return null;
+}
+
+function toggleTafsir(surah,ayah,box,button){
+    if(box.style.display==='block'){
+        box.style.display='none';
+        button.textContent='تفسير';
+        return;
+    }
+
+    var t=getTafsir(surah,ayah);
+    box.innerHTML='';
+    var b=document.createElement('div');
+    b.className='tafsir-box';
+
+    if(t){
+        b.textContent=t;
+    }else if(!tafsirData){
+        b.textContent='ملف تفسير السعدي غير متاح حاليًا.';
+    }else{
+        b.textContent='التفسير غير متوفر لهذه الآية.';
+    }
+
+    box.appendChild(b);
+    box.style.display='block';
+    button.textContent='إخفاء التفسير';
+}
+
+function showSurah(index){
+    var s=quranData[index];
+    if(!s) return;
+
+    var frag=document.createDocumentFragment();
+
+    var back=document.createElement('button');
+    back.className='back-btn';
+    back.type='button';
+    back.textContent='← فهرس السور';
+    back.addEventListener('click',showList);
+
+    var title=document.createElement('h2');
+    title.className='section-title';
+    title.textContent='سورة '+s.name;
+
+    frag.appendChild(back);
+    frag.appendChild(title);
+
+    s.ayahs.forEach(function(t,i){
+        var ayah=i+1;
+        var card=document.createElement('div');
+        card.className='ayah-card';
+
+        var num=document.createElement('span');
+        num.className='ayah-number';
+        num.textContent=ayah;
+
+        var verse=document.createElement('span');
+        verse.textContent=t;
+
+        var btn=document.createElement('button');
+        btn.className='tafsir-btn';
+        btn.type='button';
+        btn.textContent='تفسير';
+
+        var box=document.createElement('div');
+        box.style.display='none';
+
+        btn.addEventListener('click',function(){
+            toggleTafsir(s.number,ayah,box,btn);
+        });
+
+        card.appendChild(num);
+        card.appendChild(verse);
+        card.appendChild(btn);
+        card.appendChild(box);
+        frag.appendChild(card);
+    });
+
+    container.innerHTML='';
+    container.appendChild(frag);
+    window.scrollTo(0,0);
+}
+
+function search(term){
+    var q=normalizeArabic(term);
+    if(!q){showList();return;}
+
+    var matches=flatAyahs.filter(function(x){return x.normalized.indexOf(q)!==-1;});
+
+    searchStatus.textContent=matches.length ? 'تم العثور على '+matches.length+' نتيجة':'';
+
+    if(!matches.length){
+        container.innerHTML='<p class="no-results">لا توجد نتائج مطابقة.</p>';
+        return;
+    }
+
+    var frag=document.createDocumentFragment();
+
+    matches.forEach(function(x){
+        var card=document.createElement('div');
+        card.className='ayah-card';
+
+        var meta=document.createElement('div');
+        meta.style.color='var(--gold)';
+        meta.style.marginBottom='6px';
+        meta.textContent='سورة '+x.surahName+' — الآية '+x.ayahNumber;
+
+        var num=document.createElement('span');
+        num.className='ayah-number';
+        num.textContent=x.ayahNumber;
+
+        var verse=document.createElement('span');
+        verse.textContent=x.text;
+
+        var btn=document.createElement('button');
+        btn.className='tafsir-btn';
+        btn.type='button';
+        btn.textContent='تفسير';
+
+        var box=document.createElement('div');
+        box.style.display='none';
+
+        btn.addEventListener('click',function(){
+            toggleTafsir(x.surahNumber,x.ayahNumber,box,btn);
+        });
+
+        card.appendChild(meta);
+        card.appendChild(num);
+        card.appendChild(verse);
+        card.appendChild(btn);
+        card.appendChild(box);
+
+        frag.appendChild(card);
+    });
+
+    container.innerHTML='';
+    container.appendChild(frag);
+}
+
+searchInput.addEventListener('input',function(){
+    var term=this.value.trim();
+    if(searchTimer) clearTimeout(searchTimer);
+
+    if(!term){showList();return;}
+
+    searchStatus.textContent='...';
+    searchTimer=setTimeout(function(){search(term);},220);
+});
+
+fetch('./quran-local.json',{cache:'no-store'})
+.then(function(r){
+    if(!r.ok) throw new Error('quran-local.json HTTP '+r.status);
+    return r.json();
+})
+.then(function(data){
+    quranData=normalizeSource(data);
+    if(!quranData.length) throw new Error('لم يتم العثور على سور صالحة في quran-local.json');
+
+    buildFlat();
+    showList();
+
+    return loadTafsir();
+})
+.catch(function(e){
+    console.error(e);
+    container.innerHTML=
+      '<div class="error-box"><strong>تعذر تحميل القرآن.</strong><br>'+
+      'الملف quran-local.json موجود لكنه لا يطابق البنية المتوقعة أو تعذر قراءته.</div>';
+});
+
+})();
+</script>
+</body>
+</html>
