@@ -1,15 +1,14 @@
 /* =========================================================
    الرفيق — Service Worker
-   الإصدار: v14
+   الإصدار: v13
 
-   النسخة المرجعية مبنية على sw.js الأصلي الذي أرسله المستخدم.
-
-   الإصلاحات:
-   - القرآن والتفسير: Cache First
-   - الأربعون: Cache First
-   - الأذان: Cache First مع دعم Range Requests
-   - الصفحات والبرمجيات: Network First
-   - حذف إصدارات الكاش القديمة
+   الهدف:
+   - تحديث صفحات التطبيق المهمة
+   - تحديث القرآن والتفسير والقبلة
+   - تحديث app.js و theme.js و style.css
+   - تحديث ملف الأذان adhan.mp3
+   - العمل بدون إنترنت بعد تحميل الملفات
+   - حذف إصدارات الرفيق القديمة
    ========================================================= */
 
 'use strict';
@@ -19,7 +18,7 @@
    1) إصدار الكاش
    ========================================================= */
 
-const CACHE_NAME = 'rafeeq-v14';
+const CACHE_NAME = 'rafeeq-v13';
 
 
 /* =========================================================
@@ -27,6 +26,7 @@ const CACHE_NAME = 'rafeeq-v14';
    ========================================================= */
 
 const APP_FILES = [
+
     './',
     './index.html',
 
@@ -34,6 +34,7 @@ const APP_FILES = [
     './tafsir.html',
     './qibla.html',
     './prayer.html',
+
     './adhkar.html',
     './hisnul.html',
     './arbaeen.html',
@@ -46,38 +47,38 @@ const APP_FILES = [
     './manifest.json',
 
     './icon-192.png',
-    './icon-512.png'
+    './icon-512.png',
+
+    /*
+     * الأذان
+     * مهم جدًا: أُضيف هنا حتى يحصل
+     * Service Worker على النسخة الجديدة.
+     */
+    './adhan.mp3'
+
 ];
 
 
 /* =========================================================
-   3) ملفات البيانات الثابتة
+   3) ملفات البيانات المحلية
    ========================================================= */
 
 const DATA_FILES = [
+
     './quran-local.json',
-    './tafsir-saadi.json',
-    './arbaeen-data.json'
+    './tafsir-saadi.json'
+
 ];
 
 
 /* =========================================================
-   4) ملف الأذان
+   4) الملفات الحساسة للتحديث
    *
-   * منفصل عن DATA_FILES لأن الصوت يحتاج معالجة
-   * خاصة لطلبات Range.
+   * Network First
+   * أي نسخة جديدة على GitHub تُستخدم أولًا.
    ========================================================= */
 
-const AUDIO_FILES = [
-    './adhan.mp3'
-];
-
-
-/* =========================================================
-   5) الصفحات والبرمجيات التي تحتاج تحديثًا
-   ========================================================= */
-
-function isUpdateSensitivePage(request) {
+function isUpdateSensitive(request) {
 
     const url =
         new URL(request.url);
@@ -87,8 +88,6 @@ function isUpdateSensitivePage(request) {
 
 
     return (
-
-        path.endsWith('/') ||
 
         path.endsWith('/index.html') ||
 
@@ -100,19 +99,23 @@ function isUpdateSensitivePage(request) {
 
         path.endsWith('/prayer.html') ||
 
-        path.endsWith('/adhkar.html') ||
-
-        path.endsWith('/hisnul.html') ||
-
-        path.endsWith('/arbaeen.html') ||
-
-        path.endsWith('/more.html') ||
-
         path.endsWith('/app.js') ||
+
+        path.endsWith('/theme.js') ||
 
         path.endsWith('/style.css') ||
 
-        path.endsWith('/theme.js')
+        path.endsWith('/manifest.json') ||
+
+        path.endsWith('/quran-local.json') ||
+
+        path.endsWith('/tafsir-saadi.json') ||
+
+        /*
+         * الأهم:
+         * ملف الأذان نفسه أصبح حساسًا للتحديث.
+         */
+        path.endsWith('/adhan.mp3')
 
     );
 
@@ -120,393 +123,7 @@ function isUpdateSensitivePage(request) {
 
 
 /* =========================================================
-   6) معرفة هل الطلب ملف بيانات
-   ========================================================= */
-
-function isDataFile(request) {
-
-    const path =
-        new URL(request.url).pathname;
-
-
-    return DATA_FILES.some(
-        file =>
-            path.endsWith(
-                file.replace('./', '/')
-            )
-    );
-
-}
-
-
-/* =========================================================
-   7) معرفة هل الطلب ملف الأذان
-   ========================================================= */
-
-function isAudioFile(request) {
-
-    const path =
-        new URL(request.url).pathname;
-
-
-    return AUDIO_FILES.some(
-        file =>
-            path.endsWith(
-                file.replace('./', '/')
-            )
-    );
-
-}
-
-
-/* =========================================================
-   8) قراءة Range Header
-   ========================================================= */
-
-function parseRangeHeader(
-    range,
-    totalLength
-) {
-
-    if (
-        !range ||
-        !range.startsWith('bytes=')
-    ) {
-
-        return null;
-
-    }
-
-
-    const value =
-        range
-            .replace('bytes=', '')
-            .split(',')[0]
-            .trim();
-
-
-    const parts =
-        value.split('-');
-
-
-    let start =
-        Number(parts[0]);
-
-
-    let end =
-        parts[1] === ''
-            ? totalLength - 1
-            : Number(parts[1]);
-
-
-    /*
-     * bytes=-500
-     * يعني آخر 500 بايت.
-     */
-
-    if (
-        parts[0] === ''
-    ) {
-
-        const suffixLength =
-            Number(parts[1]);
-
-
-        if (
-            !Number.isFinite(
-                suffixLength
-            )
-        ) {
-
-            return null;
-
-        }
-
-
-        start =
-            Math.max(
-                0,
-                totalLength - suffixLength
-            );
-
-        end =
-            totalLength - 1;
-
-    }
-
-
-    if (
-        !Number.isFinite(start) ||
-        !Number.isFinite(end)
-    ) {
-
-        return null;
-
-    }
-
-
-    start =
-        Math.max(
-            0,
-            Math.floor(start)
-        );
-
-    end =
-        Math.min(
-            totalLength - 1,
-            Math.floor(end)
-        );
-
-
-    if (
-        start > end ||
-        start >= totalLength
-    ) {
-
-        return null;
-
-    }
-
-
-    return {
-        start,
-        end
-    };
-
-}
-
-
-/* =========================================================
-   9) خدمة ملف الأذان مع دعم Range
-   ========================================================= */
-
-async function serveAudio(
-    request,
-    cache
-) {
-
-    /*
-     * نحاول استخدام النسخة المحلية أولًا.
-     */
-
-    let cachedResponse =
-        await cache.match(
-            request
-        );
-
-
-    /*
-     * طلب Range لن يجد تطابقًا مباشرًا عادةً،
-     * لذلك نبحث عن النسخة الأصلية بدون Range.
-     */
-
-    if (
-        !cachedResponse &&
-        request.headers.has('range')
-    ) {
-
-        cachedResponse =
-            await cache.match(
-                AUDIO_FILES[0]
-            );
-
-    }
-
-
-    /*
-     * لا توجد نسخة محلية:
-     * نجلب الملف من الشبكة.
-     */
-
-    if (
-        !cachedResponse
-    ) {
-
-        try {
-
-            const networkResponse =
-                await fetch(
-                    request
-                );
-
-
-            if (
-                networkResponse &&
-                networkResponse.ok &&
-                !request.headers.has('range')
-            ) {
-
-                await cache.put(
-                    AUDIO_FILES[0],
-                    networkResponse.clone()
-                );
-
-            }
-
-
-            return networkResponse;
-
-        } catch (error) {
-
-            console.warn(
-                '❌ تعذر تحميل الأذان:',
-                error
-            );
-
-            throw error;
-
-        }
-
-    }
-
-
-    /*
-     * إذا لم يكن الطلب Range،
-     * نعيد الملف الكامل.
-     */
-
-    const rangeHeader =
-        request.headers.get(
-            'range'
-        );
-
-
-    if (
-        !rangeHeader
-    ) {
-
-        return cachedResponse;
-
-    }
-
-
-    /*
-     * تحويل الاستجابة إلى ArrayBuffer.
-     */
-
-    const buffer =
-        await cachedResponse.arrayBuffer();
-
-
-    const totalLength =
-        buffer.byteLength;
-
-
-    const range =
-        parseRangeHeader(
-            rangeHeader,
-            totalLength
-        );
-
-
-    /*
-     * Range غير صالح.
-     */
-
-    if (
-        !range
-    ) {
-
-        return new Response(
-            null,
-            {
-                status: 416,
-                headers: {
-                    'Content-Range':
-                        `bytes */${totalLength}`
-                }
-            }
-        );
-
-    }
-
-
-    /*
-     * استخراج الجزء المطلوب.
-     */
-
-    const chunk =
-        buffer.slice(
-            range.start,
-            range.end + 1
-        );
-
-
-    const headers =
-        new Headers();
-
-
-    /*
-     * الاحتفاظ بنوع الملف.
-     */
-
-    const contentType =
-        cachedResponse.headers.get(
-            'Content-Type'
-        );
-
-
-    if (
-        contentType
-    ) {
-
-        headers.set(
-            'Content-Type',
-            contentType
-        );
-
-    } else {
-
-        headers.set(
-            'Content-Type',
-            'audio/mpeg'
-        );
-
-    }
-
-
-    headers.set(
-        'Accept-Ranges',
-        'bytes'
-    );
-
-
-    headers.set(
-        'Content-Length',
-        String(
-            chunk.byteLength
-        )
-    );
-
-
-    headers.set(
-        'Content-Range',
-
-        `bytes ${range.start}-${range.end}/${totalLength}`
-
-    );
-
-
-    headers.set(
-        'Cache-Control',
-        'public, max-age=31536000'
-    );
-
-
-    return new Response(
-        chunk,
-        {
-            status: 206,
-            statusText: 'Partial Content',
-            headers
-        }
-    );
-
-}
-
-
-/* =========================================================
-   10) INSTALL
+   5) تثبيت الإصدار الجديد
    ========================================================= */
 
 self.addEventListener(
@@ -543,8 +160,7 @@ self.addEventListener(
                                 await fetch(
                                     file,
                                     {
-                                        cache:
-                                            'no-store'
+                                        cache: 'no-store'
                                     }
                                 );
 
@@ -557,6 +173,12 @@ self.addEventListener(
                                 await cache.put(
                                     file,
                                     response.clone()
+                                );
+
+
+                                console.log(
+                                    '✅ تم تخزين:',
+                                    file
                                 );
 
                             }
@@ -575,7 +197,7 @@ self.addEventListener(
 
 
                     /* -----------------------------------------
-                       ملفات القرآن والتفسير
+                       ملفات البيانات
                        ----------------------------------------- */
 
                     for (
@@ -588,8 +210,7 @@ self.addEventListener(
                                 await fetch(
                                     file,
                                     {
-                                        cache:
-                                            'no-store'
+                                        cache: 'no-store'
                                     }
                                 );
 
@@ -602,6 +223,12 @@ self.addEventListener(
                                 await cache.put(
                                     file,
                                     response.clone()
+                                );
+
+
+                                console.log(
+                                    '✅ تم تخزين البيانات:',
+                                    file
                                 );
 
                             }
@@ -618,65 +245,15 @@ self.addEventListener(
 
                     }
 
-
-                    /* -----------------------------------------
-                       الأذان
-                       ----------------------------------------- */
-
-                    for (
-                        const file of AUDIO_FILES
-                    ) {
-
-                        try {
-
-                            const response =
-                                await fetch(
-                                    file,
-                                    {
-                                        cache:
-                                            'no-store'
-                                    }
-                                );
-
-
-                            if (
-                                response &&
-                                response.ok
-                            ) {
-
-                                /*
-                                 * نخزن النسخة الكاملة،
-                                 * وليس استجابة Range.
-                                 */
-
-                                await cache.put(
-                                    file,
-                                    response.clone()
-                                );
-
-                                console.log(
-                                    '🔊 تم تخزين ملف الأذان'
-                                );
-
-                            }
-
-                        } catch (error) {
-
-                            console.warn(
-                                '⚠️ تعذر تخزين الأذان:',
-                                error
-                            );
-
-                        }
-
-                    }
-
                 }
             )
 
             .then(
                 () => {
 
+                    /*
+                     * تفعيل الإصدار الجديد فورًا
+                     */
                     return self.skipWaiting();
 
                 }
@@ -689,7 +266,9 @@ self.addEventListener(
 
 
 /* =========================================================
-   11) ACTIVATE
+   6) تفعيل Service Worker
+   *
+   * حذف كل إصدارات الرفيق القديمة.
    ========================================================= */
 
 self.addEventListener(
@@ -745,6 +324,9 @@ self.addEventListener(
             .then(
                 () => {
 
+                    /*
+                     * جعل v13 يتحكم في جميع الصفحات فورًا
+                     */
                     return self.clients.claim();
 
                 }
@@ -757,7 +339,7 @@ self.addEventListener(
 
 
 /* =========================================================
-   12) FETCH
+   7) FETCH
    ========================================================= */
 
 self.addEventListener(
@@ -773,8 +355,7 @@ self.addEventListener(
          */
 
         if (
-            request.method !==
-            'GET'
+            request.method !== 'GET'
         ) {
 
             return;
@@ -792,104 +373,37 @@ self.addEventListener(
                 async (cache) => {
 
 
-                    /* =========================================
-                       أولاً: الأذان
-                       ========================================= */
-
-                    if (
-                        isAudioFile(
-                            request
-                        )
-                    ) {
-
-                        return serveAudio(
-                            request,
-                            cache
-                        );
-
-                    }
-
-
-                    /* =========================================
-                       ثانيًا: القرآن والتفسير والبيانات
-                       Cache First
-                       ========================================= */
-
-                    if (
-                        isDataFile(
-                            request
-                        )
-                    ) {
-
-                        const cachedResponse =
-                            await cache.match(
-                                request
-                            );
-
-
-                        if (
-                            cachedResponse
-                        ) {
-
-                            return cachedResponse;
-
-                        }
-
-
-                        try {
-
-                            const networkResponse =
-                                await fetch(
-                                    request
-                                );
-
-
-                            if (
-                                networkResponse &&
-                                networkResponse.ok
-                            ) {
-
-                                await cache.put(
-                                    request,
-                                    networkResponse.clone()
-                                );
-
-                            }
-
-
-                            return networkResponse;
-
-                        } catch (error) {
-
-                            throw error;
-
-                        }
-
-                    }
-
-
-                    /* =========================================
-                       ثالثًا: الصفحات والبرمجيات
+                    /* =================================================
+                       الملفات الحساسة للتحديث
                        Network First
-                       ========================================= */
+                       ================================================= */
 
                     if (
-                        isUpdateSensitivePage(
+                        isUpdateSensitive(
                             request
                         )
                     ) {
 
                         try {
+
+                            /*
+                             * طلب مباشر من الشبكة
+                             * مع منع الكاش الوسيط.
+                             */
 
                             const networkResponse =
                                 await fetch(
                                     request,
                                     {
-                                        cache:
-                                            'no-store'
+                                        cache: 'no-store'
                                     }
                                 );
 
+
+                            /*
+                             * إذا كانت النسخة صالحة
+                             * نخزنها مكان القديمة.
+                             */
 
                             if (
                                 networkResponse &&
@@ -901,15 +415,27 @@ self.addEventListener(
                                     networkResponse.clone()
                                 );
 
+
+                                console.log(
+                                    '🔄 تم تحديث:',
+                                    request.url
+                                );
+
                             }
 
 
                             return networkResponse;
 
+
                         } catch (error) {
 
+                            /*
+                             * لا يوجد إنترنت:
+                             * نستخدم النسخة المحلية.
+                             */
+
                             console.warn(
-                                '📴 استخدام النسخة المخزنة:',
+                                '📴 الشبكة غير متاحة، استخدام الكاش:',
                                 request.url
                             );
 
@@ -928,6 +454,10 @@ self.addEventListener(
 
                             }
 
+
+                            /*
+                             * محاولة ثانية بالمسار النسبي.
+                             */
 
                             const filename =
                                 new URL(
@@ -967,10 +497,10 @@ self.addEventListener(
                     }
 
 
-                    /* =========================================
-                       رابعًا: أي طلب آخر
+                    /* =================================================
+                       بقية الملفات
                        Cache First
-                       ========================================= */
+                       ================================================= */
 
                     const cachedResponse =
                         await cache.match(
@@ -986,6 +516,11 @@ self.addEventListener(
 
                     }
 
+
+                    /* =================================================
+                       غير موجود في الكاش
+                       تحميل من الشبكة
+                       ================================================= */
 
                     try {
 
@@ -1010,6 +545,7 @@ self.addEventListener(
 
                         return networkResponse;
 
+
                     } catch (error) {
 
                         throw error;
@@ -1026,7 +562,7 @@ self.addEventListener(
 
 
 /* =========================================================
-   13) الرسائل
+   8) رسائل التطبيق
    ========================================================= */
 
 self.addEventListener(
@@ -1042,6 +578,10 @@ self.addEventListener(
         }
 
 
+        /* -----------------------------------------------------
+           تفعيل النسخة الجديدة
+           ----------------------------------------------------- */
+
         if (
             event.data.type ===
             'SKIP_WAITING'
@@ -1051,6 +591,10 @@ self.addEventListener(
 
         }
 
+
+        /* -----------------------------------------------------
+           حذف جميع الكاش
+           ----------------------------------------------------- */
 
         if (
             event.data.type ===
@@ -1090,9 +634,9 @@ self.addEventListener(
 
 
 /* =========================================================
-   14) رسالة تشخيصية
+   9) رسالة تشخيصية
    ========================================================= */
 
 console.log(
-    '🟢 الرفيق — Service Worker v14 يعمل'
+    '🟢 الرفيق — Service Worker v13 يعمل'
 );
