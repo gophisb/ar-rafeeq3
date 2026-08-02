@@ -1,1628 +1,355 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#080B10">
-
 <title>الرفيق — بوصلة القبلة</title>
-
 <style>
-:root{
-    --bg:#081712;
-    --card:#10251e;
-    --gold:#d4af37;
-    --gold2:#f1d878;
-    --text:#eee7d8;
-    --muted:#91a19a;
-    --green:#39c98a;
-    --red:#e26b6b;
-}
-
-*{
-    box-sizing:border-box;
-}
-
-html,body{
-    margin:0;
-    min-height:100%;
-    background:var(--bg);
-    color:var(--text);
-    font-family:Tajawal,"Segoe UI",Arial,sans-serif;
-}
-
-body{
-    min-height:100vh;
-}
-
-.page{
-    width:100%;
-    max-width:430px;
-    margin:auto;
-    padding:15px 14px 32px;
-}
-
-.head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-}
-
-.back{
-    color:var(--gold);
-    text-decoration:none;
-    font-size:14px;
-}
-
-.title{
-    margin:0;
-    color:var(--gold);
-    font-family:Amiri,serif;
-    font-size:27px;
-}
-
-.sub{
-    text-align:center;
-    color:var(--muted);
-    font-size:12px;
-    margin:4px 0 14px;
-}
-
-.info{
-    padding:12px;
-    border:1px solid rgba(212,175,55,.18);
-    background:rgba(255,255,255,.035);
-    border-radius:16px;
-    text-align:center;
-    color:#c7d1cc;
-    font-size:11px;
-    line-height:1.8;
-    margin-bottom:10px;
-}
-
-.start{
-    width:100%;
-    padding:14px;
-    border:0;
-    border-radius:15px;
-    background:linear-gradient(135deg,#d4af37,#9d7620);
-    color:#11140f;
-    font:800 16px Tajawal,sans-serif;
-    cursor:pointer;
-}
-
-.start:disabled{
-    opacity:.65;
-}
-
-.status{
-    min-height:48px;
-    padding:9px 4px;
-    text-align:center;
-    color:var(--gold2);
-    font-size:12px;
-    line-height:1.7;
-}
-
-.status.good{
-    color:var(--green);
-}
-
-.status.error{
-    color:#ef9696;
-}
-
-.compass{
-    position:relative;
-    width:min(88vw,350px);
-    height:min(88vw,350px);
-    margin:4px auto 15px;
-    border-radius:50%;
-    border:2px solid rgba(212,175,55,.8);
-    background:
-        radial-gradient(
-            circle,
-            #294d3e 0%,
-            #17372c 45%,
-            #0c2119 78%,
-            #06120e 100%
-        );
-    box-shadow:
-        0 0 38px rgba(212,175,55,.14),
-        inset 0 0 35px rgba(0,0,0,.55);
-}
-
-.ring{
-    position:absolute;
-    border-radius:50%;
-    border:1px solid rgba(212,175,55,.4);
-}
-
-.ring.one{
-    inset:8%;
-}
-
-.ring.two{
-    inset:19%;
-    border-style:dashed;
-    border-color:rgba(212,175,55,.22);
-}
-
-.plate{
-    position:absolute;
-    inset:8%;
-    transition:transform .12s linear;
-}
-
-.n,.e,.s,.w{
-    position:absolute;
-    font:bold 14px Arial,sans-serif;
-}
-
-.n{
-    top:4%;
-    left:50%;
-    transform:translateX(-50%);
-    color:var(--red);
-}
-
-.e{
-    right:4%;
-    top:50%;
-    transform:translateY(-50%);
-    color:#b9c4bf;
-}
-
-.s{
-    bottom:4%;
-    left:50%;
-    transform:translateX(-50%);
-    color:#b9c4bf;
-}
-
-.w{
-    left:4%;
-    top:50%;
-    transform:translateY(-50%);
-    color:#b9c4bf;
-}
-
-.pointer-top{
-    position:absolute;
-    top:5px;
-    left:50%;
-    transform:translateX(-50%);
-    width:0;
-    height:0;
-    border-left:9px solid transparent;
-    border-right:9px solid transparent;
-    border-top:18px solid var(--gold);
-    filter:drop-shadow(0 0 7px rgba(212,175,55,.7));
-    z-index:20;
-}
-
-.qibla{
-    position:absolute;
-    inset:5%;
-    transition:transform .12s linear;
-    z-index:12;
-    pointer-events:none;
-}
-
-.kaaba{
-    position:absolute;
-    top:2px;
-    left:50%;
-    transform:translateX(-50%);
-    font-size:30px;
-    filter:drop-shadow(0 0 10px rgba(212,175,55,.7));
-}
-
-.qline{
-    position:absolute;
-    top:40px;
-    left:50%;
-    width:3px;
-    height:24%;
-    transform:translateX(-50%);
-    border-radius:8px;
-    background:linear-gradient(
-        to bottom,
-        var(--gold2),
-        transparent
-    );
-    box-shadow:0 0 10px rgba(212,175,55,.6);
-}
-
-.center{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#0b1c16;
-    border:1px solid rgba(212,175,55,.5);
-    box-shadow:0 0 22px rgba(0,0,0,.5);
-    font-size:34px;
-    z-index:15;
-}
-
-.details{
-    padding:14px;
-    background:rgba(255,255,255,.035);
-    border:1px solid rgba(212,175,55,.15);
-    border-radius:16px;
-    text-align:center;
-}
-
-.label{
-    color:var(--muted);
-    font-size:11px;
-}
-
-.degree{
-    margin:3px 0;
-    color:var(--gold2);
-    font:bold 34px Arial,sans-serif;
-}
-
-.direction{
-    color:var(--text);
-    font:700 19px Amiri,serif;
-}
-
-.relative{
-    color:var(--muted);
-    font-size:11px;
-    margin-top:4px;
-}
-
-.location{
-    color:#7e9087;
-    font-size:10px;
-    margin-top:9px;
-}
-
-.sensor-box{
-    margin-top:10px;
-    padding:10px;
-    border-radius:13px;
-    background:rgba(255,255,255,.025);
-    border:1px solid rgba(212,175,55,.12);
-    font-size:10px;
-    line-height:1.8;
-    color:#aab7b1;
-}
-
-.help{
-    display:none;
-    margin-top:10px;
-    padding:12px;
-    border-radius:13px;
-    background:rgba(190,120,60,.10);
-    border:1px solid rgba(212,175,55,.18);
-    color:#d4c39f;
-    font-size:11px;
-    line-height:1.8;
-}
-
-.help.show{
-    display:block;
-}
-
-.footer{
-    text-align:center;
-    margin-top:14px;
-    color:#63726b;
-    font-size:10px;
-}
+:root{--bg:#081712;--card:#10251e;--gold:#d4af37;--gold2:#f1d878;--text:#eee7d8;--muted:#91a19a;--green:#39c98a;--red:#e26b6b;}
+*{box-sizing:border-box;}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Tajawal,"Segoe UI",Arial,sans-serif;}
+body{min-height:100vh;}
+.page{width:100%;max-width:430px;margin:auto;padding:15px 14px 32px;}
+.head{display:flex;align-items:center;justify-content:space-between;}
+.back{color:var(--gold);text-decoration:none;font-size:14px;}
+.title{margin:0;color:var(--gold);font-family:Amiri,serif;font-size:27px;}
+.sub{text-align:center;color:var(--muted);font-size:12px;margin:4px 0 14px;}
+.info{padding:12px;border:1px solid rgba(212,175,55,.18);background:rgba(255,255,255,.035);border-radius:16px;text-align:center;color:#c7d1cc;font-size:11px;line-height:1.8;margin-bottom:10px;}
+.start{width:100%;padding:14px;border:0;border-radius:15px;background:linear-gradient(135deg,#d4af37,#9d7620);color:#11140f;font:800 16px Tajawal,sans-serif;cursor:pointer;}
+.start:disabled{opacity:.65;}
+.status{min-height:48px;padding:9px 4px;text-align:center;color:var(--gold2);font-size:12px;line-height:1.7;}
+.status.good{color:var(--green);}
+.status.error{color:#ef9696;}
+.compass{position:relative;width:min(88vw,350px);height:min(88vw,350px);margin:4px auto 15px;border-radius:50%;border:2px solid rgba(212,175,55,.8);background:radial-gradient(circle,#294d3e 0%,#17372c 45%,#0c2119 78%,#06120e 100%);box-shadow:0 0 38px rgba(212,175,55,.14),inset 0 0 35px rgba(0,0,0,.55);}
+.ring{position:absolute;border-radius:50%;border:1px solid rgba(212,175,55,.4);}
+.ring.one{inset:8%;}
+.ring.two{inset:19%;border-style:dashed;border-color:rgba(212,175,55,.22);}
+.plate{position:absolute;inset:8%;transition:transform .12s linear;}
+.n,.e,.s,.w{position:absolute;font:bold 14px Arial,sans-serif;}
+.n{top:4%;left:50%;transform:translateX(-50%);color:var(--red);}
+.e{right:4%;top:50%;transform:translateY(-50%);color:#b9c4bf;}
+.s{bottom:4%;left:50%;transform:translateX(-50%);color:#b9c4bf;}
+.w{left:4%;top:50%;transform:translateY(-50%);color:#b9c4bf;}
+.pointer-top{position:absolute;top:5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:18px solid var(--gold);filter:drop-shadow(0 0 7px rgba(212,175,55,.7));z-index:20;}
+.qibla{position:absolute;inset:5%;transition:transform .12s linear;z-index:12;pointer-events:none;}
+.kaaba{position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:30px;filter:drop-shadow(0 0 10px rgba(212,175,55,.7));}
+.qline{position:absolute;top:40px;left:50%;width:3px;height:24%;transform:translateX(-50%);border-radius:8px;background:linear-gradient(to bottom,var(--gold2),transparent);box-shadow:0 0 10px rgba(212,175,55,.6);}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0b1c16;border:1px solid rgba(212,175,55,.5);box-shadow:0 0 22px rgba(0,0,0,.5);font-size:34px;z-index:15;}
+.details{padding:14px;background:rgba(255,255,255,.035);border:1px solid rgba(212,175,55,.15);border-radius:16px;text-align:center;}
+.label{color:var(--muted);font-size:11px;}
+.degree{margin:3px 0;color:var(--gold2);font:bold 34px Arial,sans-serif;}
+.direction{color:var(--text);font:700 19px Amiri,serif;}
+.relative{color:var(--muted);font-size:11px;margin-top:4px;}
+.location{color:#7e9087;font-size:10px;margin-top:9px;}
+.sensor-box{margin-top:10px;padding:10px;border-radius:13px;background:rgba(255,255,255,.025);border:1px solid rgba(212,175,55,.12);font-size:10px;line-height:1.8;color:#aab7b1;}
+.help{display:none;margin-top:10px;padding:12px;border-radius:13px;background:rgba(190,120,60,.10);border:1px solid rgba(212,175,55,.18);color:#d4c39f;font-size:11px;line-height:1.8;}
+.help.show{display:block;}
+.footer{text-align:center;margin-top:14px;color:#63726b;font-size:10px;}
 </style>
 </head>
-
 <body>
-
 <div class="page">
-
-    <div class="head">
-
-        <a
-            class="back"
-            href="./index.html"
-        >
-            ← الرئيسية
-        </a>
-
-        <h1 class="title">
-            القبلة
-        </h1>
-
-        <span>🧭</span>
-
-    </div>
-
-    <div class="sub">
-        بوصلة الرفيق — اتجاه الكعبة
-    </div>
-
-    <div class="info">
-        اضغط تشغيل، واسمح للموقع والمستشعرات عند الطلب.
-        أبعد الهاتف عن المعادن والمغناطيس أثناء المعايرة.
-    </div>
-
-    <button
-        id="start"
-        class="start"
-        type="button"
-    >
-        تشغيل بوصلة القبلة
-    </button>
-
-    <div
-        id="status"
-        class="status"
-    >
-        في انتظار التشغيل...
-    </div>
-
-    <div class="compass">
-
-        <div class="ring one"></div>
-        <div class="ring two"></div>
-
-        <div
-            id="plate"
-            class="plate"
-        >
-            <div class="n">N</div>
-            <div class="e">E</div>
-            <div class="s">S</div>
-            <div class="w">W</div>
-        </div>
-
-        <div class="pointer-top"></div>
-
-        <div
-            id="qibla"
-            class="qibla"
-        >
-            <div class="kaaba">🕋</div>
-            <div class="qline"></div>
-        </div>
-
-        <div class="center">
-            🕋
-        </div>
-
-    </div>
-
-    <div class="details">
-
-        <div class="label">
-            اتجاه القبلة من الشمال
-        </div>
-
-        <div
-            id="degree"
-            class="degree"
-        >
-            —
-        </div>
-
-        <div
-            id="direction"
-            class="direction"
-        >
-            —
-        </div>
-
-        <div
-            id="relative"
-            class="relative"
-        >
-            —
-        </div>
-
-        <div
-            id="location"
-            class="location"
-        >
-            الموقع: —
-        </div>
-
-    </div>
-
-    <div
-        id="sensorBox"
-        class="sensor-box"
-    >
-        المستشعر: لم يبدأ
-    </div>
-
-    <div
-        id="help"
-        class="help"
-    ></div>
-
-    <div class="footer">
-        الرفيق — نظام بوصلة متعدد المسارات
-    </div>
-
+<div class="head">
+<a class="back" href="./index.html">← الرئيسية</a>
+<h1 class="title">القبلة</h1>
+<span>🧭</span>
 </div>
-
-
+<div class="sub">بوصلة الرفيق — اتجاه الكعبة</div>
+<div class="info">اضغط تشغيل، واسمح للموقع والمستشعرات عند الطلب. أبعد الهاتف عن المعادن والمغناطيس أثناء المعايرة.</div>
+<button id="start" class="start" type="button">تشغيل بوصلة القبلة</button>
+<div id="status" class="status">في انتظار التشغيل...</div>
+<div class="compass">
+<div class="ring one"></div>
+<div class="ring two"></div>
+<div id="plate" class="plate">
+<div class="n">N</div>
+<div class="e">E</div>
+<div class="s">S</div>
+<div class="w">W</div>
+</div>
+<div class="pointer-top"></div>
+<div id="qibla" class="qibla">
+<div class="kaaba">🕋</div>
+<div class="qline"></div>
+</div>
+<div class="center">🕋</div>
+</div>
+<div class="details">
+<div class="label">اتجاه القبلة من الشمال</div>
+<div id="degree" class="degree">—</div>
+<div id="direction" class="direction">—</div>
+<div id="relative" class="relative">—</div>
+<div id="location" class="location">الموقع: —</div>
+</div>
+<div id="sensorBox" class="sensor-box">المستشعر: لم يبدأ</div>
+<div id="help" class="help"></div>
+<div class="footer">الرفيق — نظام بوصلة متعدد المسارات</div>
+</div>
 <script>
-(function () {
-
-    "use strict";
-
-
-    /* ========================================================
-       إحداثيات الكعبة
-    ======================================================== */
-
-    const KAABA_LAT = 21.4225;
-    const KAABA_LNG = 39.8262;
-
-
-    /* ========================================================
-       عناصر الواجهة
-    ======================================================== */
-
-    const startBtn =
-        document.getElementById("start");
-
-    const statusEl =
-        document.getElementById("status");
-
-    const plateEl =
-        document.getElementById("plate");
-
-    const qiblaEl =
-        document.getElementById("qibla");
-
-    const degreeEl =
-        document.getElementById("degree");
-
-    const directionEl =
-        document.getElementById("direction");
-
-    const relativeEl =
-        document.getElementById("relative");
-
-    const locationEl =
-        document.getElementById("location");
-
-    const sensorBox =
-        document.getElementById("sensorBox");
-
-    const helpEl =
-        document.getElementById("help");
-
-
-    /* ========================================================
-       الحالة
-    ======================================================== */
-
-    let qiblaBearing = null;
-    let heading = null;
-    let orientationSensor = null;
-    let accelerometer = null;
-    let magnetometer = null;
-
-    let accelData = null;
-    let magneticData = null;
-
-    let orientationStarted = false;
-    let genericSensorStarted = false;
-
-
-    /* ========================================================
-       أدوات
-    ======================================================== */
-
-    function normalize(deg) {
-        return ((deg % 360) + 360) % 360;
-    }
-
-    function rad(deg) {
-        return deg * Math.PI / 180;
-    }
-
-    function deg(radValue) {
-        return radValue * 180 / Math.PI;
-    }
-
-
-    /* ========================================================
-       حساب القبلة
-    ======================================================== */
-
-    function calculateQibla(
-        lat,
-        lng
-    ) {
-
-        const phi1 =
-            rad(lat);
-
-        const phi2 =
-            rad(KAABA_LAT);
-
-        const dl =
-            rad(
-                KAABA_LNG - lng
-            );
-
-        const y =
-            Math.sin(dl);
-
-        const x =
-            Math.cos(phi1) *
-                Math.tan(phi2)
-            -
-            Math.sin(phi1) *
-                Math.cos(dl);
-
-        return normalize(
-            deg(
-                Math.atan2(y, x)
-            )
-        );
-    }
-
-
-    /* ========================================================
-       اسم الاتجاه
-    ======================================================== */
-
-    function directionName(
-        value
-    ) {
-
-        if (
-            value < 22.5 ||
-            value >= 337.5
-        ) return "شمال";
-
-        if (value < 67.5) return "شمال شرقي";
-        if (value < 112.5) return "شرق";
-        if (value < 157.5) return "جنوب شرقي";
-        if (value < 202.5) return "جنوب";
-        if (value < 247.5) return "جنوب غربي";
-        if (value < 292.5) return "غرب";
-
-        return "شمال غربي";
-    }
-
-
-    /* ========================================================
-       تنعيم زاوية البوصلة
-    ======================================================== */
-
-    let headingSamples = [];
-
-    function smooth(
-        value
-    ) {
-
-        headingSamples.push(
-            normalize(value)
-        );
-
-        if (
-            headingSamples.length > 7
-        ) {
-            headingSamples.shift();
-        }
-
-        let sx = 0;
-        let sy = 0;
-
-        headingSamples.forEach(
-            function (v) {
-
-                sx += Math.cos(
-                    rad(v)
-                );
-
-                sy += Math.sin(
-                    rad(v)
-                );
-
-            }
-        );
-
-        return normalize(
-            deg(
-                Math.atan2(
-                    sy,
-                    sx
-                )
-            )
-        );
-    }
-
-
-    /* ========================================================
-       تحديث الواجهة
-    ======================================================== */
-
-    function updateUI() {
-
-        if (
-            qiblaBearing === null
-        ) {
-            return;
-        }
-
-
-        degreeEl.textContent =
-            Math.round(
-                qiblaBearing
-            ) + "°";
-
-
-        directionEl.textContent =
-            directionName(
-                qiblaBearing
-            );
-
-
-        if (
-            heading === null
-        ) {
-
-            plateEl.style.transform =
-                "rotate(0deg)";
-
-            qiblaEl.style.transform =
-                "rotate(" +
-                qiblaBearing +
-                "deg)";
-
-            relativeEl.textContent =
-                "اتجاه القبلة محسوب من موقعك — في انتظار البوصلة";
-
-            return;
-        }
-
-
-        plateEl.style.transform =
-            "rotate(" +
-            (-heading) +
-            "deg)";
-
-
-        const relative =
-            normalize(
-                qiblaBearing -
-                heading
-            );
-
-
-        qiblaEl.style.transform =
-            "rotate(" +
-            relative +
-            "deg)";
-
-
-        const error =
-            Math.min(
-                relative,
-                360 - relative
-            );
-
-
-        if (
-            error <= 5
-        ) {
-
-            statusEl.textContent =
-                "✅ أنت تواجه القبلة";
-
-            statusEl.className =
-                "status good";
-
-            relativeEl.textContent =
-                "القبلة أمامك مباشرة";
-
-        } else {
-
-            statusEl.textContent =
-                "البوصلة تعمل — حرّك الهاتف حتى يتجه 🕋 للأعلى";
-
-            statusEl.className =
-                "status";
-
-            relativeEl.textContent =
-                "الانحراف: " +
-                Math.round(error) +
-                "°";
-        }
-    }
-
-
-    /* ========================================================
-       تحويل Quaternion إلى اتجاه
-       لمسار AbsoluteOrientationSensor
-    ======================================================== */
-
-    function quaternionHeading(
-        q
-    ) {
-
-        if (
-            !q ||
-            q.length < 4
-        ) {
-            return null;
-        }
-
-        const x = q[0];
-        const y = q[1];
-        const z = q[2];
-        const w = q[3];
-
-
-        /*
-         * اتجاه أعلى الشاشة في إطار الجهاز.
-         * نستخدم المتجه (0,-1,0)
-         * ثم نحوله إلى إطار الأرض.
-         */
-
-        const vx = 0;
-        const vy = -1;
-        const vz = 0;
-
-
-        const tx =
-            2 * (
-                y * vz -
-                z * vy
-            );
-
-        const ty =
-            2 * (
-                z * vx -
-                x * vz
-            );
-
-        const tz =
-            2 * (
-                x * vy -
-                y * vx
-            );
-
-
-        const wx =
-            vx +
-            w * tx +
-            (
-                y * tz -
-                z * ty
-            );
-
-        const wy =
-            vy +
-            w * ty +
-            (
-                z * tx -
-                x * tz
-            );
-
-        const wz =
-            vz +
-            w * tz +
-            (
-                x * ty -
-                y * tx
-            );
-
-
-        /*
-         * في إطار الأرض:
-         * X ≈ شرق
-         * Y ≈ شمال
-         */
-
-        let result =
-            deg(
-                Math.atan2(
-                    wx,
-                    wy
-                )
-            );
-
-
-        /*
-         * بعض المحاور تأتي معكوسة حسب
-         * إطار المتصفح، لذلك نطبعها إلى 0..360.
-         */
-
-        result =
-            normalize(
-                result
-            );
-
-
-        /*
-         * إذا كان اتجاه المتجه أقرب إلى الأسفل
-         * نستخدم العكس.
-         */
-
-        if (
-            wz > 0.85
-        ) {
-
-            result =
-                normalize(
-                    result + 180
-                );
-        }
-
-
-        return result;
-    }
-
-
-    /* ========================================================
-       AbsoluteOrientationSensor
-    ======================================================== */
-
-    async function startAbsoluteSensor() {
-
-        if (
-            !("AbsoluteOrientationSensor" in window)
-        ) {
-            return false;
-        }
-
-
-        try {
-
-            /*
-             * فحص الصلاحيات عند توفر Permissions API
-             */
-
-            if (
-                navigator.permissions
-            ) {
-
-                const results =
-                    await Promise.all([
-                        navigator.permissions.query({
-                            name:"accelerometer"
-                        }),
-                        navigator.permissions.query({
-                            name:"gyroscope"
-                        }),
-                        navigator.permissions.query({
-                            name:"magnetometer"
-                        })
-                    ]);
-
-                if (
-                    results.some(
-                        r => r.state === "denied"
-                    )
-                ) {
-
-                    throw new Error(
-                        "صلاحيات مستشعرات الاتجاه مرفوضة"
-                    );
-                }
-            }
-
-
-            orientationSensor =
-                new AbsoluteOrientationSensor({
-                    frequency: 30,
-                    referenceFrame: "device"
-                });
-
-
-            orientationSensor.addEventListener(
-                "reading",
-                function () {
-
-                    const value =
-                        quaternionHeading(
-                            orientationSensor.quaternion
-                        );
-
-                    if (
-                        value === null
-                    ) {
-                        return;
-                    }
-
-
-                    heading =
-                        smooth(value);
-
-
-                    updateUI();
-
-
-                    sensorBox.textContent =
-                        "المستشعر: AbsoluteOrientationSensor ✅";
-
-                }
-            );
-
-
-            orientationSensor.addEventListener(
-                "error",
-                function (event) {
-
-                    sensorBox.textContent =
-                        "المستشعر: خطأ في AbsoluteOrientationSensor";
-
-                    console.warn(
-                        event.error
-                    );
-                }
-            );
-
-
-            orientationSensor.start();
-
-
-            genericSensorStarted =
-                true;
-
-
-            return true;
-
-        } catch (error) {
-
-            console.warn(
-                "AbsoluteOrientationSensor:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-
-    /* ========================================================
-       Accelerometer + Magnetometer
-       محاكاة getRotationMatrix/getOrientation في Android
-    ======================================================== */
-
-    function computeFromRawSensors() {
-
-        if (
-            !accelData ||
-            !magneticData
-        ) {
-            return;
-        }
-
-
-        const ax = accelData.x;
-        const ay = accelData.y;
-        const az = accelData.z;
-
-        const mx = magneticData.x;
-        const my = magneticData.y;
-        const mz = magneticData.z;
-
-
-        /*
-         * طول متجه الجاذبية
-         */
-
-        const g =
-            Math.hypot(
-                ax,
-                ay,
-                az
-            );
-
-
-        const m =
-            Math.hypot(
-                mx,
-                my,
-                mz
-            );
-
-
-        if (
-            g < 0.1 ||
-            m < 0.1
-        ) {
-            return;
-        }
-
-
-        /*
-         * Android getRotationMatrix:
-         *
-         * H = geomagnetic × gravity
-         */
-
-        let hx =
-            my * az -
-            mz * ay;
-
-        let hy =
-            mz * ax -
-            mx * az;
-
-        let hz =
-            mx * ay -
-            my * ax;
-
-
-        const h =
-            Math.hypot(
-                hx,
-                hy,
-                hz
-            );
-
-
-        if (
-            h < 0.1
-        ) {
-            return;
-        }
-
-
-        hx /= h;
-        hy /= h;
-        hz /= h;
-
-
-        /*
-         * Normalize gravity
-         */
-
-        const gx =
-            ax / g;
-
-        const gy =
-            ay / g;
-
-        const gz =
-            az / g;
-
-
-        /*
-         * M = gravity × H
-         */
-
-        const ex =
-            gy * hz -
-            gz * hy;
-
-        const ey =
-            gz * hx -
-            gx * hz;
-
-        const ez =
-            gx * hy -
-            gy * hx;
-
-
-        /*
-         * Android getOrientation:
-         * azimuth = atan2(R[1],R[4])
-         *
-         * في مصفوفة getRotationMatrix:
-         *
-         * R[1] = H.y
-         * R[4] = M.y
-         */
-
-        let azimuth =
-            deg(
-                Math.atan2(
-                    hy,
-                    ey
-                )
-            );
-
-
-        azimuth =
-            normalize(
-                azimuth
-            );
-
-
-        heading =
-            smooth(
-                azimuth
-            );
-
-
-        updateUI();
-
-
-        sensorBox.textContent =
-            "المستشعر: Accelerometer + Magnetometer ✅";
-    }
-
-
-    async function startRawSensors() {
-
-        if (
-            !("Accelerometer" in window) ||
-            !("Magnetometer" in window)
-        ) {
-            return false;
-        }
-
-
-        try {
-
-            if (
-                navigator.permissions
-            ) {
-
-                const results =
-                    await Promise.all([
-                        navigator.permissions.query({
-                            name:"accelerometer"
-                        }),
-                        navigator.permissions.query({
-                            name:"magnetometer"
-                        })
-                    ]);
-
-                if (
-                    results.some(
-                        r => r.state === "denied"
-                    )
-                ) {
-
-                    throw new Error(
-                        "صلاحيات المستشعرات مرفوضة"
-                    );
-                }
-            }
-
-
-            accelerometer =
-                new Accelerometer({
-                    frequency:30
-                });
-
-
-            magnetometer =
-                new Magnetometer({
-                    frequency:30
-                });
-
-
-            accelerometer.addEventListener(
-                "reading",
-                function () {
-
-                    accelData = {
-                        x: accelerometer.x,
-                        y: accelerometer.y,
-                        z: accelerometer.z
-                    };
-
-                    computeFromRawSensors();
-                }
-            );
-
-
-            magnetometer.addEventListener(
-                "reading",
-                function () {
-
-                    magneticData = {
-                        x: magnetometer.x,
-                        y: magnetometer.y,
-                        z: magnetometer.z
-                    };
-
-                    computeFromRawSensors();
-                }
-            );
-
-
-            accelerometer.start();
-            magnetometer.start();
-
-
-            return true;
-
-        } catch (error) {
-
-            console.warn(
-                "Raw sensors:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-
-    /* ========================================================
-       DeviceOrientation كاحتياط
-    ======================================================== */
-
-    function handleDeviceOrientation(
-        event
-    ) {
-
-        let value = null;
-
-
-        if (
-            typeof event.webkitCompassHeading ===
-                "number" &&
-            Number.isFinite(
-                event.webkitCompassHeading
-            )
-        ) {
-
-            value =
-                event.webkitCompassHeading;
-
-        } else if (
-            typeof event.alpha ===
-                "number" &&
-            Number.isFinite(
-                event.alpha
-            )
-        ) {
-
-            value =
-                360 -
-                event.alpha;
-        }
-
-
-        if (
-            value === null
-        ) {
-            return;
-        }
-
-
-        heading =
-            smooth(value);
-
-
-        updateUI();
-
-
-        if (
-            !genericSensorStarted
-        ) {
-
-            sensorBox.textContent =
-                "المستشعر: DeviceOrientation ✅";
-        }
-    }
-
-
-    async function startDeviceOrientation() {
-
-        try {
-
-            if (
-                typeof DeviceOrientationEvent !==
-                "undefined" &&
-                typeof DeviceOrientationEvent.requestPermission ===
-                "function"
-            ) {
-
-                const permission =
-                    await DeviceOrientationEvent
-                        .requestPermission();
-
-                if (
-                    permission !==
-                    "granted"
-                ) {
-
-                    throw new Error(
-                        "تم رفض إذن DeviceOrientation"
-                    );
-                }
-            }
-
-
-            window.addEventListener(
-                "deviceorientation",
-                handleDeviceOrientation,
-                true
-            );
-
-
-            window.addEventListener(
-                "deviceorientationabsolute",
-                handleDeviceOrientation,
-                true
-            );
-
-
-            orientationStarted =
-                true;
-
-
-            return true;
-
-        } catch (error) {
-
-            console.warn(
-                "DeviceOrientation:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-
-    /* ========================================================
-       الموقع
-    ======================================================== */
-
-    function getLocation() {
-
-        return new Promise(
-            function (
-                resolve,
-                reject
-            ) {
-
-                if (
-                    !navigator.geolocation
-                ) {
-
-                    reject(
-                        new Error(
-                            "GPS غير متاح"
-                        )
-                    );
-
-                    return;
-                }
-
-
-                navigator.geolocation.getCurrentPosition(
-
-                    resolve,
-
-                    reject,
-
-                    {
-                        enableHighAccuracy:true,
-                        timeout:15000,
-                        maximumAge:5000
-                    }
-                );
-            }
-        );
-    }
-
-
-    /* ========================================================
-       تشغيل البوصلة
-    ======================================================== */
-
-    async function startCompass() {
-
-        try {
-
-            sensorBox.textContent =
-                "المستشعر: محاولة AbsoluteOrientationSensor...";
-
-
-            let ok =
-                await startAbsoluteSensor();
-
-
-            if (ok) {
-                return true;
-            }
-
-
-            sensorBox.textContent =
-                "المستشعر: محاولة Accelerometer + Magnetometer...";
-
-
-            ok =
-                await startRawSensors();
-
-
-            if (ok) {
-                return true;
-            }
-
-
-            sensorBox.textContent =
-                "المستشعر: محاولة DeviceOrientation...";
-
-
-            ok =
-                await startDeviceOrientation();
-
-
-            return ok;
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
-            return false;
-        }
-    }
-
-
-    /* ========================================================
-       بدء التطبيق
-    ======================================================== */
-
-    async function start() {
-
-        startBtn.disabled =
-            true;
-
-        startBtn.textContent =
-            "جاري التشغيل...";
-
-
-        helpEl.classList.remove(
-            "show"
-        );
-
-
-        try {
-
-            statusEl.textContent =
-                "جاري تحديد موقعك...";
-
-
-            const position =
-                await getLocation();
-
-
-            qiblaBearing =
-                calculateQibla(
-                    position.coords.latitude,
-                    position.coords.longitude
-                );
-
-
-            locationEl.textContent =
-                "الموقع: " +
-                position.coords.latitude.toFixed(4) +
-                " ، " +
-                position.coords.longitude.toFixed(4);
-
-
-            updateUI();
-
-
-            statusEl.textContent =
-                "تم تحديد القبلة — تشغيل المستشعر...";
-
-
-            const started =
-                await startCompass();
-
-
-            if (!started) {
-
-                throw new Error(
-                    "لم يتوفر مستشعر اتجاه مدعوم في المتصفح"
-                );
-            }
-
-
-            startBtn.textContent =
-                "البوصلة تعمل";
-
-
-            statusEl.textContent =
-                "✅ نظام البوصلة نشط";
-
-
-            statusEl.className =
-                "status good";
-
-
-            /*
-             * إذا لم تصل قراءة بعد 3 ثوان،
-             * نعطي تشخيصًا واضحًا.
-             */
-
-            setTimeout(
-                function () {
-
-                    if (
-                        heading === null
-                    ) {
-
-                        statusEl.textContent =
-                            "⚠️ المستشعر لم يرسل اتجاهًا بعد";
-
-
-                        statusEl.className =
-                            "status error";
-
-
-                        helpEl.classList.add(
-                            "show"
-                        );
-
-
-                        helpEl.innerHTML =
-                            "الموقع يعمل، لكن المتصفح لم يعطنا اتجاه الهاتف. هذا مرتبط بدعم المستشعر/صلاحياته في المتصفح، وليس بحساب اتجاه القبلة.<br><br>" +
-                            "أبعد الهاتف عن المعادن والمغناطيس، حرّكه على شكل 8، ثم أعد المحاولة.";
-                    }
-
-                },
-                3000
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            statusEl.textContent =
-                "❌ " +
-                (
-                    error.message ||
-                    "تعذر تشغيل البوصلة"
-                );
-
-            statusEl.className =
-                "status error";
-
-
-            helpEl.classList.add(
-                "show"
-            );
-
-
-            helpEl.innerHTML =
-                "تأكد من السماح بالموقع ومستشعرات الحركة، وأن الصفحة تعمل عبر HTTPS.";
-
-
-            startBtn.disabled =
-                false;
-
-            startBtn.textContent =
-                "إعادة التشغيل";
-        }
-    }
-
-
-    startBtn.addEventListener(
-        "click",
-        start
-    );
-
+(function(){
+"use strict";
+const KAABA_LAT = 21.4225;
+const KAABA_LNG = 39.8262;
+const startBtn = document.getElementById("start");
+const statusEl = document.getElementById("status");
+const plateEl = document.getElementById("plate");
+const qiblaEl = document.getElementById("qibla");
+const degreeEl = document.getElementById("degree");
+const directionEl = document.getElementById("direction");
+const relativeEl = document.getElementById("relative");
+const locationEl = document.getElementById("location");
+const sensorBox = document.getElementById("sensorBox");
+const helpEl = document.getElementById("help");
+let qiblaBearing = null;
+let heading = null;
+let orientationSensor = null;
+let accelerometer = null;
+let magnetometer = null;
+let accelData = null;
+let magneticData = null;
+let orientationStarted = false;
+let genericSensorStarted = false;
+function normalize(deg){return ((deg % 360) + 360) % 360;}
+function rad(deg){return deg * Math.PI / 180;}
+function deg(radValue){return radValue * 180 / Math.PI;}
+function calculateQibla(lat,lng){
+const phi1 = rad(lat);
+const phi2 = rad(KAABA_LAT);
+const dl = rad(KAABA_LNG - lng);
+const y = Math.sin(dl);
+const x = Math.cos(phi1) * Math.tan(phi2) - Math.sin(phi1) * Math.cos(dl);
+return normalize(deg(Math.atan2(y, x)));
+}
+function directionName(value){
+if(value < 22.5 || value >= 337.5) return "شمال";
+if(value < 67.5) return "شمال شرقي";
+if(value < 112.5) return "شرق";
+if(value < 157.5) return "جنوب شرقي";
+if(value < 202.5) return "جنوب";
+if(value < 247.5) return "جنوب غربي";
+if(value < 292.5) return "غرب";
+return "شمال غربي";
+}
+let headingSamples = [];
+function smooth(value){
+headingSamples.push(normalize(value));
+if(headingSamples.length > 7) headingSamples.shift();
+let sx = 0, sy = 0;
+headingSamples.forEach(function(v){
+sx += Math.cos(rad(v));
+sy += Math.sin(rad(v));
+});
+return normalize(deg(Math.atan2(sy, sx)));
+}
+function updateUI(){
+if(qiblaBearing === null) return;
+degreeEl.textContent = Math.round(qiblaBearing) + "°";
+directionEl.textContent = directionName(qiblaBearing);
+if(heading === null){
+plateEl.style.transform = "rotate(0deg)";
+qiblaEl.style.transform = "rotate(" + qiblaBearing + "deg)";
+relativeEl.textContent = "اتجاه القبلة محسوب من موقعك — في انتظار البوصلة";
+return;
+}
+plateEl.style.transform = "rotate(" + (-heading) + "deg)";
+const relative = normalize(qiblaBearing - heading);
+qiblaEl.style.transform = "rotate(" + relative + "deg)";
+const error = Math.min(relative, 360 - relative);
+if(error <= 5){
+statusEl.textContent = "✅ أنت تواجه القبلة";
+statusEl.className = "status good";
+relativeEl.textContent = "القبلة أمامك مباشرة";
+} else {
+statusEl.textContent = "البوصلة تعمل — حرّك الهاتف حتى يتجه 🕋 للأعلى";
+statusEl.className = "status";
+relativeEl.textContent = "الانحراف: " + Math.round(error) + "°";
+}
+}
+function quaternionHeading(q){
+if(!q || q.length < 4) return null;
+const x = q[0], y = q[1], z = q[2], w = q[3];
+const vx = 0, vy = -1, vz = 0;
+const tx = 2 * (y * vz - z * vy);
+const ty = 2 * (z * vx - x * vz);
+const tz = 2 * (x * vy - y * vx);
+const wx = vx + w * tx + (y * tz - z * ty);
+const wy = vy + w * ty + (z * tx - x * tz);
+const wz = vz + w * tz + (x * ty - y * tx);
+let result = deg(Math.atan2(wx, wy));
+result = normalize(result);
+if(wz > 0.85) result = normalize(result + 180);
+return result;
+}
+async function startAbsoluteSensor(){
+if(!("AbsoluteOrientationSensor" in window)) return false;
+try{
+if(navigator.permissions){
+const results = await Promise.all([
+navigator.permissions.query({name:"accelerometer"}),
+navigator.permissions.query({name:"gyroscope"}),
+navigator.permissions.query({name:"magnetometer"})
+]);
+if(results.some(r => r.state === "denied")) throw new Error("صلاحيات مستشعرات الاتجاه مرفوضة");
+}
+orientationSensor = new AbsoluteOrientationSensor({frequency: 30, referenceFrame: "device"});
+orientationSensor.addEventListener("reading", function(){
+const value = quaternionHeading(orientationSensor.quaternion);
+if(value === null) return;
+heading = smooth(value);
+updateUI();
+sensorBox.textContent = "المستشعر: AbsoluteOrientationSensor ✅";
+});
+orientationSensor.addEventListener("error", function(event){
+sensorBox.textContent = "المستشعر: خطأ في AbsoluteOrientationSensor";
+console.warn(event.error);
+});
+orientationSensor.start();
+genericSensorStarted = true;
+return true;
+} catch(error){
+console.warn("AbsoluteOrientationSensor:", error);
+return false;
+}
+}
+function computeFromRawSensors(){
+if(!accelData || !magneticData) return;
+const ax = accelData.x, ay = accelData.y, az = accelData.z;
+const mx = magneticData.x, my = magneticData.y, mz = magneticData.z;
+const g = Math.hypot(ax, ay, az);
+const m = Math.hypot(mx, my, mz);
+if(g < 0.1 || m < 0.1) return;
+let hx = my * az - mz * ay;
+let hy = mz * ax - mx * az;
+let hz = mx * ay - my * ax;
+const h = Math.hypot(hx, hy, hz);
+if(h < 0.1) return;
+hx /= h; hy /= h; hz /= h;
+const gx = ax / g, gy = ay / g, gz = az / g;
+const ex = gy * hz - gz * hy;
+const ey = gz * hx - gx * hz;
+const ez = gx * hy - gy * hx;
+let azimuth = deg(Math.atan2(hy, ey));
+azimuth = normalize(azimuth);
+heading = smooth(azimuth);
+updateUI();
+sensorBox.textContent = "المستشعر: Accelerometer + Magnetometer ✅";
+}
+async function startRawSensors(){
+if(!("Accelerometer" in window) || !("Magnetometer" in window)) return false;
+try{
+if(navigator.permissions){
+const results = await Promise.all([
+navigator.permissions.query({name:"accelerometer"}),
+navigator.permissions.query({name:"magnetometer"})
+]);
+if(results.some(r => r.state === "denied")) throw new Error("صلاحيات المستشعرات مرفوضة");
+}
+accelerometer = new Accelerometer({frequency:30});
+magnetometer = new Magnetometer({frequency:30});
+accelerometer.addEventListener("reading", function(){
+accelData = {x: accelerometer.x, y: accelerometer.y, z: accelerometer.z};
+computeFromRawSensors();
+});
+magnetometer.addEventListener("reading", function(){
+magneticData = {x: magnetometer.x, y: magnetometer.y, z: magnetometer.z};
+computeFromRawSensors();
+});
+accelerometer.start();
+magnetometer.start();
+return true;
+} catch(error){
+console.warn("Raw sensors:", error);
+return false;
+}
+}
+function handleDeviceOrientation(event){
+let value = null;
+if(typeof event.webkitCompassHeading === "number" && Number.isFinite(event.webkitCompassHeading)){
+value = event.webkitCompassHeading;
+} else if(typeof event.alpha === "number" && Number.isFinite(event.alpha)){
+value = 360 - event.alpha;
+}
+if(value === null) return;
+heading = smooth(value);
+updateUI();
+if(!genericSensorStarted) sensorBox.textContent = "المستشعر: DeviceOrientation ✅";
+}
+async function startDeviceOrientation(){
+try{
+if(typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function"){
+const permission = await DeviceOrientationEvent.requestPermission();
+if(permission !== "granted") throw new Error("تم رفض إذن DeviceOrientation");
+}
+window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+window.addEventListener("deviceorientationabsolute", handleDeviceOrientation, true);
+orientationStarted = true;
+return true;
+} catch(error){
+console.warn("DeviceOrientation:", error);
+return false;
+}
+}
+function getLocation(){
+return new Promise(function(resolve, reject){
+if(!navigator.geolocation){
+reject(new Error("GPS غير متاح"));
+return;
+}
+navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
+});
+}
+async function startCompass(){
+try{
+sensorBox.textContent = "المستشعر: محاولة AbsoluteOrientationSensor...";
+let ok = await startAbsoluteSensor();
+if(ok) return true;
+sensorBox.textContent = "المستشعر: محاولة Accelerometer + Magnetometer...";
+ok = await startRawSensors();
+if(ok) return true;
+sensorBox.textContent = "المستشعر: محاولة DeviceOrientation...";
+ok = await startDeviceOrientation();
+return ok;
+} catch(error){
+console.error(error);
+return false;
+}
+}
+async function start(){
+startBtn.disabled = true;
+startBtn.textContent = "جاري التشغيل...";
+helpEl.classList.remove("show");
+try{
+statusEl.textContent = "جاري تحديد موقعك...";
+const position = await getLocation();
+qiblaBearing = calculateQibla(position.coords.latitude, position.coords.longitude);
+locationEl.textContent = "الموقع: " + position.coords.latitude.toFixed(4) + " ، " + position.coords.longitude.toFixed(4);
+updateUI();
+statusEl.textContent = "تم تحديد القبلة — تشغيل المستشعر...";
+const started = await startCompass();
+if(!started) throw new Error("لم يتوفر مستشعر اتجاه مدعوم في المتصفح");
+startBtn.textContent = "البوصلة تعمل";
+statusEl.textContent = "✅ نظام البوصلة نشط";
+statusEl.className = "status good";
+setTimeout(function(){
+if(heading === null){
+statusEl.textContent = "⚠️ المستشعر لم يرسل اتجاهًا بعد";
+statusEl.className = "status error";
+helpEl.classList.add("show");
+helpEl.innerHTML = "الموقع يعمل، لكن المتصفح لم يعطنا اتجاه الهاتف. هذا مرتبط بدعم المستشعر/صلاحياته في المتصفح.<br><br>أبعد الهاتف عن المعادن والمغناطيس، حرّكه على شكل 8، ثم أعد المحاولة.";
+}
+}, 3000);
+} catch(error){
+console.error(error);
+statusEl.textContent = "❌ " + (error.message || "تعذر تشغيل البوصلة");
+statusEl.className = "status error";
+helpEl.classList.add("show");
+helpEl.innerHTML = "تأكد من السماح بالموقع ومستشعرات الحركة، وأن الصفحة تعمل عبر HTTPS.";
+startBtn.disabled = false;
+startBtn.textContent = "إعادة التشغيل";
+}
+}
+startBtn.addEventListener("click", start);
 })();
 </script>
 </body>
