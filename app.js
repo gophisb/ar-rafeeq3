@@ -61,7 +61,8 @@ const State = {
     hijriDate: null,
     gregorianDate: new Date(),
     online: navigator.onLine,
-    ready: false
+    ready: false,
+    adhanPlayedFor: null // لحفظ اسم الصلاة التي شُغّل لها الأذان
 };
 
 /*==========================================================
@@ -124,9 +125,6 @@ window.addEventListener("offline", () => {
   المرحلة الثانية: الولايات + التاريخ
 ==========================================================*/
 
-/*----------------------------------------------------------
-  قاعدة بيانات الولايات (58 ولاية)
-----------------------------------------------------------*/
 const WILAYAS = [
     { code:"01", name:"أدرار", lat:27.87, lng:-0.28 },
     { code:"02", name:"الشلف", lat:36.16, lng:1.33 },
@@ -188,12 +186,8 @@ const WILAYAS = [
     { code:"58", name:"المنيعة", lat:30.60, lng:2.88 }
 ];
 
-/*----------------------------------------------------------
-  حساب التاريخ الهجري (أم القرى)
-----------------------------------------------------------*/
 function hijriDate(gregDate = new Date()) {
     const d = new Date(gregDate);
-    // ضبط إلى UTC+1
     d.setMinutes(d.getMinutes() + d.getTimezoneOffset() + 60);
     const jd = Math.floor((d.getTime() / 86400000) + 2440587.5);
     const l = jd - 1948439;
@@ -231,9 +225,6 @@ function formatHijri({ year, month, day }) {
     return `${day} ${monthNames[month-1]} ${year}هـ`;
 }
 
-/*----------------------------------------------------------
-  تحديث التاريخ في الواجهة
-----------------------------------------------------------*/
 function updateDates() {
     const now = new Date();
     State.gregorianDate = now;
@@ -248,9 +239,6 @@ function updateDates() {
     }
 }
 
-/*----------------------------------------------------------
-  بناء قائمة المدن
-----------------------------------------------------------*/
 function buildCityList() {
     if (!UI.city) return;
     UI.city.innerHTML = '';
@@ -271,13 +259,10 @@ function buildCityList() {
         const code = e.target.value;
         applyCity(code);
         Storage.set('cityCode', code);
-        refreshPrayerTimes(); // تحديث الأوقات عند تغيير المدينة
+        refreshPrayerTimes();
     });
 }
 
-/*----------------------------------------------------------
-  تطبيق المدينة المختارة
-----------------------------------------------------------*/
 function applyCity(code) {
     const city = WILAYAS.find(w => w.code === code);
     if (!city) return;
@@ -458,28 +443,59 @@ function updateNextPrayerUI() {
     }
 }
 
+// --------------- تم تعديل checkAdhan و playAdhan ---------------
 function checkAdhan() {
     if (!State.prayerTimes) return;
     const now = new Date();
     const current = `${Utils.pad(now.getHours())}:${Utils.pad(now.getMinutes())}`;
-    const adhanTimes = [
-        State.prayerTimes.fajr,
-        State.prayerTimes.dhuhr,
-        State.prayerTimes.asr,
-        State.prayerTimes.maghrib,
-        State.prayerTimes.isha
-    ];
-    if (adhanTimes.includes(current)) {
-        playAdhan();
+    const adhanMap = {
+        "الفجر": State.prayerTimes.fajr,
+        "الظهر": State.prayerTimes.dhuhr,
+        "العصر": State.prayerTimes.asr,
+        "المغرب": State.prayerTimes.maghrib,
+        "العشاء": State.prayerTimes.isha
+    };
+
+    // البحث عن اسم الصلاة التي وقتها الآن
+    for (const [name, time] of Object.entries(adhanMap)) {
+        if (current === time && State.adhanPlayedFor !== name) {
+            playAdhan(name);
+            break;
+        }
     }
 }
 
-function playAdhan() {
+function playAdhan(prayerName) {
     if (!UI.audio) return;
-    UI.audio.play().catch(() => {});
-    if (UI.play) UI.play.style.display = 'none';
-    if (UI.pause) UI.pause.style.display = 'inline';
+    // منع التشغيل المتكرر لنفس الصلاة
+    State.adhanPlayedFor = prayerName;
+
+    const playPromise = UI.audio.play();
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            // تم التشغيل بنجاح
+            if (UI.play) UI.play.style.display = 'none';
+            if (UI.pause) UI.pause.style.display = 'inline';
+        }).catch(() => {
+            // المتصفح منع التشغيل التلقائي – نظهر زر التشغيل
+            if (UI.playButton) UI.playButton.style.display = 'block';
+            if (UI.play) UI.play.style.display = 'inline';
+            if (UI.pause) UI.pause.style.display = 'none';
+        });
+    }
 }
+
+// إعادة تعيين adhanPlayedFor عند تغير الوقت أو اليوم
+function resetAdhanFlagIfNewPrayer() {
+    if (!State.prayerTimes || !State.nextPrayer) return;
+    // إذا كانت الصلاة القادمة مختلفة عن التي تم تشغيلها، نسمح بالتشغيل مرة أخرى
+    if (State.adhanPlayedFor && !State.nextPrayer.name.includes(State.adhanPlayedFor)) {
+        State.adhanPlayedFor = null;
+        // نخفي زر التشغيل اليدوي عند انتهاء وقت الصلاة السابقة
+        if (UI.playButton) UI.playButton.style.display = 'none';
+    }
+}
+// -------------------------------------------------------------
 
 let tickInterval = null;
 
@@ -487,6 +503,7 @@ function startTicking() {
     if (tickInterval) clearInterval(tickInterval);
     tickInterval = setInterval(() => {
         updateNextPrayerUI();
+        resetAdhanFlagIfNewPrayer();
         checkAdhan();
     }, 1000);
 }
@@ -495,6 +512,8 @@ function refreshPrayerTimes() {
     const times = computePrayerTimes();
     if (times) {
         State.prayerTimes = times;
+        // إعادة تعيين حالة الأذان عند تحديث الأوقات (تغيير يوم أو مدينة)
+        State.adhanPlayedFor = null;
         updateNextPrayerUI();
         if (UI.prayerCard) {
             UI.prayerCard.innerHTML = `
@@ -515,8 +534,6 @@ function initPhase3() {
     }
     refreshPrayerTimes();
     startTicking();
-    // تحديث الأوقات عند تغيير المدينة (أُضيف المستمع في buildCityList)
-    // تحديث عند منتصف الليل
     const now = new Date();
     const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
     setTimeout(() => {
@@ -534,13 +551,11 @@ function boot() {
     State.ready = true;
     setStatus("جاري تهيئة النظام...");
 
-    // المرحلة الثانية
     buildCityList();
     updateDates();
     setInterval(updateDates, 60000);
     console.log("المرحلة الثانية جاهزة");
 
-    // المرحلة الثالثة
     initPhase3();
 }
 
