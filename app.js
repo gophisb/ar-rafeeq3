@@ -1,8 +1,8 @@
 /* ==========================================================
    الرفيق
    app.js
-   الإصدار : 2.0.0
-   المراحل 1+2+3 مدمجة
+   الإصدار : 2.0.1
+   المراحل 1+2+3 مدمجة + إصلاحات الأذان
    Core Engine + المدن + التاريخ + أوقات الصلاة
 
    ✔ بدون مكتبات
@@ -13,18 +13,12 @@
 
 "use strict";
 
-/*==========================================================
-  معلومات الإصدار
-==========================================================*/
 const APP = {
     name: "الرفيق",
-    version: "2.0.0",
+    version: "2.0.1",
     build: "offline-core"
 };
 
-/*==========================================================
-  التخزين المحلي
-==========================================================*/
 const Storage = {
     get(key, fallback = null) {
         try {
@@ -49,9 +43,6 @@ const Storage = {
     }
 };
 
-/*==========================================================
-  الحالة العامة للتطبيق
-==========================================================*/
 const State = {
     city: null,
     latitude: null,
@@ -62,12 +53,10 @@ const State = {
     gregorianDate: new Date(),
     online: navigator.onLine,
     ready: false,
-    adhanPlayedFor: null // لحفظ اسم الصلاة التي شُغّل لها الأذان
+    adhanPlayedFor: null, // لحفظ اسم الصلاة التي شُغّل لها الأذان
+    audioUnlocked: false  // جديد: هل تم فتح قفل الصوت بعد أول تفاعل؟
 };
 
-/*==========================================================
-  أدوات مساعدة
-==========================================================*/
 const Utils = {
     pad(value) {
         return String(value).padStart(2, "0");
@@ -81,9 +70,6 @@ const Utils = {
     }
 };
 
-/*==========================================================
-  الوصول للعناصر مرة واحدة فقط
-==========================================================*/
 const UI = {
     status: document.getElementById("status"),
     city: document.getElementById("citySelect"),
@@ -101,17 +87,11 @@ const UI = {
     playButton: document.getElementById("adhanPlayBtn")
 };
 
-/*==========================================================
-  الرسائل
-==========================================================*/
 function setStatus(text) {
     if (!UI.status) return;
     UI.status.textContent = text;
 }
 
-/*==========================================================
-  الإنترنت
-==========================================================*/
 window.addEventListener("online", () => {
     State.online = true;
     setStatus("تم الاتصال بالإنترنت");
@@ -122,8 +102,60 @@ window.addEventListener("offline", () => {
 });
 
 /*==========================================================
-  المرحلة الثانية: الولايات + التاريخ
+  جديد: فتح قفل تشغيل الصوت عند أول تفاعل من المستخدم
+  (المتصفحات تمنع audio.play() التلقائي بدون هذا)
 ==========================================================*/
+function unlockAudio() {
+    if (State.audioUnlocked || !UI.audio) return;
+    UI.audio.muted = true;
+    const p = UI.audio.play();
+    if (p !== undefined) {
+        p.then(() => {
+            UI.audio.pause();
+            UI.audio.currentTime = 0;
+            UI.audio.muted = false;
+            State.audioUnlocked = true;
+            console.log("تم فتح قفل الصوت");
+        }).catch(() => {
+            UI.audio.muted = false;
+        });
+    }
+}
+document.addEventListener("click", unlockAudio, { once: true });
+document.addEventListener("touchstart", unlockAudio, { once: true });
+
+/*==========================================================
+  جديد: إذن الإشعارات (طبقة تنبيه بديلة عند الشاشة المقفلة)
+==========================================================*/
+function requestNotificationPermission() {
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+}
+document.addEventListener("click", requestNotificationPermission, { once: true });
+document.addEventListener("touchstart", requestNotificationPermission, { once: true });
+
+function showAdhanNotification(prayerName) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const options = {
+        body: "حان الآن وقت الصلاة",
+        icon: "./icons/icon-192.png", // ⚠️ عدّل المسار حسب أيقونة تطبيقك الفعلية
+        vibrate: [500, 200, 500, 200, 500],
+        tag: "adhan-notification",
+        requireInteraction: true
+    };
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then((reg) => {
+            reg.showNotification(`حان وقت صلاة ${prayerName}`, options);
+        });
+    } else {
+        try {
+            new Notification(`حان وقت صلاة ${prayerName}`, options);
+        } catch (e) {
+            console.warn("تعذر إظهار الإشعار:", e);
+        }
+    }
+}
 
 const WILAYAS = [
     { code:"01", name:"أدرار", lat:27.87, lng:-0.28 },
@@ -272,10 +304,6 @@ function applyCity(code) {
     if (UI.city) UI.city.value = code;
     setStatus(`المدينة: ${city.name}`);
 }
-
-/*==========================================================
-  المرحلة الثالثة: أوقات الصلاة
-==========================================================*/
 
 const PRAYER_ANGLES = {
     fajr: -18,
@@ -443,11 +471,18 @@ function updateNextPrayerUI() {
     }
 }
 
-// --------------- تم تعديل checkAdhan و playAdhan ---------------
+/*==========================================================
+  الأذان — checkAdhan و playAdhan (مُصلَحة)
+==========================================================*/
+
+// جديد: نافذة مطابقة موسّعة (دقيقتان) بدل تطابق حرفي للدقيقة
+// هذا يمنع تفويت الأذان إذا تأخر تنفيذ المؤقّت (مثلاً بسبب تجميد المتصفح)
+const ADHAN_MATCH_WINDOW_MINUTES = 2;
+
 function checkAdhan() {
     if (!State.prayerTimes) return;
     const now = new Date();
-    const current = `${Utils.pad(now.getHours())}:${Utils.pad(now.getMinutes())}`;
+    const currentMin = now.getHours() * 60 + now.getMinutes();
     const adhanMap = {
         "الفجر": State.prayerTimes.fajr,
         "الظهر": State.prayerTimes.dhuhr,
@@ -456,9 +491,11 @@ function checkAdhan() {
         "العشاء": State.prayerTimes.isha
     };
 
-    // البحث عن اسم الصلاة التي وقتها الآن
     for (const [name, time] of Object.entries(adhanMap)) {
-        if (current === time && State.adhanPlayedFor !== name) {
+        const targetMin = Utils.minutes(time);
+        // نطبّق modulo لتفادي مشاكل التفاف منتصف الليل
+        const diff = (currentMin - targetMin + 1440) % 1440;
+        if (diff >= 0 && diff <= ADHAN_MATCH_WINDOW_MINUTES && State.adhanPlayedFor !== name) {
             playAdhan(name);
             break;
         }
@@ -470,14 +507,19 @@ function playAdhan(prayerName) {
     // منع التشغيل المتكرر لنفس الصلاة
     State.adhanPlayedFor = prayerName;
 
+    // جديد: إشعار مرئي + اهتزاز يعمل حتى والشاشة مقفلة (طالما التطبيق لم يُغلق كليًا)
+    showAdhanNotification(prayerName);
+
+    UI.audio.currentTime = 0;
     const playPromise = UI.audio.play();
     if (playPromise !== undefined) {
         playPromise.then(() => {
             // تم التشغيل بنجاح
             if (UI.play) UI.play.style.display = 'none';
             if (UI.pause) UI.pause.style.display = 'inline';
-        }).catch(() => {
-            // المتصفح منع التشغيل التلقائي – نظهر زر التشغيل
+        }).catch((err) => {
+            // المتصفح منع التشغيل التلقائي – نظهر زر التشغيل اليدوي
+            console.warn("تعذر التشغيل التلقائي للأذان:", err);
             if (UI.playButton) UI.playButton.style.display = 'block';
             if (UI.play) UI.play.style.display = 'inline';
             if (UI.pause) UI.pause.style.display = 'none';
@@ -485,17 +527,36 @@ function playAdhan(prayerName) {
     }
 }
 
+// جديد: ربط زر التشغيل/الإيقاف اليدوي فعليًا (كان غائبًا تمامًا سابقًا)
+function bindManualAdhanButton() {
+    if (!UI.playButton || !UI.audio) return;
+    UI.playButton.addEventListener('click', () => {
+        if (UI.audio.paused) {
+            UI.audio.play()
+                .then(() => {
+                    if (UI.play) UI.play.style.display = 'none';
+                    if (UI.pause) UI.pause.style.display = 'inline';
+                })
+                .catch((err) => {
+                    console.error('فشل تشغيل الأذان يدويًا:', err);
+                    alert('تعذّر تشغيل الملف الصوتي — تحقق من مسار ملف الأذان (src) في HTML');
+                });
+        } else {
+            UI.audio.pause();
+            if (UI.play) UI.play.style.display = 'inline';
+            if (UI.pause) UI.pause.style.display = 'none';
+        }
+    });
+}
+
 // إعادة تعيين adhanPlayedFor عند تغير الوقت أو اليوم
 function resetAdhanFlagIfNewPrayer() {
     if (!State.prayerTimes || !State.nextPrayer) return;
-    // إذا كانت الصلاة القادمة مختلفة عن التي تم تشغيلها، نسمح بالتشغيل مرة أخرى
     if (State.adhanPlayedFor && !State.nextPrayer.name.includes(State.adhanPlayedFor)) {
         State.adhanPlayedFor = null;
-        // نخفي زر التشغيل اليدوي عند انتهاء وقت الصلاة السابقة
         if (UI.playButton) UI.playButton.style.display = 'none';
     }
 }
-// -------------------------------------------------------------
 
 let tickInterval = null;
 
@@ -512,7 +573,6 @@ function refreshPrayerTimes() {
     const times = computePrayerTimes();
     if (times) {
         State.prayerTimes = times;
-        // إعادة تعيين حالة الأذان عند تحديث الأوقات (تغيير يوم أو مدينة)
         State.adhanPlayedFor = null;
         updateNextPrayerUI();
         if (UI.prayerCard) {
@@ -533,6 +593,7 @@ function initPhase3() {
         applyCity(Storage.get('cityCode', '16'));
     }
     refreshPrayerTimes();
+    bindManualAdhanButton(); // جديد
     startTicking();
     const now = new Date();
     const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
@@ -543,9 +604,6 @@ function initPhase3() {
     console.log("المرحلة الثالثة جاهزة (أوقات الصلاة)");
 }
 
-/*==========================================================
-  دمج المرحلتين 2 و 3 في boot
-==========================================================*/
 function boot() {
     console.log(APP.name, APP.version, "بدأ التشغيل");
     State.ready = true;
@@ -559,9 +617,6 @@ function boot() {
     initPhase3();
 }
 
-/*==========================================================
-  تشغيل التطبيق عند تحميل الصفحة
-==========================================================*/
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
 } else {
