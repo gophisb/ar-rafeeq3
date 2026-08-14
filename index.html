@@ -3,32 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>الرفيق — Premium</title>
+    <meta name="theme-color" content="#05070A">
+    <title>الرفيق — Premium Edition</title>
     <link rel="stylesheet" href="./style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="./manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="./theme.js"></script>
 </head>
 <body>
 <div class="max">
     <header class="topbar">
-        <div class="brand-mark"><svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 0 0 6 0L7 7ZM17 7l-3 6a3 3 0 0 0 6 0l-3-6Z"/></svg></div>
-        <div class="titlebox"><h1>الرفيق</h1><p>رفيقك إلى الخير</p></div>
-        <div class="brand-mark" onclick="RafeeqTheme.toggle()" style="cursor:pointer">🌓</div>
+        <div class="brand-mark">
+            <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 0 0 6 0L7 7ZM17 7l-3 6a3 3 0 0 0 6 0l-3-6Z"/>
+            </svg>
+        </div>
+        <div class="titlebox">
+            <h1>الرفيق</h1>
+            <p>رفيقك إلى الخير</p>
+        </div>
+        <div class="brand-mark" id="themeToggle" style="cursor:pointer" onclick="RafeeqTheme.toggle()">
+            <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+        </div>
     </header>
+
     <section class="welcome-card">
         <div class="welcome-title">السلام عليكم ورحمة الله</div>
-        <div class="welcome-subtitle">اجعل يومك عامراً بذكر الله</div>
+        <div class="welcome-subtitle">اجعل يومك عامراً بذكر الله وطاعته</div>
     </section>
-    <div class="pillrow"><div class="pill" id="hijriPill">...</div><div class="pill"><select id="citySelect"></select></div></div>
-    <section class="prayer-card">
+
+    <div class="pillrow">
+        <div class="pill" id="hijriPill">...</div>
+        <div class="pill">
+            <select id="citySelect"></select>
+        </div>
+    </div>
+
+    <section class="prayer-card" id="prayerCard">
         <span class="next-badge">الصلاة القادمة</span>
         <div class="medallion-wrap">
             <div class="medal-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M12 2L12 5M12 5C9 5 6 7 6 10V17H18V10C18 7 15 5 12 5Z" />
-                    <path d="M4 17H20V21H4V17Z" />
-                    <path d="M12 2C13 2 14 3 14 4C14 5 13 6 12 6C11 6 10 5 10 4C10 3 11 2 12 2Z" fill="currentColor" />
-                </svg>
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 5px var(--gold));">
+                        <defs>
+                            <linearGradient id="mosqueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:var(--gold-soft);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:var(--gold);stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="15" y="35" width="6" height="45" rx="1" fill="url(#mosqueGrad)"/>
+                        <path d="M18 25L14 35H22L18 25Z" fill="var(--gold)"/>
+                        <rect x="79" y="35" width="6" height="45" rx="1" fill="url(#mosqueGrad)"/>
+                        <path d="M82 25L78 35H86L82 25Z" fill="var(--gold)"/>
+                        <path d="M25 60C25 40 35 30 50 30C65 30 75 40 75 60H25Z" fill="url(#mosqueGrad)"/>
+                        <path d="M50 15C53 15 56 16 58 18C54 18 51 21 51 25C51 29 54 32 58 32C56 34 53 35 50 35C44 35 40 31 40 25C40 19 44 15 50 15Z" fill="var(--gold)"/>
+                        <path d="M20 60H80V85H20V60Z" fill="url(#mosqueGrad)"/>
+                        <path d="M42 85V72C42 68 45 65 50 65C55 65 58 68 58 72V85H42Z" fill="var(--bg)"/>
+                    </svg>
             </div>
         </div>
         <div class="prayer-info">
@@ -38,24 +70,64 @@
         </div>
         <div class="prayer-details" id="prayerDetails"></div>
     </section>
-    <section class="ramadan-card" id="ramadanSection" hidden>
-        <div style="font-size:3rem">🌙</div>
-        <div><h3 style="color:#fff">رمضان مبارك</h3><p style="color:rgba(255,255,255,0.7)">تقبل الله منا ومنكم صالح الأعمال</p></div>
+
+    <section class="prayer-card" id="adhanSection">
+        <div class="prayer-row">
+            <div class="lbl"><span>📢</span> <b>تنبيه الأذان</b></div>
+            <div class="toggle-wrap">
+                <div class="toggle" id="adhanToggle" onclick="App.toggleAdhan()"></div>
+            </div>
+        </div>
+        <div id="adhanSettings" style="margin-top:15px; border-top:1px solid var(--border); padding-top:15px; display:none;">
+            <div class="prayer-row">
+                <span>صوت المؤذن</span>
+                <select id="muezzinSelect" class="pill" style="width:auto; padding:5px 15px;" onchange="App.changeMuezzin(this.value)">
+                    <option value="mecca">مكة المكرمة</option>
+                    <option value="medina">المدينة المنورة</option>
+                    <option value="alaqsa">المسجد الأقصى</option>
+                </select>
+            </div>
+            <button class="pill" onclick="App.testAdhan()" style="margin-top:10px; width:100%; background:var(--emerald);">تجربة صوت الأذان</button>
+        </div>
     </section>
+
+    <div id="ramadanSection" hidden></div>
+
+    <div class="section-title">خدمات الرفيق</div>
     <div class="grid2">
-        <a href="quran.html" class="feat-card"><div class="icon-wrap">📖</div><div class="t">القرآن</div><div class="s">تلاوة وتدبر</div></a>
-        <a href="azkar.html" class="feat-card"><div class="icon-wrap">📿</div><div class="t">الأذكار</div><div class="s">حصن المسلم</div></a>
-        <a href="qibla.html" class="feat-card"><div class="icon-wrap">🧭</div><div class="t">القبلة</div><div class="s">تحديد الاتجاه</div></a>
-        <a href="tafsir.html" class="feat-card"><div class="icon-wrap">📚</div><div class="t">التفسير</div><div class="s">تفسير السعدي</div></a>
+        <a href="quran.html" class="feat-card">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+            <div class="t">القرآن الكريم</div>
+            <div class="s">تلاوة وتدبر</div>
+        </a>
+        <a href="adhkar.html" class="feat-card">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="t">الأذكار</div>
+            <div class="s">حصن المسلم</div>
+        </a>
+        <a href="qibla.html" class="feat-card">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div>
+            <div class="t">القبلة</div>
+            <div class="s">تحديد الاتجاه</div>
+        </a>
+        <a href="tafsir.html" class="feat-card">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+            <div class="t">التفسير</div>
+            <div class="s">تفسير السعدي</div>
+        </a>
     </div>
 </div>
-<nav class="bottomnav"><div class="bottomnav-inner">
-    <a href="index.html" class="navitem active"><div class="ic">🏠</div><span>الرئيسية</span></a>
-    <a href="quran.html" class="navitem"><div class="ic">📖</div><span>القرآن</span></a>
-    <a href="prayer.html" class="navitem"><div class="ic">🕌</div><span>الصلاة</span></a>
-    <a href="azkar.html" class="navitem"><div class="ic">📿</div><span>الأذكار</span></a>
-    <a href="more.html" class="navitem"><div class="ic">⚙️</div><span>المزيد</span></a>
-</div></nav>
+
+<nav class="bottomnav">
+    <div class="bottomnav-inner">
+        <a href="index.html" class="navitem active"><div class="ic">🏠</div><span>الرئيسية</span></a>
+        <a href="quran.html" class="navitem"><div class="ic">📖</div><span>القرآن</span></a>
+        <a href="prayer.html" class="navitem"><div class="ic">🕌</div><span>الصلاة</span></a>
+        <a href="adhkar.html" class="navitem"><div class="ic">📿</div><span>الأذكار</span></a>
+        <a href="more.html" class="navitem"><div class="ic">⚙️</div><span>المزيد</span></a>
+    </div>
+</nav>
+
 <script src="./app.js"></script>
 </body>
 </html>
