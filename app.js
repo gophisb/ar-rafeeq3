@@ -18,7 +18,7 @@ const Storage = {
 };
 
 /**
- * القائمة الرسمية الكاملة لولايات الجزائر الـ 69 المحدثة
+ * القائمة الرسمية الكاملة لولايات الجزائر الـ 69 المحدثة لعام 2026
  */
 const WILAYAS = [
     { code: "01", name: "01 - أدرار", lat: 27.87, lng: -0.28 },
@@ -105,12 +105,15 @@ const PrayerEngine = {
         const dec = Math.asin(Math.sin(this.toRad(e)) * Math.sin(this.toRad(l))) * 180 / Math.PI;
         const eqTime = (q - ra) / 15;
         const noon = 12 + timezone - lng / 15 - eqTime;
+        
         const getHourAngle = (angle) => {
             const cosH = (Math.sin(this.toRad(angle)) - Math.sin(this.toRad(lat)) * Math.sin(this.toRad(dec))) / (Math.cos(this.toRad(lat)) * Math.cos(this.toRad(dec)));
             if (cosH > 1) return 0; if (cosH < -1) return 12;
             return Math.acos(cosH) * 180 / Math.PI / 15;
         };
+        
         const asrAngle = Math.atan(1 / (1 + Math.tan(this.toRad(Math.abs(lat - dec))))) * 180 / Math.PI;
+        
         const times = {
             fajr: noon - getHourAngle(-18),
             sunrise: noon - getHourAngle(-0.833),
@@ -119,7 +122,8 @@ const PrayerEngine = {
             maghrib: noon + getHourAngle(-0.833),
             isha: noon + getHourAngle(-17)
         };
-        times.imsak = times.fajr - (10 / 60);
+        
+        times.imsak = times.fajr - (10 / 60); // الإمساك قبل الفجر بـ 10 دقائق
         return times;
     },
     getJulianDate(y, m, d) {
@@ -152,11 +156,55 @@ const HijriEngine = {
 };
 
 const App = {
-    state: { cityCode: Storage.get('cityCode', '16'), times: null, next: null, hijri: null },
+    state: { 
+        cityCode: Storage.get('cityCode', '16'), 
+        times: null, 
+        next: null, 
+        hijri: null,
+        adhanEnabled: Storage.get('adhanEnabled', false),
+        muezzin: Storage.get('muezzin', 'mecca'),
+        audioContextUnlocked: false,
+        lastAdhanPlayed: null
+    },
     init() {
         this.buildWilayaSelector();
         this.update();
+        this.updateAdhanUI();
         setInterval(() => this.tick(), 1000);
+        document.addEventListener('click', () => {
+            if (!this.state.audioContextUnlocked) {
+                this.state.audioContextUnlocked = true;
+                console.log("Audio unlocked");
+            }
+        }, { once: true });
+    },
+    updateAdhanUI() {
+        const toggle = document.getElementById('adhanToggle');
+        const settings = document.getElementById('adhanSettings');
+        if (this.state.adhanEnabled) {
+            toggle.classList.add('on');
+            settings.style.display = 'block';
+        } else {
+            toggle.classList.remove('on');
+            settings.style.display = 'none';
+        }
+        document.getElementById('muezzinSelect').value = this.state.muezzin;
+    },
+    toggleAdhan() {
+        this.state.adhanEnabled = !this.state.adhanEnabled;
+        Storage.set('adhanEnabled', this.state.adhanEnabled);
+        this.updateAdhanUI();
+    },
+    changeMuezzin(val) {
+        this.state.muezzin = val;
+        Storage.set('muezzin', val);
+    },
+    testAdhan() {
+        this.playAdhan();
+    },
+    playAdhan() {
+        const audio = new Audio(`./audio/adhan_${this.state.muezzin}.mp3`);
+        audio.play().catch(e => alert("يرجى الضغط على أي مكان في الشاشة لتفعيل الصوت أولاً."));
     },
     buildWilayaSelector() {
         const sel = document.getElementById('citySelect');
@@ -199,6 +247,7 @@ const App = {
             <div class="prayer-row"><span>المغرب</span><span>${t.maghrib}</span></div>
             <div class="prayer-row"><span>العشاء</span><span>${t.isha}</span></div>
         `;
+        
         const ramadanSection = document.getElementById('ramadanSection');
         if (ramadanSection) {
             if (h.month === 9) {
@@ -209,13 +258,22 @@ const App = {
                         <div class="ramadan-info">
                             <h3>رمضان مبارك</h3>
                             <div style="display:flex; gap:20px; margin-top:10px;">
-                                <div><span style="color:var(--gold-soft); font-size:0.75rem;">السحور (الإمساك):</span> <b style="color:#fff; display:block; font-size:1.1rem;">${t.imsak}</b></div>
-                                <div><span style="color:var(--gold-soft); font-size:0.75rem;">الإفطار (المغرب):</span> <b style="color:#fff; display:block; font-size:1.1rem;">${t.maghrib}</b></div>
+                                <div>
+                                    <span style="color:var(--gold-soft); font-size:0.75rem;">السحور (الإمساك):</span> 
+                                    <b style="color:#fff; display:block; font-size:1.1rem;">${t.imsak}</b>
+                                </div>
+                                <div>
+                                    <span style="color:var(--gold-soft); font-size:0.75rem;">الإفطار (المغرب):</span> 
+                                    <b style="color:#fff; display:block; font-size:1.1rem;">${t.maghrib}</b>
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
-            } else { ramadanSection.hidden = true; ramadanSection.innerHTML = ''; }
+            } else { 
+                ramadanSection.hidden = true; 
+                ramadanSection.innerHTML = '';
+            }
         }
         this.findNext();
     },
@@ -223,7 +281,13 @@ const App = {
         const now = new Date();
         const curMin = now.getHours() * 60 + now.getMinutes();
         const t = this.state.times;
-        const list = [{ n: "الفجر", t: t.fajr }, { n: "الظهر", t: t.dhuhr }, { n: "العصر", t: t.asr }, { n: "المغرب", t: t.maghrib }, { n: "العشاء", t: t.isha }];
+        const list = [
+            { n: "الفجر", t: t.fajr }, 
+            { n: "الظهر", t: t.dhuhr }, 
+            { n: "العصر", t: t.asr }, 
+            { n: "المغرب", t: t.maghrib }, 
+            { n: "العشاء", t: t.isha }
+        ];
         let next = list.find(p => {
             const [h, m] = p.t.split(':').map(Number);
             return (h * 60 + m) > curMin;
@@ -235,13 +299,26 @@ const App = {
     tick() {
         if (!this.state.next) return;
         const now = new Date();
+        const curTimeStr = PrayerEngine.format(now.getHours() + now.getMinutes()/60);
+        
+        if (this.state.adhanEnabled) {
+            const prayerTimes = Object.values(this.state.times);
+            if (prayerTimes.includes(curTimeStr) && this.state.lastAdhanPlayed !== curTimeStr) {
+                this.state.lastAdhanPlayed = curTimeStr;
+                this.playAdhan();
+            }
+        }
+
         const [h, m] = this.state.next.t.split(':').map(Number);
         let target = new Date(now); target.setHours(h, m, 0, 0);
         if (target < now) target.setDate(target.getDate() + 1);
         const diff = target - now;
         const hh = Math.floor(diff/3600000), mm = Math.floor((diff%3600000)/60000), ss = Math.floor((diff%60000)/1000);
         document.getElementById('countdown').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-        if (diff < 1000) this.update();
+        
+        if (diff < 1000) {
+            setTimeout(() => this.update(), 1000);
+        }
     }
 };
 document.addEventListener('DOMContentLoaded', () => App.init());
