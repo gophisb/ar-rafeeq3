@@ -5,7 +5,7 @@
 
     <meta charset="UTF-8">
 
-    <manifest.json
+    <link rel="manifest" href="./manifest.json">
 
     <meta
         name="theme-color"
@@ -39,11 +39,6 @@
 
     <title>الرفيق — رفيقك إلى الخير</title>
 
-
-    <!-- ======================================================
-         PWA
-    ======================================================= -->
-
     <link
         rel="manifest"
         href="./manifest.json"
@@ -59,11 +54,6 @@
         rel="apple-touch-icon"
         href="./icon-192.png"
     >
-
-
-    <!-- ======================================================
-         الخطوط
-    ======================================================= -->
 
     <link
         rel="preconnect"
@@ -81,41 +71,19 @@
         rel="stylesheet"
     >
 
-
-    <!-- ======================================================
-         CSS
-    ======================================================= -->
-
     <link
         rel="stylesheet"
         href="./style.css"
     >
 
-
-    <!-- ======================================================
-         تحسينات إضافية للواجهة
-         متوافقة مع style.css الحالي
-    ======================================================= -->
-
     <style>
-
-        /* ==================================================
-           حماية الصفحة من الظهور قبل تحميل CSS
-        ================================================== */
-
         html {
             background: #080B10;
         }
 
-
         body {
             overflow-x: hidden;
         }
-
-
-        /* ==================================================
-           رأس الصفحة
-        ================================================== */
 
         .brand-mark {
             display: flex;
@@ -128,18 +96,12 @@
             background: rgba(212,175,55,0.05);
         }
 
-
         .brand-mark svg {
             width: 25px;
             height: 25px;
             stroke: var(--gold);
             fill: none;
         }
-
-
-        /* ==================================================
-           بطاقة الترحيب
-        ================================================== */
 
         .welcome-card {
             position: relative;
@@ -162,7 +124,6 @@
             box-shadow: var(--shadow-strong);
         }
 
-
         .welcome-card::after {
             content: "";
             position: absolute;
@@ -178,12 +139,10 @@
             pointer-events: none;
         }
 
-
         .welcome-content {
             position: relative;
             z-index: 2;
         }
-
 
         .welcome-kicker {
             color: var(--gold-soft);
@@ -193,7 +152,6 @@
             margin-bottom: 4px;
         }
 
-
         .welcome-title {
             font-family: 'Amiri', serif;
             font-size: 1.7rem;
@@ -201,27 +159,19 @@
             font-weight: 700;
         }
 
-
         .welcome-subtitle {
             color: var(--muted);
             font-size: .75rem;
             margin-top: 4px;
         }
 
-
-        /* ==================================================
-           بطاقة الصلاة الرئيسية
-        ================================================== */
-
         #prayerCard {
             position: relative;
         }
 
-
         #prayerCard[hidden] {
             display: none;
         }
-
 
         .prayer-top-label {
             text-align: center;
@@ -229,7 +179,6 @@
             font-size: .72rem;
             margin-bottom: 8px;
         }
-
 
         .next-badge {
             display: inline-flex;
@@ -243,18 +192,12 @@
             border: 1px solid var(--border);
         }
 
-
-        /* ==================================================
-           بطاقة التاريخ
-        ================================================== */
-
         .date-card {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 16px;
         }
-
 
         .date-item {
             padding: 13px 10px;
@@ -264,18 +207,15 @@
             border: 1px solid var(--border);
         }
 
-
         .date-item .date-icon {
             font-size: 1rem;
             margin-bottom: 2px;
         }
 
-
         .date-item .date-label {
             color: var(--muted);
             font-size: .65rem;
         }
-
 
         .date-item .date-value {
             color: var(--text);
@@ -283,11 +223,6 @@
             font-weight: 700;
             margin-top: 2px;
         }
-
-
-        /* ==================================================
-           اختيار المدينة
-        ================================================== */
 
         .location-card {
             display: flex;
@@ -301,13 +236,11 @@
             border: 1px solid var(--border);
         }
 
-
         .location-info {
             display: flex;
             align-items: center;
             gap: 9px;
         }
-
 
         .location-icon {
             width: 34px;
@@ -320,7 +253,6 @@
             background: rgba(212,175,55,0.08);
         }
 
-
         .location-icon svg {
             width: 19px;
             height: 19px;
@@ -328,33 +260,24 @@
             fill: none;
         }
 
-
         .location-text {
             display: flex;
             flex-direction: column;
         }
 
-
         .location-text strong {
             font-size: .75rem;
         }
-
 
         .location-text span {
             color: var(--muted);
             font-size: .62rem;
         }
 
-
         #citySelect {
             min-width: 120px;
             max-width: 170px;
         }
-
-
-        /* ==================================================
-           حالة التحميل
-        ================================================== */
 
         #status {
             border-radius: 18px;
@@ -363,29 +286,17 @@
             margin-bottom: 16px;
         }
 
-
-        /* ==================================================
-           بطاقة الأذان
-        ================================================== */
-
         .adhan-play {
             position: relative;
         }
-
 
         .adhan-play svg {
             pointer-events: none;
         }
 
-
         #pauseIcon {
             display: none;
         }
-
-
-        /* ==================================================
-           عنوان الأقسام
-        ================================================== */
 
         .section-heading {
             display: flex;
@@ -394,23 +305,16 @@
             margin: 22px 2px 10px;
         }
 
-
         .section-heading h2 {
             font-family: 'Amiri', serif;
             color: var(--gold-soft);
             font-size: 1.25rem;
         }
 
-
         .section-heading span {
             color: var(--muted);
             font-size: .65rem;
         }
-
-
-        /* ==================================================
-           تحسين البطاقات
-        ================================================== */
 
         .feat-card,
         .quick {
@@ -420,26 +324,15 @@
                 box-shadow .2s ease;
         }
 
-
         .feat-card:active,
         .quick:active {
             transform: scale(.97);
         }
 
-
-        /* ==================================================
-           حالة عدم وجود رابط
-        ================================================== */
-
         .disabled-card {
             opacity: .65;
             pointer-events: none;
         }
-
-
-        /* ==================================================
-           زر التثبيت
-        ================================================== */
 
         .install-card {
             display: none;
@@ -458,18 +351,15 @@
             border: 1px solid var(--border);
         }
 
-
         .install-card.visible {
             display: flex;
         }
-
 
         .install-info {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
 
         .install-icon {
             width: 40px;
@@ -482,7 +372,6 @@
             color: var(--gold);
         }
 
-
         .install-icon svg {
             width: 22px;
             height: 22px;
@@ -490,18 +379,15 @@
             fill: none;
         }
 
-
         .install-text strong {
             display: block;
             font-size: .75rem;
         }
 
-
         .install-text span {
             color: var(--muted);
             font-size: .62rem;
         }
-
 
         .install-btn {
             border: none;
@@ -519,11 +405,6 @@
             );
         }
 
-
-        /* ==================================================
-           الوضع النهاري
-        ================================================== */
-
         body.day-mode .welcome-card {
             background:
                 radial-gradient(
@@ -538,1311 +419,332 @@
                 );
         }
 
-
-        /* ==================================================
-           شريط سفلي آمن للهاتف
-        ================================================== */
-
         @supports (padding-bottom: env(safe-area-inset-bottom)) {
-
             .bottomnav {
-                bottom:
-                    calc(
-                        12px +
-                        env(safe-area-inset-bottom)
-                    );
+                bottom: calc(12px + env(safe-area-inset-bottom));
             }
-
             body {
-                padding-bottom:
-                    calc(
-                        110px +
-                        env(safe-area-inset-bottom)
-                    );
+                padding-bottom: calc(110px + env(safe-area-inset-bottom));
             }
-
         }
-
     </style>
 
 </head>
 
-
 <body>
-
-
-    <!-- ======================================================
-         الحاوية الرئيسية
-    ======================================================= -->
 
     <main class="max">
 
-
-        <!-- ==================================================
-             رأس التطبيق
-        =================================================== -->
-
         <header class="topbar">
-
-            <div class="brand-mark"
-                 aria-label="الرفيق">
-
-                <svg
-                    viewBox="0 0 24 24"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <path
-                        d="M12 3v18"
-                    />
-
-                    <path
-                        d="M5 7h14"
-                    />
-
-                    <path
-                        d="M7 7l-3 6a3 3 0 0 0 6 0L7 7Z"
-                    />
-
-                    <path
-                        d="M17 7l-3 6a3 3 0 0 0 6 0l-3-6Z"
-                    />
-
+            <div class="brand-mark" aria-label="الرفيق">
+                <svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3v18" />
+                    <path d="M5 8v8" />
+                    <path d="M19 8v8" />
                 </svg>
-
             </div>
-
-
-            <div class="titlebox">
-
-                <h1>الرفيق</h1>
-
-                <p>
-                    رفيقك إلى الخير
-                </p>
-
-            </div>
-
-
-            <div class="brand-mark"
-                 aria-hidden="true">
-
-                <svg
-                    viewBox="0 0 24 24"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <path
-                        d="M12 2
-                           14.5 8
-                           21 9
-                           16 13
-                           17.5 20
-                           12 16
-                           6.5 20
-                           8 13
-                           3 9
-                           9.5 8Z"
-                    />
-
-                </svg>
-
-            </div>
-
         </header>
 
-
-        <!-- ==================================================
-             خط بصري
-        =================================================== -->
-
-        <div class="skyline">
-
-            <svg
-                viewBox="0 0 500 80"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-            >
-
-                <path
-                    d="M0 70
-                       L45 70
-                       L45 48
-                       L60 48
-                       L60 70
-                       L90 70
-                       L90 38
-                       L105 38
-                       L105 70
-                       L145 70
-                       L145 52
-                       L160 52
-                       L160 70
-                       L190 70
-                       L190 25
-                       L205 25
-                       L205 70
-                       L250 70
-                       L250 42
-                       L265 42
-                       L265 70
-                       L305 70
-                       L305 32
-                       L320 32
-                       L320 70
-                       L360 70
-                       L360 50
-                       L375 50
-                       L375 70
-                       L410 70
-                       L410 35
-                       L425 35
-                       L425 70
-                       L500 70"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.2"
-                    opacity=".45"
-                />
-
-            </svg>
-
-        </div>
-
-
-        <!-- ==================================================
-             اختيار المدينة والتاريخ
-        =================================================== -->
-
-        <div class="location-card">
-
-            <div class="location-info">
-
-                <div class="location-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="M12 21s7-6.2 7-12
-                               a7 7 0 1 0-14 0
-                               c0 5.8 7 12 7 12Z"
-                        />
-
-                        <circle
-                            cx="12"
-                            cy="9"
-                            r="2.5"
-                        />
-
-                    </svg>
-
-                </div>
-
-
-                <div class="location-text">
-
-                    <strong>
-                        مواقيت الصلاة
-                    </strong>
-
-                    <span>
-                        اختر موقعك
-                    </span>
-
-                </div>
-
+        <section class="welcome-card">
+            <div class="welcome-content">
+                <div class="welcome-kicker">السلام عليكم ورحمة الله</div>
+                <div class="welcome-title">اجعل يومك عامرًا بذكر الله</div>
+                <div class="welcome-subtitle">مواقيتك، قرآنك، أذكارك ورفيقك في طريق الخير.</div>
             </div>
+        </section>
 
+        <div id="status" class="card" style="padding: 10px; text-align: center; font-size: 0.8rem;">جاري التحميل...</div>
 
-            <select
-                id="citySelect"
-                aria-label="اختر المدينة"
-            >
-
-                <option>
-                    جاري تحميل المدن...
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <!-- ==================================================
-             التاريخ
-        =================================================== -->
+        <section id="prayerCard" class="card" hidden>
+            <div id="prayerDetails" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.85rem;"></div>
+            <div class="prayer-top-label">
+                <span class="next-badge">الصلاة القادمة</span>
+            </div>
+            <div class="prayer-row">
+                <div class="medallion-wrap">
+                    <svg class="circle-bg" viewBox="0 0 176 176" aria-hidden="true">
+                        <circle cx="88" cy="88" r="78" fill="none" stroke="rgba(212,175,55,0.12)" stroke-width="1" />
+                        <circle cx="88" cy="88" r="68" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="1" stroke-dasharray="3 7" />
+                    </svg>
+                    <div class="medal-icon">
+                        <svg viewBox="0 0 24 24" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 14 8 19 9 15 12 16 18 12 15 8 18 9 12 5 9 10 8Z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="prayer-info">
+                    <div id="nextName" class="name">—</div>
+                    <div id="nextTime" class="time">—</div>
+                    <div id="countdown" class="rem">—</div>
+                </div>
+            </div>
+            <div class="progress-track">
+                <div id="progressBar" class="progress-fill"></div>
+            </div>
+        </section>
 
         <div class="date-card">
-
             <div class="date-item">
-
-                <div class="date-icon">
-                    🌙
-                </div>
-
-                <div class="date-label">
-                    التاريخ الهجري
-                </div>
-
-                <div
-                    class="date-value"
-                    id="hijriPill"
-                >
-                    جاري التحميل...
-                </div>
-
+                <div class="date-icon">🌙</div>
+                <div class="date-label">التاريخ الهجري</div>
+                <div id="hijriPill" class="date-value">—</div>
             </div>
-
-
             <div class="date-item">
-
-                <div class="date-icon">
-                    ☀️
-                </div>
-
-                <div class="date-label">
-                    اليوم
-                </div>
-
-                <div
-                    class="date-value"
-                    id="gregorianDisplay"
-                >
-                    اليوم
-                </div>
-
+                <div class="date-icon">📅</div>
+                <div class="date-label">التاريخ الميلادي</div>
+                <div id="gregorianDisplay" class="date-value">—</div>
             </div>
-
         </div>
 
-
-        <!-- ==================================================
-             رسالة الحالة
-        =================================================== -->
-
-        <div
-            id="status"
-            role="status"
-            aria-live="polite"
-        >
-            جاري تحميل مواقيت الصلاة...
-        </div>
-
-
-        <!-- ==================================================
-             بطاقة الترحيب
-        =================================================== -->
-
-        <section class="welcome-card">
-
-            <div class="welcome-content">
-
-                <div class="welcome-kicker">
-                    بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ
-                </div>
-
-                <div class="welcome-title">
-                    اجعل يومك عامرًا بذكر الله
-                </div>
-
-                <div class="welcome-subtitle">
-                    مواقيتك، قرآنك، أذكارك ورفيقك في طريق الخير.
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==================================================
-             بطاقة الصلاة القادمة
-        =================================================== -->
-
-        <section
-            id="prayerCard"
-            class="card"
-            hidden
-        >
-
-            <div class="prayer-top-label">
-
-                <span class="next-badge">
-                    الصلاة القادمة
-                </span>
-
-            </div>
-
-
-            <div class="prayer-row">
-
-
-                <!-- الدائرة -->
-
-                <div class="medallion-wrap">
-
-                    <svg
-                        class="circle-bg"
-                        viewBox="0 0 176 176"
-                        aria-hidden="true"
-                    >
-
-                        <circle
-                            cx="88"
-                            cy="88"
-                            r="78"
-                            fill="none"
-                            stroke="rgba(212,175,55,0.12)"
-                            stroke-width="1"
-                        />
-
-                        <circle
-                            cx="88"
-                            cy="88"
-                            r="68"
-                            fill="none"
-                            stroke="rgba(212,175,55,0.08)"
-                            stroke-width="1"
-                            stroke-dasharray="3 7"
-                        />
-
+        <div class="location-card">
+            <div class="location-info">
+                <div class="location-icon">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                        <circle cx="12" cy="10" r="3" />
                     </svg>
-
-
-                    <div class="medal-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            stroke-width="1.4"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-
-                            <path
-                                d="M12 3
-                                   14 8
-                                   19 9
-                                   15 12
-                                   16 18
-                                   12 15
-                                   8 18
-                                   9 12
-                                   5 9
-                                   10 8Z"
-                            />
-
-                        </svg>
-
-                    </div>
-
                 </div>
-
-
-                <!-- معلومات الصلاة -->
-
-                <div class="prayer-info">
-
-                    <div class="lbl">
-                        الصلاة القادمة
-                    </div>
-
-                    <div
-                        class="name"
-                        id="nextName"
-                    >
-                        —
-                    </div>
-
-                    <div
-                        class="time"
-                        id="nextTime"
-                    >
-                        —
-                    </div>
-
-                    <div class="remain-lbl">
-                        متبقي على الأذان
-                    </div>
-
-                    <div
-                        class="countdown"
-                        id="countdown"
-                    >
-                        00:00:00
-                    </div>
-
+                <div class="location-text">
+                    <strong>الجزائر</strong>
+                    <span>حدد ولايتك الحالية</span>
                 </div>
-
             </div>
-
-
-            <!-- شريط التقدم -->
-
-            <div class="progress-track">
-
-                <div
-                    id="progressBar"
-                    class="progress-fill"
-                ></div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==================================================
-             بطاقة الأذان
-        =================================================== -->
+            <select id="citySelect" class="select-clean"></select>
+        </div>
 
         <section class="adhan-card">
-
-
             <div class="mosque-icon">
-
-                <svg
-                    viewBox="0 0 64 64"
-                    stroke-width="1.4"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <path
-                        d="M8 52h48"
-                    />
-
-                    <path
-                        d="M14 52V32"
-                    />
-
-                    <path
-                        d="M50 52V32"
-                    />
-
-                    <path
-                        d="M18 32
-                           Q32 14 46 32"
-                    />
-
-                    <path
-                        d="M24 52V37
-                           Q32 29 40 37V52"
-                    />
-
-                    <path
-                        d="M32 14V7"
-                    />
-
-                    <path
-                        d="M29 10h6"
-                    />
-
+                <svg viewBox="0 0 64 64" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 52h48" />
+                    <path d="M14 52V32" />
+                    <path d="M50 52V32" />
+                    <path d="M18 32 Q32 14 46 32" />
+                    <path d="M24 52V37 Q32 29 40 37V52" />
+                    <path d="M32 14V7" />
+                    <path d="M29 10h6" />
                 </svg>
-
             </div>
-
-
             <div class="adhan-mid">
-
-                <div class="t1">
-                    الأذان القادم
-                </div>
-
-                <div
-                    class="t2"
-                    id="adhanTimeLabel"
-                >
-                    —
-                </div>
-
-                <div class="t3">
-                    اضغط للاستماع إلى الأذان
-                </div>
-
+                <div class="t1">الأذان القادم</div>
+                <div class="t2" id="adhanTimeLabel">—</div>
+                <div class="t3">اضغط للاستماع إلى الأذان</div>
             </div>
-
-
-            <button
-                id="adhanPlayBtn"
-                class="adhan-play"
-                type="button"
-                aria-label="تشغيل الأذان"
-            >
-
-                <!-- تشغيل -->
-
-                <svg
-                    id="playIcon"
-                    viewBox="0 0 24 24"
-                >
-
-                    <path
-                        d="M8 5v14l11-7Z"
-                    />
-
+            <button id="adhanPlayBtn" class="adhan-play" type="button" aria-label="تشغيل الأذان">
+                <svg id="playIcon" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7Z" />
                 </svg>
-
-
-                <!-- إيقاف -->
-
-                <svg
-                    id="pauseIcon"
-                    viewBox="0 0 24 24"
-                    style="display:none"
-                >
-
-                    <path
-                        d="M7 5h4v14H7zM13 5h4v14h-4z"
-                    />
-
+                <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none">
+                    <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
                 </svg>
-
             </button>
-
-
-            <audio
-                id="adhanAudio"
-                preload="none"
-                src="./adhan.mp3"
-            ></audio>
-
+            <audio id="adhanAudio" preload="none" src="./adhan.mp3"></audio>
         </section>
 
-
-        <!-- ==================================================
-             التثبيت
-        =================================================== -->
-
-        <div
-            id="installCard"
-            class="install-card"
-        >
-
+        <div id="installCard" class="install-card">
             <div class="install-info">
-
                 <div class="install-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="M12 3v12"
-                        />
-
-                        <path
-                            d="m7 10 5 5 5-5"
-                        />
-
-                        <path
-                            d="M5 21h14"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3v12" />
+                        <path d="m7 10 5 5 5-5" />
+                        <path d="M5 21h14" />
                     </svg>
-
                 </div>
-
-
                 <div class="install-text">
-
-                    <strong>
-                        ثبّت الرفيق على هاتفك
-                    </strong>
-
-                    <span>
-                        وصول أسرع وتجربة أفضل
-                    </span>
-
+                    <strong>ثبّت الرفيق على هاتفك</strong>
+                    <span>وصول أسرع وتجربة أفضل</span>
                 </div>
-
             </div>
-
-
-            <button
-                id="installBtn"
-                class="install-btn"
-                type="button"
-            >
-                تثبيت
-            </button>
-
+            <button id="installBtn" class="install-btn" type="button">تثبيت</button>
         </div>
-
-
-        <!-- ==================================================
-             الخدمات الأساسية
-        =================================================== -->
 
         <div class="section-heading">
-
-            <h2>
-                رفيقك في الخير
-            </h2>
-
-            <span>
-                خدمات إسلامية
-            </span>
-
+            <h2>رفيقك في الخير</h2>
+            <span>خدمات إسلامية</span>
         </div>
-
 
         <div class="grid2">
-
-
-            <!-- القرآن -->
-
-            <a
-                class="feat-card"
-                href="./quran.html"
-            >
-
+            <a class="feat-card" href="./quran.html">
                 <div class="icon-wrap">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="M5 4
-                               a3 3 0 0 1 3-3h11v18H8
-                               a3 3 0 0 0-3 3Z"
-                        />
-
-                        <path
-                            d="M5 4v18"
-                        />
-
-                        <path
-                            d="M8 5h7"
-                        />
-
-                        <path
-                            d="M8 9h6"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 4 a3 3 0 0 1 3-3h11v18H8 a3 3 0 0 0-3 3Z" />
+                        <path d="M5 4v18" />
+                        <path d="M8 5h7" />
+                        <path d="M8 9h6" />
                     </svg>
-
                 </div>
-
-                <div class="t">
-                    القرآن الكريم
-                </div>
-
-                <div class="s">
-                    تلاوة وتدبر
-                </div>
-
+                <div class="t">القرآن الكريم</div>
+                <div class="s">تلاوة وتدبر</div>
             </a>
-
-
-            <!-- الأذكار -->
-
-            <a
-                class="feat-card"
-                href="./adhkar.html"
-            >
-
+            <a class="feat-card" href="./adhkar.html">
                 <div class="icon-wrap">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        />
-
-                        <path
-                            d="M12 8v4l3 2"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="8" />
+                        <path d="M12 8v4l3 2" />
                     </svg>
-
                 </div>
-
-                <div class="t">
-                    الأذكار
-                </div>
-
-                <div class="s">
-                    صباح ومساء
-                </div>
-
+                <div class="t">الأذكار</div>
+                <div class="s">صباح ومساء</div>
             </a>
-
-
-            <!-- حصن المسلم -->
-
-            <a
-                class="feat-card"
-                href="./hisnul.html"
-            >
-
+            <a class="feat-card" href="./hisnul.html">
                 <div class="icon-wrap">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="M12 3
-                               20 6v6
-                               c0 5-3.5 8-8 10
-                               C7.5 20 4 17 4 12V6Z"
-                        />
-
-                        <path
-                            d="m8 12 2.5 2.5L16 9"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3 20 6v6 c0 5-3.5 8-8 10 C7.5 20 4 17 4 12V6Z" />
+                        <path d="m8 12 2.5 2.5L16 9" />
                     </svg>
-
                 </div>
-
-                <div class="t">
-                    حصن المسلم
-                </div>
-
-                <div class="s">
-                    أذكار وأدعية
-                </div>
-
+                <div class="t">حصن المسلم</div>
+                <div class="s">أذكار وأدعية</div>
             </a>
-
-
-            <!-- الأربعين -->
-
-            <a
-                class="feat-card"
-                href="./arbaeen.html"
-            >
-
+            <a class="feat-card" href="./arbaeen.html">
                 <div class="icon-wrap">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="M6 4h12v16H6z"
-                        />
-
-                        <path
-                            d="M9 8h6"
-                        />
-
-                        <path
-                            d="M9 12h6"
-                        />
-
-                        <path
-                            d="M9 16h4"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 4h12v16H6z" />
+                        <path d="M9 8h6" />
+                        <path d="M9 12h6" />
+                        <path d="M9 16h4" />
                     </svg>
-
                 </div>
-
-                <div class="t">
-                    الأربعون النووية
-                </div>
-
-                <div class="s">
-                    أحاديث نبوية
-                </div>
-
+                <div class="t">الأربعون النووية</div>
+                <div class="s">أحاديث نبوية</div>
             </a>
-
         </div>
-
-
-        <!-- ==================================================
-             أدوات الرفيق
-        =================================================== -->
 
         <div class="section-heading">
-
-            <h2>
-                أدوات الرفيق
-            </h2>
-
-            <span>
-                اكتشف المزيد
-            </span>
-
+            <h2>أدوات الرفيق</h2>
+            <span>اكتشف المزيد</span>
         </div>
-
 
         <div class="grid4">
-
-
-            <a
-                class="quick"
-                href="./tafsir.html"
-            >
-
-                <svg
-                    viewBox="0 0 24 24"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <path
-                        d="M4 5h16"
-                    />
-
-                    <path
-                        d="M4 12h16"
-                    />
-
-                    <path
-                        d="M4 19h16"
-                    />
-
+            <a class="quick" href="./tafsir.html">
+                <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 5h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 19h16" />
                 </svg>
-
-                <span>
-                    التفسير
-                </span>
-
+                <span>التفسير</span>
             </a>
-
-
-            <a
-                class="quick"
-                href="./qibla.html"
-            >
-
-                <svg
-                    viewBox="0 0 24 24"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                    />
-
-                    <path
-                        d="m12 7 2 5-2 5-2-5Z"
-                    />
-
+            <a class="quick" href="./qibla.html">
+                <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="m12 7 2 5-2 5-2-5Z" />
                 </svg>
-
-                <span>
-                    القبلة
-                </span>
-
+                <span>القبلة</span>
             </a>
-
-
-            <a
-                class="quick"
-                href="./prayer.html"
-            >
-
-                <svg
-                    viewBox="0 0 24 24"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                    />
-
-                    <path
-                        d="M12 7v5l3 2"
-                    />
-
+            <a class="quick" href="./prayer.html">
+                <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
                 </svg>
-
-                <span>
-                    الصلاة
-                </span>
-
+                <span>الصلاة</span>
             </a>
-
-
-            <a
-                class="quick"
-                href="./more.html"
-            >
-
-                <svg
-                    viewBox="0 0 24 24"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-
-                    <circle
-                        cx="5"
-                        cy="12"
-                        r="1"
-                    />
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="1"
-                    />
-
-                    <circle
-                        cx="19"
-                        cy="12"
-                        r="1"
-                    />
-
+            <a class="quick" href="./more.html">
+                <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="5" cy="12" r="1" />
+                    <circle cx="12" cy="12" r="1" />
+                    <circle cx="19" cy="12" r="1" />
                 </svg>
-
-                <span>
-                    المزيد
-                </span>
-
+                <span>المزيد</span>
             </a>
-
-
         </div>
 
-
-        <!-- ==================================================
-             عبارة ختامية
-        =================================================== -->
-
-        <div class="mood-note">
-
-            ﴿ وَاذْكُرْ رَبَّكَ إِذَا نَسِيتَ ﴾
-
-        </div>
-
+        <div class="mood-note">﴿ وَاذْكُرْ رَبَّكَ إِذَا نَسِيتَ ﴾</div>
 
     </main>
 
-
-    <!-- ======================================================
-         شريط التنقل السفلي
-    ======================================================= -->
-
-    <nav
-        class="bottomnav"
-        aria-label="التنقل الرئيسي"
-    >
-
+    <nav class="bottomnav" aria-label="التنقل الرئيسي">
         <div class="bottomnav-inner">
-
-
-            <!-- الرئيسية -->
-
-            <a
-                class="navitem active"
-                href="./index.html"
-                aria-label="الرئيسية"
-            >
-
+            <a class="navitem active" href="./index.html" aria-label="الرئيسية">
                 <div class="ic">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="m3 11 9-8 9 8"
-                        />
-
-                        <path
-                            d="M5 10v10h14V10"
-                        />
-
-                        <path
-                            d="M9 20v-6h6v6"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 11 9-8 9 8" />
+                        <path d="M5 10v10h14V10" />
+                        <path d="M9 21V9h6v12" />
                     </svg>
-
                 </div>
-
-                <span>
-                    الرئيسية
-                </span>
-
+                <span>الرئيسية</span>
             </a>
-
-
-            <!-- القرآن -->
-
-            <a
-                class="navitem"
-                href="./quran.html"
-            >
-
+            <a class="navitem" href="./quran.html" aria-label="القرآن">
                 <div class="ic">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <path
-                            d="M5 4
-                               a3 3 0 0 1 3-3h11v18H8
-                               a3 3 0 0 0-3 3Z"
-                        />
-
-                        <path
-                            d="M5 4v18"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                     </svg>
-
                 </div>
-
-                <span>
-                    القرآن
-                </span>
-
+                <span>القرآن</span>
             </a>
-
-
-            <!-- الأذكار -->
-
-            <a
-                class="navitem"
-                href="./adhkar.html"
-            >
-
+            <a class="navitem" href="./prayer.html" aria-label="الصلاة">
                 <div class="ic">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        />
-
-                        <path
-                            d="M12 8v4l3 2"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
                     </svg>
-
                 </div>
-
-                <span>
-                    الأذكار
-                </span>
-
+                <span>الصلاة</span>
             </a>
-
-
-            <!-- القبلة -->
-
-            <a
-                class="navitem"
-                href="./qibla.html"
-            >
-
+            <a class="navitem" href="./adhkar.html" aria-label="الأذكار">
                 <div class="ic">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                        />
-
-                        <path
-                            d="m12 7 2 5-2 5-2-5Z"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7 3 9 3 9h6s3-2 3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
-
                 </div>
-
-                <span>
-                    القبلة
-                </span>
-
+                <span>الأذكار</span>
             </a>
-
-
-            <!-- المزيد -->
-
-            <a
-                class="navitem"
-                href="./more.html"
-            >
-
+            <a class="navitem" href="./more.html" aria-label="المزيد">
                 <div class="ic">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <circle
-                            cx="5"
-                            cy="12"
-                            r="1"
-                        />
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="1"
-                        />
-
-                        <circle
-                            cx="19"
-                            cy="12"
-                            r="1"
-                        />
-
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                     </svg>
-
                 </div>
-
-                <span>
-                    المزيد
-                </span>
-
+                <span>المزيد</span>
             </a>
-
-
         </div>
-
     </nav>
 
-
-    <!-- ======================================================
-         JavaScript
-    ======================================================= -->
-
     <script src="./app.js"></script>
-
     <script src="./theme.js"></script>
-
-
-    <!-- ======================================================
-         التثبيت
-    ======================================================= -->
-
     <script>
-
         document.addEventListener(
             'DOMContentLoaded',
             function () {
-
-                const installCard =
-                    document.getElementById(
-                        'installCard'
-                    );
-
-                const installBtn =
-                    document.getElementById(
-                        'installBtn'
-                    );
-
-
+                const installCard = document.getElementById(
+                    'installCard'
+                );
+                const installBtn = document.getElementById(
+                    'installBtn'
+                );
                 if (
                     !installCard ||
                     !installBtn
                 ) {
-
                     return;
-
                 }
-
-
                 window.AppBridge?.on(
                     'app-can-install',
                     function () {
-
                         installCard.classList.add(
                             'visible'
                         );
-
                     }
                 );
-
-
                 installBtn.addEventListener(
                     'click',
                     async function () {
-
                         const result =
                             await window.installApp?.();
-
-
                         if (
                             result === 'accepted'
                         ) {
-
                             installCard.classList.remove(
                                 'visible'
                             );
-
                         }
-
                     }
                 );
-
             }
         );
-
     </script>
 
-
 </body>
-
 </html>
