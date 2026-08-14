@@ -1,26 +1,84 @@
-/* ==========================================================
-   الرفيق — app.js (النسخة الدستورية v4.2 - تحديث الـ 69 ولاية)
-   الالتزام بدقة المواقيت لـ 69 ولاية جزائرية ومنطق رمضان الذكي.
+<div style="position: relative;">
+  <button onclick="copyCode()" style="position: absolute; top: 10px; left: 10px; z-index: 10; background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-family: Tahoma, sans-serif;">📋 نسخ الكود</button>
+  <pre id="codeBlock" style="direction: ltr; text-align: left; background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; line-height: 1.5;"><code>/* ==========================================================
+   الرفيق 3 — app.js
+   الإصدار: 5.0.0
+   ----------------------------------------------------------
+   محرك التطبيق الأساسي
+
+   ✔ 69 ولاية جزائرية
+   ✔ اختيار الولاية يدويًا
+   ✔ مواقيت الصلاة
+   ✔ التاريخ الهجري
+   ✔ الصلاة القادمة
+   ✔ العد التنازلي
+   ✔ الأذان المحلي
+   ✔ حفظ الإعدادات
+   ✔ دعم الواجهة القديمة والجديدة
+   ✔ لا يعتمد على API
+   ✔ يعمل Offline
    ========================================================== */
 
 "use strict";
 
+/* ==========================================================
+   STORAGE
+   ========================================================== */
+
 const Storage = {
+
     get(key, fallback = null) {
+
         try {
-            const value = localStorage.getItem(key);
-            return value ? JSON.parse(value) : fallback;
-        } catch (e) { return fallback; }
+
+            const value =
+                localStorage.getItem(key);
+
+            return value !== null
+                ? JSON.parse(value)
+                : fallback;
+
+        } catch (error) {
+
+            console.warn(
+                "[الرفيق] تعذر قراءة التخزين:",
+                error
+            );
+
+            return fallback;
+        }
     },
+
     set(key, value) {
-        try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+
+        try {
+
+            localStorage.setItem(
+                key,
+                JSON.stringify(value)
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.warn(
+                "[الرفيق] تعذر حفظ الإعداد:",
+                error
+            );
+
+            return false;
+        }
     }
 };
 
-/**
- * القائمة الرسمية الكاملة لولايات الجزائر الـ 69 المحدثة لعام 2026
- */
+
+/* ==========================================================
+   الولايات الجزائرية
+   ========================================================== */
+
 const WILAYAS = [
+
     { code: "01", name: "01 - أدرار", lat: 27.87, lng: -0.28 },
     { code: "02", name: "02 - الشلف", lat: 36.16, lng: 1.33 },
     { code: "03", name: "03 - الأغواط", lat: 33.80, lng: 2.87 },
@@ -69,6 +127,7 @@ const WILAYAS = [
     { code: "46", name: "46 - عين تموشنت", lat: 35.30, lng: -1.14 },
     { code: "47", name: "47 - غرداية", lat: 32.49, lng: 3.67 },
     { code: "48", name: "48 - غليزان", lat: 35.74, lng: 0.56 },
+
     { code: "49", name: "49 - تيميمون", lat: 29.26, lng: 0.23 },
     { code: "50", name: "50 - برج باجي مختار", lat: 21.33, lng: 0.92 },
     { code: "51", name: "51 - أولاد جلال", lat: 34.42, lng: 5.06 },
@@ -79,6 +138,7 @@ const WILAYAS = [
     { code: "56", name: "56 - جانت", lat: 24.55, lng: 9.48 },
     { code: "57", name: "57 - المغير", lat: 33.95, lng: 5.92 },
     { code: "58", name: "58 - المنيعة", lat: 30.58, lng: 2.88 },
+
     { code: "59", name: "59 - آفلو", lat: 34.11, lng: 2.10 },
     { code: "60", name: "60 - بريكة", lat: 35.39, lng: 5.36 },
     { code: "61", name: "61 - قصر الشلالة", lat: 35.16, lng: 2.31 },
@@ -90,235 +150,1465 @@ const WILAYAS = [
     { code: "67", name: "67 - قصر البخاري", lat: 35.88, lng: 2.75 },
     { code: "68", name: "68 - بوسعادة", lat: 35.21, lng: 4.17 },
     { code: "69", name: "69 - الأبيض سيدي الشيخ", lat: 32.89, lng: 0.54 }
+
 ];
 
+
+/* ==========================================================
+   محرك مواقيت الصلاة
+   ========================================================== */
+
 const PrayerEngine = {
+
     calculate(lat, lng, timezone = 1) {
+
         const date = new Date();
-        const jd = this.getJulianDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
-        const d = jd - 2451545.0;
-        const g = (357.529 + 0.98560028 * d) % 360;
-        const q = (280.459 + 0.98564736 * d) % 360;
-        const l = (q + 1.915 * Math.sin(this.toRad(g)) + 0.020 * Math.sin(this.toRad(2 * g))) % 360;
-        const e = 23.439 - 0.00000036 * d;
-        const ra = Math.atan2(Math.cos(this.toRad(e)) * Math.sin(this.toRad(l)), Math.cos(this.toRad(l))) * 180 / Math.PI;
-        const dec = Math.asin(Math.sin(this.toRad(e)) * Math.sin(this.toRad(l))) * 180 / Math.PI;
-        const eqTime = (q - ra) / 15;
-        const noon = 12 + timezone - lng / 15 - eqTime;
-        
+
+        const jd =
+            this.getJulianDate(
+                date.getFullYear(),
+                date.getMonth() + 1,
+                date.getDate()
+            );
+
+        const d =
+            jd - 2451545.0;
+
+        const g =
+            (357.529 + 0.98560028 * d) % 360;
+
+        const q =
+            (280.459 + 0.98564736 * d) % 360;
+
+        const l =
+            (
+                q +
+                1.915 *
+                Math.sin(this.toRad(g)) +
+                0.020 *
+                Math.sin(this.toRad(2 * g))
+            ) % 360;
+
+        const e =
+            23.439 -
+            0.00000036 * d;
+
+        const ra =
+            Math.atan2(
+                Math.cos(this.toRad(e)) *
+                Math.sin(this.toRad(l)),
+                Math.cos(this.toRad(l))
+            ) *
+            180 /
+            Math.PI;
+
+        const dec =
+            Math.asin(
+                Math.sin(this.toRad(e)) *
+                Math.sin(this.toRad(l))
+            ) *
+            180 /
+            Math.PI;
+
+        const eqTime =
+            (q - ra) / 15;
+
+        const noon =
+            12 +
+            timezone -
+            lng / 15 -
+            eqTime;
+
+
         const getHourAngle = (angle) => {
-            const cosH = (Math.sin(this.toRad(angle)) - Math.sin(this.toRad(lat)) * Math.sin(this.toRad(dec))) / (Math.cos(this.toRad(lat)) * Math.cos(this.toRad(dec)));
-            if (cosH > 1) return 0; if (cosH < -1) return 12;
-            return Math.acos(cosH) * 180 / Math.PI / 15;
+
+            const cosH =
+                (
+                    Math.sin(this.toRad(angle)) -
+                    Math.sin(this.toRad(lat)) *
+                    Math.sin(this.toRad(dec))
+                ) /
+                (
+                    Math.cos(this.toRad(lat)) *
+                    Math.cos(this.toRad(dec))
+                );
+
+            if (cosH > 1) {
+                return 0;
+            }
+
+            if (cosH < -1) {
+                return 12;
+            }
+
+            return (
+                Math.acos(cosH) *
+                180 /
+                Math.PI /
+                15
+            );
         };
-        
-        const asrAngle = Math.atan(1 / (1 + Math.tan(this.toRad(Math.abs(lat - dec))))) * 180 / Math.PI;
-        
+
+
+        /*
+         * العصر:
+         * مذهب الجمهور — ظل الشيء مثليه
+         *
+         * نحتفظ بالمعادلة الأصلية في الرفيق.
+         */
+
+        const asrAngle =
+            Math.atan(
+                1 /
+                (
+                    1 +
+                    Math.tan(
+                        this.toRad(
+                            Math.abs(lat - dec)
+                        )
+                    )
+                )
+            ) *
+            180 /
+            Math.PI;
+
+
         const times = {
-            fajr: noon - getHourAngle(-18),
-            sunrise: noon - getHourAngle(-0.833),
-            dhuhr: noon,
-            asr: noon + getHourAngle(asrAngle),
-            maghrib: noon + getHourAngle(-0.833),
-            isha: noon + getHourAngle(-17)
+
+            fajr:
+                noon -
+                getHourAngle(-18),
+
+            sunrise:
+                noon -
+                getHourAngle(-0.833),
+
+            dhuhr:
+                noon,
+
+            asr:
+                noon +
+                getHourAngle(asrAngle),
+
+            maghrib:
+                noon +
+                getHourAngle(-0.833),
+
+            isha:
+                noon +
+                getHourAngle(-17)
+
         };
-        
-        times.imsak = times.fajr - (10 / 60); // الإمساك قبل الفجر بـ 10 دقائق
+
+
+        /*
+         * الإمساك:
+         * ليس صلاة مستقلة.
+         * هو تنبيه احتياطي قبل الفجر.
+         */
+
+        times.imsak =
+            times.fajr -
+            (10 / 60);
+
+
         return times;
     },
+
+
     getJulianDate(y, m, d) {
-        if (m <= 2) { y -= 1; m += 12; }
-        const a = Math.floor(y / 100);
-        const b = 2 - a + Math.floor(a / 4);
-        return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + b - 1524.5;
+
+        if (m <= 2) {
+            y -= 1;
+            m += 12;
+        }
+
+        const a =
+            Math.floor(y / 100);
+
+        const b =
+            2 -
+            a +
+            Math.floor(a / 4);
+
+        return (
+            Math.floor(
+                365.25 *
+                (y + 4716)
+            ) +
+
+            Math.floor(
+                30.6001 *
+                (m + 1)
+            ) +
+
+            d +
+            b -
+            1524.5
+        );
     },
-    toRad: (deg) => deg * Math.PI / 180,
-    format: (h) => {
-        h = (h + 24) % 24;
-        const hh = Math.floor(h);
-        const mm = Math.floor((h - hh) * 60 + 0.5);
-        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+
+
+    toRad(deg) {
+
+        return deg * Math.PI / 180;
+
+    },
+
+
+    format(hours) {
+
+        if (!Number.isFinite(hours)) {
+            return "--:--";
+        }
+
+        hours =
+            (
+                hours + 24
+            ) % 24;
+
+        let hh =
+            Math.floor(hours);
+
+        let mm =
+            Math.floor(
+                (
+                    hours - hh
+                ) * 60 +
+                0.5
+            );
+
+        if (mm >= 60) {
+            hh++;
+            mm = 0;
+        }
+
+        hh %= 24;
+
+        return (
+            String(hh).padStart(2, "0") +
+            ":" +
+            String(mm).padStart(2, "0")
+        );
     }
 };
+
+
+/* ==========================================================
+   التاريخ الهجري
+   ========================================================== */
 
 const HijriEngine = {
-    get() {
-        const d = new Date();
-        const jd = Math.floor(d.getTime() / 86400000) + 2440587.5;
-        const l = jd - 1948439, n = Math.floor(l / 10631), rem = l % 10631;
-        let y = 0, remDays = rem, kabisa = [2,5,7,10,13,15,18,21,24,26,29];
-        while (remDays >= (kabisa.includes(y) ? 355 : 354)) { remDays -= (kabisa.includes(y) ? 355 : 354); y++; }
-        const mNames = ["محرم","صفر","ربيع الأول","ربيع الثاني","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
-        const mLen = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29]; if (kabisa.includes(y)) mLen[11] = 30;
-        let m = 0; while (remDays >= mLen[m]) { remDays -= mLen[m]; m++; }
-        return { day: remDays + 1, month: m + 1, monthName: mNames[m], year: n * 30 + y + 1 };
+
+    get(date = new Date()) {
+
+        const jd =
+            Math.floor(
+                date.getTime() /
+                86400000
+            ) +
+            2440587.5;
+
+        const l =
+            jd -
+            1948439;
+
+        const n =
+            Math.floor(
+                l / 10631
+            );
+
+        const rem =
+            l % 10631;
+
+        let y = 0;
+
+        let remDays = rem;
+
+
+        const kabisa = [
+            2,
+            5,
+            7,
+            10,
+            13,
+            15,
+            18,
+            21,
+            24,
+            26,
+            29
+        ];
+
+
+        while (
+            remDays >=
+            (
+                kabisa.includes(y)
+                    ? 355
+                    : 354
+            )
+        ) {
+
+            remDays -=
+                kabisa.includes(y)
+                    ? 355
+                    : 354;
+
+            y++;
+        }
+
+
+        const monthNames = [
+            "محرم",
+            "صفر",
+            "ربيع الأول",
+            "ربيع الثاني",
+            "جمادى الأولى",
+            "جمادى الآخرة",
+            "رجب",
+            "شعبان",
+            "رمضان",
+            "شوال",
+            "ذو القعدة",
+            "ذو الحجة"
+        ];
+
+
+        const monthLength = [
+            30,
+            29,
+            30,
+            29,
+            30,
+            29,
+            30,
+            29,
+            30,
+            29,
+            30,
+            29
+        ];
+
+
+        if (kabisa.includes(y)) {
+            monthLength[11] = 30;
+        }
+
+
+        let month = 0;
+
+
+        while (
+            month < 12 &&
+            remDays >=
+            monthLength[month]
+        ) {
+
+            remDays -=
+                monthLength[month];
+
+            month++;
+        }
+
+
+        return {
+
+            day:
+                remDays + 1,
+
+            month:
+                month + 1,
+
+            monthName:
+                monthNames[month],
+
+            year:
+                n * 30 +
+                y +
+                1
+        };
     }
 };
+
+
+/* ==========================================================
+   محرك الرفيق
+   ========================================================== */
 
 const App = {
-    state: { 
-        cityCode: Storage.get('cityCode', '16'), 
-        times: null, 
-        next: null, 
-        hijri: null,
-        adhanEnabled: Storage.get('adhanEnabled', false),
-        muezzin: Storage.get('muezzin', 'mecca'),
-        audioContextUnlocked: false,
-        lastAdhanPlayed: null
+
+    state: {
+
+        cityCode:
+            Storage.get(
+                "cityCode",
+                "16"
+            ),
+
+        times:
+            null,
+
+        rawTimes:
+            null,
+
+        next:
+            null,
+
+        hijri:
+            null,
+
+        adhanEnabled:
+            Storage.get(
+                "adhanEnabled",
+                false
+            ),
+
+        muezzin:
+            Storage.get(
+                "muezzin",
+                "mecca"
+            ),
+
+        audioContextUnlocked:
+            false,
+
+        lastAdhanPlayed:
+            null
     },
+
+
     init() {
+
         this.buildWilayaSelector();
+
         this.update();
+
         this.updateAdhanUI();
-        setInterval(() => this.tick(), 1000);
-        document.addEventListener('click', () => {
-            if (!this.state.audioContextUnlocked) {
-                this.state.audioContextUnlocked = true;
-                console.log("Audio unlocked");
+
+
+        /*
+         * تحديث الساعة كل ثانية.
+         */
+
+        setInterval(
+            () => this.tick(),
+            1000
+        );
+
+
+        /*
+         * فتح إمكانية الصوت بعد أول تفاعل
+         * مع الصفحة.
+         */
+
+        const unlockAudio = () => {
+
+            this.state.audioContextUnlocked = true;
+
+            document.removeEventListener(
+                "click",
+                unlockAudio
+            );
+
+            document.removeEventListener(
+                "touchstart",
+                unlockAudio
+            );
+
+        };
+
+
+        document.addEventListener(
+            "click",
+            unlockAudio,
+            {
+                once: true,
+                passive: true
             }
-        }, { once: true });
+        );
+
+
+        document.addEventListener(
+            "touchstart",
+            unlockAudio,
+            {
+                once: true,
+                passive: true
+            }
+        );
+
     },
-    updateAdhanUI() {
-        const toggle = document.getElementById('adhanToggle');
-        const settings = document.getElementById('adhanSettings');
-        if (this.state.adhanEnabled) {
-            toggle.classList.add('on');
-            settings.style.display = 'block';
-        } else {
-            toggle.classList.remove('on');
-            settings.style.display = 'none';
-        }
-        document.getElementById('muezzinSelect').value = this.state.muezzin;
+
+
+    /* ======================================================
+       الولاية الحالية
+       ====================================================== */
+
+    getCurrentWilaya() {
+
+        return (
+            WILAYAS.find(
+                w =>
+                    w.code ===
+                    this.state.cityCode
+            ) ||
+            WILAYAS.find(
+                w =>
+                    w.code === "16"
+            )
+        );
     },
-    toggleAdhan() {
-        this.state.adhanEnabled = !this.state.adhanEnabled;
-        Storage.set('adhanEnabled', this.state.adhanEnabled);
-        this.updateAdhanUI();
-    },
-    changeMuezzin(val) {
-        this.state.muezzin = val;
-        Storage.set('muezzin', val);
-    },
-    testAdhan() {
-        this.playAdhan();
-    },
-    playAdhan() {
-        const audio = new Audio(`./audio/adhan_${this.state.muezzin}.mp3`);
-        audio.play().catch(e => alert("يرجى الضغط على أي مكان في الشاشة لتفعيل الصوت أولاً."));
-    },
+
+
+    /* ======================================================
+       بناء قائمة الولايات
+       ====================================================== */
+
     buildWilayaSelector() {
-        const sel = document.getElementById('citySelect');
-        if (!sel) return;
-        WILAYAS.forEach(w => {
-            const opt = document.createElement('option');
-            opt.value = w.code; opt.textContent = w.name;
-            sel.appendChild(opt);
-        });
-        sel.value = this.state.cityCode;
-        sel.onchange = (e) => {
-            this.state.cityCode = e.target.value;
-            Storage.set('cityCode', this.state.cityCode);
-            this.update();
-        };
-    },
-    update() {
-        const city = WILAYAS.find(w => w.code === this.state.cityCode) || WILAYAS[15];
-        const rawTimes = PrayerEngine.calculate(city.lat, city.lng);
-        this.state.times = {
-            fajr: PrayerEngine.format(rawTimes.fajr),
-            sunrise: PrayerEngine.format(rawTimes.sunrise),
-            dhuhr: PrayerEngine.format(rawTimes.dhuhr),
-            asr: PrayerEngine.format(rawTimes.asr),
-            maghrib: PrayerEngine.format(rawTimes.maghrib),
-            isha: PrayerEngine.format(rawTimes.isha),
-            imsak: PrayerEngine.format(rawTimes.imsak)
-        };
-        this.state.hijri = HijriEngine.get();
-        this.render();
-    },
-    render() {
-        const h = this.state.hijri;
-        document.getElementById('hijriPill').textContent = `${h.day} ${h.monthName} ${h.year}هـ`;
-        const t = this.state.times;
-        document.getElementById('prayerDetails').innerHTML = `
-            <div class="prayer-row"><span>الفجر</span><span>${t.fajr}</span></div>
-            <div class="prayer-row"><span>الظهر</span><span>${t.dhuhr}</span></div>
-            <div class="prayer-row"><span>العصر</span><span>${t.asr}</span></div>
-            <div class="prayer-row"><span>المغرب</span><span>${t.maghrib}</span></div>
-            <div class="prayer-row"><span>العشاء</span><span>${t.isha}</span></div>
-        `;
-        
-        const ramadanSection = document.getElementById('ramadanSection');
-        if (ramadanSection) {
-            if (h.month === 9) {
-                ramadanSection.hidden = false;
-                ramadanSection.innerHTML = `
-                    <div class="ramadan-card">
-                        <div class="ramadan-icon">🌙</div>
-                        <div class="ramadan-info">
-                            <h3>رمضان مبارك</h3>
-                            <div style="display:flex; gap:20px; margin-top:10px;">
-                                <div>
-                                    <span style="color:var(--gold-soft); font-size:0.75rem;">السحور (الإمساك):</span> 
-                                    <b style="color:#fff; display:block; font-size:1.1rem;">${t.imsak}</b>
-                                </div>
-                                <div>
-                                    <span style="color:var(--gold-soft); font-size:0.75rem;">الإفطار (المغرب):</span> 
-                                    <b style="color:#fff; display:block; font-size:1.1rem;">${t.maghrib}</b>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else { 
-                ramadanSection.hidden = true; 
-                ramadanSection.innerHTML = '';
-            }
+
+        const select =
+            document.getElementById(
+                "citySelect"
+            );
+
+        if (!select) {
+            return;
         }
+
+
+        /*
+         * لا نكرر الخيارات إذا أعيد تهيئة المحرك.
+         */
+
+        select.innerHTML = "";
+
+
+        WILAYAS.forEach(
+            (wilaya) => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    wilaya.code;
+
+                option.textContent =
+                    wilaya.name;
+
+                select.appendChild(
+                    option
+                );
+            }
+        );
+
+
+        select.value =
+            this.state.cityCode;
+
+
+        /*
+         * إذا كانت القيمة المحفوظة
+         * غير موجودة نرجع إلى الجزائر العاصمة.
+         */
+
+        if (
+            select.value !==
+            this.state.cityCode
+        ) {
+
+            this.state.cityCode =
+                "16";
+
+            select.value =
+                "16";
+
+            Storage.set(
+                "cityCode",
+                "16"
+            );
+        }
+
+
+        select.onchange =
+            (event) => {
+
+                this.state.cityCode =
+                    event.target.value;
+
+                Storage.set(
+                    "cityCode",
+                    this.state.cityCode
+                );
+
+                this.update();
+            };
+    },
+
+
+    /* ======================================================
+       حساب المواقيت
+       ====================================================== */
+
+    update() {
+
+        const city =
+            this.getCurrentWilaya();
+
+
+        const rawTimes =
+            PrayerEngine.calculate(
+                city.lat,
+                city.lng,
+                1
+            );
+
+
+        this.state.rawTimes =
+            rawTimes;
+
+
+        this.state.times = {
+
+            fajr:
+                PrayerEngine.format(
+                    rawTimes.fajr
+                ),
+
+            sunrise:
+                PrayerEngine.format(
+                    rawTimes.sunrise
+                ),
+
+            dhuhr:
+                PrayerEngine.format(
+                    rawTimes.dhuhr
+                ),
+
+            asr:
+                PrayerEngine.format(
+                    rawTimes.asr
+                ),
+
+            maghrib:
+                PrayerEngine.format(
+                    rawTimes.maghrib
+                ),
+
+            isha:
+                PrayerEngine.format(
+                    rawTimes.isha
+                ),
+
+            imsak:
+                PrayerEngine.format(
+                    rawTimes.imsak
+                )
+        };
+
+
+        this.state.hijri =
+            HijriEngine.get();
+
+
+        this.render();
+
         this.findNext();
+
     },
+
+
+    /* ======================================================
+       عرض البيانات
+       ====================================================== */
+
+    render() {
+
+        const hijri =
+            this.state.hijri;
+
+
+        const hijriElement =
+            document.getElementById(
+                "hijriPill"
+            );
+
+
+        if (hijriElement) {
+
+            hijriElement.textContent =
+                `${hijri.day} ${hijri.monthName} ${hijri.year}هـ`;
+
+        }
+
+
+        /*
+         * تحديث بطاقات المواقيت
+         * دون استبدال HTML الخاص بالواجهة.
+         */
+
+        const times =
+            this.state.times;
+
+
+        document
+            .querySelectorAll(
+                "[data-prayer]"
+            )
+            .forEach(
+                (element) => {
+
+                    const key =
+                        element.dataset.prayer;
+
+                    if (
+                        Object.prototype.hasOwnProperty.call(
+                            times,
+                            key
+                        )
+                    ) {
+
+                        element.textContent =
+                            times[key];
+
+                    }
+                }
+            );
+
+
+        /*
+         * دعم الواجهة القديمة أيضًا.
+         */
+
+        const prayerDetails =
+            document.getElementById(
+                "prayerDetails"
+            );
+
+
+        if (
+            prayerDetails &&
+            !prayerDetails.querySelector(
+                "[data-prayer]"
+            )
+        ) {
+
+            const rows = [
+
+                ["الفجر", times.fajr],
+                ["الظهر", times.dhuhr],
+                ["العصر", times.asr],
+                ["المغرب", times.maghrib],
+                ["العشاء", times.isha]
+
+            ];
+
+
+            prayerDetails.innerHTML =
+                rows.map(
+                    ([name, time]) => `
+                        <div class="prayer-row">
+                            <span>${name}</span>
+                            <span dir="ltr">${time}</span>
+                        </div>
+                    `
+                ).join("");
+
+        }
+
+
+        /*
+         * رمضان
+         */
+
+        this.renderRamadan();
+
+    },
+
+
+    /* ======================================================
+       رمضان
+       ====================================================== */
+
+    renderRamadan() {
+
+        const section =
+            document.getElementById(
+                "ramadanSection"
+            );
+
+        if (!section) {
+            return;
+        }
+
+
+        const hijri =
+            this.state.hijri;
+
+        const times =
+            this.state.times;
+
+
+        if (
+            hijri &&
+            hijri.month === 9
+        ) {
+
+            section.hidden = false;
+
+
+            section.innerHTML = `
+
+                <div class="ramadan-card">
+
+                    <div class="ramadan-title">
+                        🌙 رمضان مبارك
+                    </div>
+
+                    <div class="ramadan-times">
+
+                        <div>
+                            <span class="ramadan-time-label">
+                                السحور — الإمساك
+                            </span>
+
+                            <span
+                                class="ramadan-time-value"
+                                dir="ltr">
+                                ${times.imsak}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="ramadan-time-label">
+                                الإفطار — المغرب
+                            </span>
+
+                            <span
+                                class="ramadan-time-value"
+                                dir="ltr">
+                                ${times.maghrib}
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        } else {
+
+            section.hidden = true;
+
+            section.innerHTML = "";
+        }
+    },
+
+
+    /* ======================================================
+       الصلاة القادمة
+       ====================================================== */
+
     findNext() {
-        const now = new Date();
-        const curMin = now.getHours() * 60 + now.getMinutes();
-        const t = this.state.times;
-        const list = [
-            { n: "الفجر", t: t.fajr }, 
-            { n: "الظهر", t: t.dhuhr }, 
-            { n: "العصر", t: t.asr }, 
-            { n: "المغرب", t: t.maghrib }, 
-            { n: "العشاء", t: t.isha }
+
+        const now =
+            new Date();
+
+
+        const currentMinutes =
+            now.getHours() * 60 +
+            now.getMinutes() +
+            now.getSeconds() / 60;
+
+
+        const times =
+            this.state.times;
+
+
+        const prayers = [
+
+            {
+                key: "fajr",
+                name: "الفجر",
+                time: times.fajr
+            },
+
+            {
+                key: "dhuhr",
+                name: "الظهر",
+                time: times.dhuhr
+            },
+
+            {
+                key: "asr",
+                name: "العصر",
+                time: times.asr
+            },
+
+            {
+                key: "maghrib",
+                name: "المغرب",
+                time: times.maghrib
+            },
+
+            {
+                key: "isha",
+                name: "العشاء",
+                time: times.isha
+            }
+
         ];
-        let next = list.find(p => {
-            const [h, m] = p.t.split(':').map(Number);
-            return (h * 60 + m) > curMin;
-        }) || list[0];
-        this.state.next = next;
-        document.getElementById('nextName').textContent = next.n;
-        document.getElementById('nextTime').textContent = next.t;
+
+
+        let next =
+            prayers.find(
+                prayer => {
+
+                    const [h, m] =
+                        prayer.time
+                            .split(":")
+                            .map(Number);
+
+                    return (
+                        h * 60 +
+                        m >
+                        currentMinutes
+                    );
+                }
+            );
+
+
+        /*
+         * إذا انتهت صلوات اليوم
+         * فالصلاة القادمة هي فجر الغد.
+         */
+
+        if (!next) {
+            next = prayers[0];
+        }
+
+
+        this.state.next =
+            next;
+
+
+        const nextName =
+            document.getElementById(
+                "nextName"
+            );
+
+
+        const nextTime =
+            document.getElementById(
+                "nextTime"
+            );
+
+
+        if (nextName) {
+            nextName.textContent =
+                next.name;
+        }
+
+
+        if (nextTime) {
+            nextTime.textContent =
+                next.time;
+        }
     },
+
+
+    /* ======================================================
+       العد التنازلي
+       ====================================================== */
+
     tick() {
-        if (!this.state.next) return;
-        const now = new Date();
-        const curTimeStr = PrayerEngine.format(now.getHours() + now.getMinutes()/60);
-        
-        if (this.state.adhanEnabled) {
-            const prayerTimes = Object.values(this.state.times);
-            if (prayerTimes.includes(curTimeStr) && this.state.lastAdhanPlayed !== curTimeStr) {
-                this.state.lastAdhanPlayed = curTimeStr;
-                this.playAdhan();
+
+        if (!this.state.next) {
+            this.findNext();
+            return;
+        }
+
+
+        const now =
+            new Date();
+
+
+        /*
+         * إعادة تحديد الصلاة القادمة
+         * إذا تغيّرت الدقيقة.
+         */
+
+        const currentMinute =
+            now.getHours() * 60 +
+            now.getMinutes();
+
+
+        const [nextHour, nextMinute] =
+            this.state.next.time
+                .split(":")
+                .map(Number);
+
+
+        const nextMinuteOfDay =
+            nextHour * 60 +
+            nextMinute;
+
+
+        if (
+            nextMinuteOfDay <=
+            currentMinute
+        ) {
+
+            /*
+             * لا نعيد حسابها في كل ثانية،
+             * فقط إذا وصلنا إلى وقت الصلاة.
+             */
+
+            if (
+                nextMinuteOfDay ===
+                currentMinute
+            ) {
+
+                this.update();
+
             }
         }
 
-        const [h, m] = this.state.next.t.split(':').map(Number);
-        let target = new Date(now); target.setHours(h, m, 0, 0);
-        if (target < now) target.setDate(target.getDate() + 1);
-        const diff = target - now;
-        const hh = Math.floor(diff/3600000), mm = Math.floor((diff%3600000)/60000), ss = Math.floor((diff%60000)/1000);
-        document.getElementById('countdown').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-        
-        if (diff < 1000) {
-            setTimeout(() => this.update(), 1000);
+
+        let target =
+            new Date(now);
+
+
+        target.setHours(
+            nextHour,
+            nextMinute,
+            0,
+            0
+        );
+
+
+        if (
+            target <= now
+        ) {
+
+            target.setDate(
+                target.getDate() + 1
+            );
         }
+
+
+        const difference =
+            target.getTime() -
+            now.getTime();
+
+
+        const hours =
+            Math.floor(
+                difference /
+                3600000
+            );
+
+
+        const minutes =
+            Math.floor(
+                (
+                    difference %
+                    3600000
+                ) /
+                60000
+            );
+
+
+        const seconds =
+            Math.floor(
+                (
+                    difference %
+                    60000
+                ) /
+                1000
+            );
+
+
+        const countdown =
+            document.getElementById(
+                "countdown"
+            );
+
+
+        if (countdown) {
+
+            countdown.textContent =
+                `${String(hours).padStart(2, "0")}:` +
+                `${String(minutes).padStart(2, "0")}:` +
+                `${String(seconds).padStart(2, "0")}`;
+
+        }
+
+
+        /*
+         * تشغيل الأذان.
+         */
+
+        this.checkAdhan(now);
+
+    },
+
+
+    /* ======================================================
+       الأذان
+       ====================================================== */
+
+    checkAdhan(now) {
+
+        if (!this.state.adhanEnabled) {
+            return;
+        }
+
+
+        const currentTime =
+            PrayerEngine.format(
+                now.getHours() +
+                now.getMinutes() / 60
+            );
+
+
+        const prayerKeys = [
+            "fajr",
+            "dhuhr",
+            "asr",
+            "maghrib",
+            "isha"
+        ];
+
+
+        for (
+            const key of prayerKeys
+        ) {
+
+            if (
+                this.state.times[key] ===
+                currentTime
+            ) {
+
+                const uniqueKey =
+                    `${new Date().toDateString()}-${key}-${currentTime}`;
+
+
+                if (
+                    this.state.lastAdhanPlayed !==
+                    uniqueKey
+                ) {
+
+                    this.state.lastAdhanPlayed =
+                        uniqueKey;
+
+                    this.playAdhan();
+                }
+
+
+                break;
+            }
+        }
+    },
+
+
+    /* ======================================================
+       تشغيل الأذان
+       ====================================================== */
+
+    playAdhan() {
+
+        /*
+         * النسخة الحالية من المستودع تحتوي
+         * ملف adhan.mp3 في الجذر.
+         *
+         * لذلك نستخدمه أولًا بدل المسار
+         * غير الموجود ./audio/...
+         */
+
+        const sources = [
+            "./adhan.mp3",
+            "./audio/adhan_mecca.mp3"
+        ];
+
+
+        this.tryAudioSource(
+            sources,
+            0
+        );
+    },
+
+
+    tryAudioSource(
+        sources,
+        index
+    ) {
+
+        if (
+            index >=
+            sources.length
+        ) {
+
+            console.warn(
+                "[الرفيق] لم يتم العثور على ملف الأذان."
+            );
+
+            return;
+        }
+
+
+        const audio =
+            new Audio();
+
+
+        audio.preload =
+            "auto";
+
+
+        audio.src =
+            sources[index];
+
+
+        audio.addEventListener(
+            "error",
+            () => {
+
+                this.tryAudioSource(
+                    sources,
+                    index + 1
+                );
+
+            },
+            {
+                once: true
+            }
+        );
+
+
+        const promise =
+            audio.play();
+
+
+        if (
+            promise &&
+            typeof promise.catch ===
+            "function"
+        ) {
+
+            promise.catch(
+                (error) => {
+
+                    console.warn(
+                        "[الرفيق] تعذر تشغيل الأذان:",
+                        error
+                    );
+
+                }
+            );
+        }
+    },
+
+
+    /* ======================================================
+       مفتاح الأذان
+       ====================================================== */
+
+    toggleAdhan() {
+
+        this.state.adhanEnabled =
+            !this.state.adhanEnabled;
+
+
+        Storage.set(
+            "adhanEnabled",
+            this.state.adhanEnabled
+        );
+
+
+        this.updateAdhanUI();
+
+    },
+
+
+    /* ======================================================
+       اختيار المؤذن
+       ====================================================== */
+
+    changeMuezzin(
+        value
+    ) {
+
+        if (!value) {
+            return;
+        }
+
+
+        this.state.muezzin =
+            value;
+
+
+        Storage.set(
+            "muezzin",
+            value
+        );
+
+
+        this.updateAdhanUI();
+
+    },
+
+
+    /* ======================================================
+       اختبار الأذان
+       ====================================================== */
+
+    testAdhan() {
+
+        this.playAdhan();
+
+    },
+
+
+    /* ======================================================
+       واجهة الأذان
+       ====================================================== */
+
+    updateAdhanUI() {
+
+        const toggle =
+            document.getElementById(
+                "adhanToggle"
+            );
+
+
+        const settings =
+            document.getElementById(
+                "adhanSettings"
+            );
+
+
+        const status =
+            document.getElementById(
+                "adhanStatus"
+            );
+
+
+        if (toggle) {
+
+            toggle.classList.toggle(
+                "on",
+                this.state.adhanEnabled
+            );
+
+
+            toggle.setAttribute(
+                "aria-checked",
+                String(
+                    this.state.adhanEnabled
+                )
+            );
+        }
+
+
+        if (settings) {
+
+            settings.style.display =
+                this.state.adhanEnabled
+                    ? "block"
+                    : "none";
+        }
+
+
+        if (status) {
+
+            status.textContent =
+                this.state.adhanEnabled
+                    ? "تنبيه الأذان مفعل"
+                    : "تنبيه الأذان غير مفعل";
+        }
+
+
+        const select =
+            document.getElementById(
+                "muezzinSelect"
+            );
+
+
+        if (select) {
+
+            select.value =
+                this.state.muezzin;
+        }
+
+
+        /*
+         * دعم أزرار المؤذنين في index.html.
+         */
+
+        document
+            .querySelectorAll(
+                "[data-muezzin]"
+            )
+            .forEach(
+                (element) => {
+
+                    element.classList.toggle(
+                        "active",
+                        element.dataset.muezzin ===
+                        this.state.muezzin
+                    );
+
+                }
+            );
     }
 };
-document.addEventListener('DOMContentLoaded', () => App.init());
+
+
+/* ==========================================================
+   بدء التطبيق
+   ========================================================== */
+
+if (
+    typeof window !== "undefined"
+) {
+
+    window.WILAYAS =
+        WILAYAS;
+
+    window.PrayerEngine =
+        PrayerEngine;
+
+    window.HijriEngine =
+        HijriEngine;
+
+    window.App =
+        App;
+}
+
+
+/* ==========================================================
+   DOM READY
+   ========================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        App.init();
+
+    }
+);</code></pre>
+</div>
+
+<script>
+function copyCode() {
+    const code = document.getElementById('codeBlock').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        alert('✅ تم نسخ كود app.js بنجاح!');
+    }).catch(() => {
+        alert('❌ تعذر النسخ. يرجى النسخ يدويًا.');
+    });
+}
+</script>
