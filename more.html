@@ -1,106 +1,39 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#080B10">
-  <title>المزيد — الرفيق</title>
-  <link rel="stylesheet" href="./style.css">
-  <link rel="manifest" href="./manifest.json">
-  <style>
-    .container{max-width:520px;margin:0 auto;padding:16px;}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:16px 18px;border:1px solid var(--line);border-radius:14px;
-      background:var(--card);margin-bottom:12px;}
-    .row .lbl{display:flex;align-items:center;gap:10px;font-size:.95rem;font-weight:600;}
-    .row .lbl span:first-child{font-size:1.3rem;}
-    .row .desc{font-size:.75rem;color:var(--muted);margin-top:2px;}
-    .toggle{position:relative;width:48px;height:27px;border-radius:99px;background:#555;
-      cursor:pointer;flex-shrink:0;transition:.2s;}
-    .toggle.on{background:var(--gold);}
-    .toggle::after{content:'';position:absolute;top:3px;right:3px;width:21px;height:21px;
-      border-radius:50%;background:#fff;transition:.2s;}
-    .toggle.on::after{transform:translateX(-21px);}
-    .action-btn{width:100%;text-align:right;background:var(--card);border:1px solid var(--line);
-      border-radius:14px;padding:16px 18px;font-size:.9rem;color:var(--text);cursor:pointer;
-      margin-bottom:12px;display:flex;align-items:center;gap:10px;}
-    .action-btn.danger{color:#e07a5f;}
-    .about-box{text-align:center;color:var(--muted);font-size:.78rem;padding:20px 0;line-height:2;}
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>المزيد — الرفيق</title><link rel="stylesheet" href="./style.css"><script src="./theme.js"></script>
+<style>
+  .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+  .row { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; margin-bottom: 15px; }
+  .btn-action { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 18px; color: var(--text); text-align: right; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; }
+  .toggle-switch { width: 50px; height: 26px; background: #334155; border-radius: 99px; position: relative; cursor: pointer; }
+  .toggle-switch.on { background: var(--emerald); }
+  .toggle-switch::after { content: ''; position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.3s; }
+  .toggle-switch.on::after { transform: translateX(-24px); }
+</style>
 </head>
 <body>
 <div class="container">
-  <header style="text-align:center;padding:14px 0 20px;">
-    <h1 style="color:var(--gold);font-size:1.4rem;">المزيد</h1>
-  </header>
-  <div class="row">
-    <div class="lbl">
-      <span>🌗</span>
-      <div>
-        <div>الوضع الليلي / النهاري</div>
-        <div class="desc" id="themeDesc">الوضع الحالي: ليلي</div>
-      </div>
-    </div>
-    <div class="toggle" id="themeToggle"></div>
-  </div>
-  <button class="action-btn" id="resetBtn">
-    <span>↺</span> إعادة تعيين الولاية المحفوظة (يفعّل تحديد GPS من جديد)
-  </button>
-  <button class="action-btn" id="clearAzkarBtn">
-    <span>🧹</span> مسح عدّادات الأذكار
-  </button>
-  <button class="action-btn" id="shareBtn">
-    <span>📤</span> مشاركة التطبيق
-  </button>
-  <div class="about-box">
-    الرفيق — رفيقك إلى الصلاة والذكر والقرآن<br>
-    مواقيت الصلاة، الأذان، القرآن الكريم، الأربعون النووية، الأذكار، حصن المسلم، اتجاه القبلة<br>
-    يعمل بالكامل بدون إنترنت بعد أول تحميل
-  </div>
+    <div style="text-align:center; margin-bottom:30px;"><h1>الإعدادات</h1></div>
+    <div class="row"><div><div style="font-weight:700">الوضع الليلي</div><div id="themeText" style="font-size:0.8rem; color:var(--muted)">الوضع الحالي: ليلي</div></div><div class="toggle-switch" id="themeToggle"></div></div>
+    <button class="btn-action" id="resetCity"><span>📍</span> إعادة تعيين المدينة</button>
+    <button class="btn-action" id="shareApp"><span>🔗</span> مشاركة التطبيق</button>
 </div>
-<nav class="bottom-nav">
-  <a href="./index.html" class="nav-item"><span>🏠</span>الرئيسية</a>
-  <a href="./quran.html" class="nav-item"><span>📖</span>القرآن</a>
-  <a href="./prayer.html" class="nav-item"><span>🕌</span>الصلاة</a>
-  <a href="./adhkar.html" class="nav-item"><span>🤲</span>الأذكار</a>
-  <a href="./more.html" class="nav-item active"><span>⚙️</span>المزيد</a>
-</nav>
-<script src="./theme.js"></script>
+<nav class="bottomnav"><div class="bottomnav-inner">
+    <a href="index.html" class="navitem"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span>الرئيسية</span></a>
+    <a href="quran.html" class="navitem"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path></svg><span>القرآن</span></a>
+    <a href="azkar.html" class="navitem"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87"></path></svg><span>الأذكار</span></a>
+    <a href="more.html" class="navitem active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle></svg><span>المزيد</span></a>
+</div></nav>
 <script>
-  const toggle = document.getElementById('themeToggle');
-  const desc = document.getElementById('themeDesc');
-  function refreshUI(){
-    const isDay = localStorage.getItem('rafeeq_theme') === 'day';
-    toggle.classList.toggle('on', isDay);
-    desc.textContent = 'الوضع الحالي: ' + (isDay ? 'نهاري' : 'ليلي');
-  }
-  toggle.addEventListener('click', ()=>{ 
-    if(window.RafeeqTheme) {
-      window.RafeeqTheme.toggle();
-    } else {
-      const isDay = localStorage.getItem('rafeeq_theme') === 'day';
-      localStorage.setItem('rafeeq_theme', isDay ? 'night' : 'day');
-      document.body.classList.toggle('day-mode', !isDay);
-    }
-    refreshUI(); 
-  });
-  refreshUI();
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
-    localStorage.removeItem('rafeeq_wilaya');
-    localStorage.removeItem('rafeeq_wilaya_source');
-    alert('تم إعادة التعيين — سيحاول التطبيق تحديد ولايتك تلقائياً عبر GPS عند فتح الرئيسية.');
-  });
-  document.getElementById('clearAzkarBtn').addEventListener('click', ()=>{
-    alert('تم مسح عدّادات الأذكار.');
-  });
-  document.getElementById('shareBtn').addEventListener('click', ()=>{
-    const shareUrl = window.location.href.split('/more.html')[0];
-    if(navigator.share){
-      navigator.share({ title:'الرفيق', text:'تطبيق الرفيق — الصلاة والذكر والقرآن', url: shareUrl });
-    } else {
-      navigator.clipboard.writeText(shareUrl).then(()=> alert('تم نسخ الرابط'));
-    }
-  });
+    const toggle = document.getElementById('themeToggle');
+    const themeText = document.getElementById('themeText');
+    function updateUI() { const isDay = document.body.classList.contains('day-mode'); toggle.classList.toggle('on', isDay); themeText.textContent = 'الوضع الحالي: ' + (isDay ? 'نهاري' : 'ليلي'); }
+    toggle.onclick = () => { if (window.RafeeqTheme) { window.RafeeqTheme.toggle(); updateUI(); } };
+    document.getElementById('resetCity').onclick = () => { localStorage.setItem('cityCode', JSON.stringify('16')); alert('تمت إعادة التعيين'); window.location.href = 'index.html'; };
+    document.getElementById('shareApp').onclick = () => { const url = window.location.origin + window.location.pathname.replace('more.html', 'index.html'); if (navigator.share) { navigator.share({ title: 'الرفيق', text: 'رفيقك إلى الخير', url: url }); } else { navigator.clipboard.writeText(url).then(() => alert('تم النسخ')); } };
+    updateUI();
 </script>
 </body>
 </html>
