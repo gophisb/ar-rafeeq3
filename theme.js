@@ -1,68 +1,15 @@
-/* ============================================================
-   الرفيق — theme.js
-   الإصدار: 1.0.1 (إصلاح التكرار)
-   ============================================================ */
-
 'use strict';
-
 const THEME_STORAGE_KEY = 'rafeeq_theme';
-
 function applyTheme(theme) {
-    const body = document.body;
-    if (!body) return;
-
-    if (theme === 'day') {
-        body.classList.add('day-mode');
-    } else {
-        body.classList.remove('day-mode');
-    }
-
-    try {
-        localStorage.setItem(THEME_STORAGE_KEY, theme);
-    } catch (error) {
-        console.warn('تعذر حفظ إعدادات الوضع:', error);
-    }
-
-    if (window.AppBridge && typeof window.AppBridge.emit === 'function') {
-        window.AppBridge.emit('theme-changed', theme);
-    }
+    const body = document.body; if (!body) return;
+    if (theme === 'day') body.classList.add('day-mode'); else body.classList.remove('day-mode');
+    try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
 }
-
 function getSavedTheme() {
-    try {
-        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        if (savedTheme === 'day' || savedTheme === 'night') {
-            return savedTheme;
-        }
-    } catch (error) {
-        console.warn('تعذر قراءة الوضع المحفوظ:', error);
-    }
+    try { const saved = localStorage.getItem(THEME_STORAGE_KEY); if (saved === 'day' || saved === 'night') return saved; } catch (e) {}
     return 'night';
 }
-
-function toggleTheme() {
-    const body = document.body;
-    if (!body) return;
-    const isDay = body.classList.contains('day-mode');
-    applyTheme(isDay ? 'night' : 'day');
-}
-
-window.RafeeqTheme = {
-    apply: applyTheme,
-    toggle: toggleTheme,
-    get: getSavedTheme
-};
-
-function initializeTheme() {
-    const savedTheme = getSavedTheme();
-    applyTheme(savedTheme);
-    console.log('🎨 الرفيق — الوضع الحالي:', savedTheme);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeTheme);
-} else {
-    initializeTheme();
-}
-
-console.log('🚀 الرفيق — theme.js يعمل بنجاح');
+function toggleTheme() { const isDay = document.body.classList.contains('day-mode'); applyTheme(isDay ? 'night' : 'day'); }
+window.RafeeqTheme = { apply: applyTheme, toggle: toggleTheme, get: getSavedTheme };
+function initializeTheme() { applyTheme(getSavedTheme()); }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializeTheme); else initializeTheme();
