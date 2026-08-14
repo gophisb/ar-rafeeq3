@@ -53,8 +53,8 @@ const State = {
     gregorianDate: new Date(),
     online: navigator.onLine,
     ready: false,
-    adhanPlayedFor: null, // لحفظ اسم الصلاة التي شُغّل لها الأذان
-    audioUnlocked: false  // جديد: هل تم فتح قفل الصوت بعد أول تفاعل؟
+    adhanPlayedFor: null, 
+    audioUnlocked: false  
 };
 
 const Utils = {
@@ -101,10 +101,6 @@ window.addEventListener("offline", () => {
     setStatus("يعمل بدون إنترنت");
 });
 
-/*==========================================================
-  جديد: فتح قفل تشغيل الصوت عند أول تفاعل من المستخدم
-  (المتصفحات تمنع audio.play() التلقائي بدون هذا)
-==========================================================*/
 function unlockAudio() {
     if (State.audioUnlocked || !UI.audio) return;
     UI.audio.muted = true;
@@ -124,9 +120,6 @@ function unlockAudio() {
 document.addEventListener("click", unlockAudio, { once: true });
 document.addEventListener("touchstart", unlockAudio, { once: true });
 
-/*==========================================================
-  جديد: إذن الإشعارات (طبقة تنبيه بديلة عند الشاشة المقفلة)
-==========================================================*/
 function requestNotificationPermission() {
     if ("Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
@@ -139,7 +132,7 @@ function showAdhanNotification(prayerName) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     const options = {
         body: "حان الآن وقت الصلاة",
-        icon: "./icons/icon-192.png", // ⚠️ عدّل المسار حسب أيقونة تطبيقك الفعلية
+        icon: "./icon-192.png",
         vibrate: [500, 200, 500, 200, 500],
         tag: "adhan-notification",
         requireInteraction: true
@@ -471,12 +464,6 @@ function updateNextPrayerUI() {
     }
 }
 
-/*==========================================================
-  الأذان — checkAdhan و playAdhan (مُصلَحة)
-==========================================================*/
-
-// جديد: نافذة مطابقة موسّعة (دقيقتان) بدل تطابق حرفي للدقيقة
-// هذا يمنع تفويت الأذان إذا تأخر تنفيذ المؤقّت (مثلاً بسبب تجميد المتصفح)
 const ADHAN_MATCH_WINDOW_MINUTES = 2;
 
 function checkAdhan() {
@@ -493,7 +480,6 @@ function checkAdhan() {
 
     for (const [name, time] of Object.entries(adhanMap)) {
         const targetMin = Utils.minutes(time);
-        // نطبّق modulo لتفادي مشاكل التفاف منتصف الليل
         const diff = (currentMin - targetMin + 1440) % 1440;
         if (diff >= 0 && diff <= ADHAN_MATCH_WINDOW_MINUTES && State.adhanPlayedFor !== name) {
             playAdhan(name);
@@ -504,21 +490,15 @@ function checkAdhan() {
 
 function playAdhan(prayerName) {
     if (!UI.audio) return;
-    // منع التشغيل المتكرر لنفس الصلاة
     State.adhanPlayedFor = prayerName;
-
-    // جديد: إشعار مرئي + اهتزاز يعمل حتى والشاشة مقفلة (طالما التطبيق لم يُغلق كليًا)
     showAdhanNotification(prayerName);
-
     UI.audio.currentTime = 0;
     const playPromise = UI.audio.play();
     if (playPromise !== undefined) {
         playPromise.then(() => {
-            // تم التشغيل بنجاح
             if (UI.play) UI.play.style.display = 'none';
             if (UI.pause) UI.pause.style.display = 'inline';
         }).catch((err) => {
-            // المتصفح منع التشغيل التلقائي – نظهر زر التشغيل اليدوي
             console.warn("تعذر التشغيل التلقائي للأذان:", err);
             if (UI.playButton) UI.playButton.style.display = 'block';
             if (UI.play) UI.play.style.display = 'inline';
@@ -527,7 +507,6 @@ function playAdhan(prayerName) {
     }
 }
 
-// جديد: ربط زر التشغيل/الإيقاف اليدوي فعليًا (كان غائبًا تمامًا سابقًا)
 function bindManualAdhanButton() {
     if (!UI.playButton || !UI.audio) return;
     UI.playButton.addEventListener('click', () => {
@@ -549,7 +528,6 @@ function bindManualAdhanButton() {
     });
 }
 
-// إعادة تعيين adhanPlayedFor عند تغير الوقت أو اليوم
 function resetAdhanFlagIfNewPrayer() {
     if (!State.prayerTimes || !State.nextPrayer) return;
     if (State.adhanPlayedFor && !State.nextPrayer.name.includes(State.adhanPlayedFor)) {
@@ -575,14 +553,16 @@ function refreshPrayerTimes() {
         State.prayerTimes = times;
         State.adhanPlayedFor = null;
         updateNextPrayerUI();
-        if (UI.prayerCard) {
-            UI.prayerCard.innerHTML = `
-                <div>الفجر: ${times.fajr}</div>
-                <div>الشروق: ${times.sunrise}</div>
-                <div>الظهر: ${times.dhuhr}</div>
-                <div>العصر: ${times.asr}</div>
-                <div>المغرب: ${times.maghrib}</div>
-                <div>العشاء: ${times.isha}</div>
+        
+        const details = document.getElementById("prayerDetails");
+        if (details) {
+            details.innerHTML = `
+                <div class="prayer-row"><span>الفجر</span> <span>${times.fajr}</span></div>
+                <div class="prayer-row"><span>الشروق</span> <span>${times.sunrise}</span></div>
+                <div class="prayer-row"><span>الظهر</span> <span>${times.dhuhr}</span></div>
+                <div class="prayer-row"><span>العصر</span> <span>${times.asr}</span></div>
+                <div class="prayer-row"><span>المغرب</span> <span>${times.maghrib}</span></div>
+                <div class="prayer-row"><span>العشاء</span> <span>${times.isha}</span></div>
             `;
         }
     }
@@ -593,7 +573,7 @@ function initPhase3() {
         applyCity(Storage.get('cityCode', '16'));
     }
     refreshPrayerTimes();
-    bindManualAdhanButton(); // جديد
+    bindManualAdhanButton(); 
     startTicking();
     const now = new Date();
     const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
@@ -607,7 +587,9 @@ function initPhase3() {
 function boot() {
     console.log(APP.name, APP.version, "بدأ التشغيل");
     State.ready = true;
-    setStatus("جاري تهيئة النظام...");
+    
+    if (UI.status) UI.status.hidden = true;
+    if (UI.prayerCard) UI.prayerCard.hidden = false;
 
     buildCityList();
     updateDates();
