@@ -1,39 +1,47 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>المزيد — الرفيق</title><link rel="stylesheet" href="./style.css"><script src="./theme.js"></script>
-<style>
-  .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-  .row { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; margin-bottom: 15px; }
-  .btn-action { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 18px; color: var(--text); text-align: right; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; }
-  .toggle-switch { width: 50px; height: 26px; background: #334155; border-radius: 99px; position: relative; cursor: pointer; }
-  .toggle-switch.on { background: var(--emerald); }
-  .toggle-switch::after { content: ''; position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.3s; }
-  .toggle-switch.on::after { transform: translateX(-24px); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>المزيد — الرفيق</title>
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="./theme.js"></script>
 </head>
 <body>
-<div class="container">
-    <div style="text-align:center; margin-bottom:30px;"><h1>الإعدادات</h1></div>
-    <div class="row"><div><div style="font-weight:700">الوضع الليلي</div><div id="themeText" style="font-size:0.8rem; color:var(--muted)">الوضع الحالي: ليلي</div></div><div class="toggle-switch" id="themeToggle"></div></div>
-    <button class="btn-action" id="resetCity"><span>📍</span> إعادة تعيين المدينة</button>
-    <button class="btn-action" id="shareApp"><span>🔗</span> مشاركة التطبيق</button>
+<div class="max">
+    <header class="topbar">
+        <div class="brand-mark" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
+        <div class="titlebox"><h1>الإعدادات</h1><p>تخصيص تجربة الرفيق</p></div>
+        <div></div>
+    </header>
+    <section class="prayer-card">
+        <div class="feat-card" style="display:flex; justify-content:space-between; align-items:center; padding:20px; margin-bottom:15px; text-align:right;">
+            <div><div class="t">الوضع الليلي</div><div class="s">تبديل المظهر</div></div>
+            <div class="brand-mark" onclick="RafeeqTheme.toggle()" style="cursor:pointer;">🌓</div>
+        </div>
+        <div class="feat-card" style="display:flex; justify-content:space-between; align-items:center; padding:20px; text-align:right;">
+            <div><div class="t">مشاركة التطبيق</div><div class="s">انشر الخير</div></div>
+            <div class="brand-mark" onclick="shareApp()" style="cursor:pointer;">🔗</div>
+        </div>
+    </section>
+    <div style="text-align:center; color:var(--muted); font-size:0.8rem; margin-top:40px;">
+        إصدار الرفيق Premium v4.0.0<br>تقبل الله منا ومنكم صالح الأعمال
+    </div>
 </div>
 <nav class="bottomnav"><div class="bottomnav-inner">
-    <a href="index.html" class="navitem"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span>الرئيسية</span></a>
-    <a href="quran.html" class="navitem"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path></svg><span>القرآن</span></a>
-    <a href="azkar.html" class="navitem"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87"></path></svg><span>الأذكار</span></a>
-    <a href="more.html" class="navitem active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle></svg><span>المزيد</span></a>
+    <a href="index.html" class="navitem"><div class="ic">🏠</div><span>الرئيسية</span></a>
+    <a href="quran.html" class="navitem"><div class="ic">📖</div><span>القرآن</span></a>
+    <a href="prayer.html" class="navitem"><div class="ic">🕌</div><span>الصلاة</span></a>
+    <a href="adhkar.html" class="navitem"><div class="ic">📿</div><span>الأذكار</span></a>
+    <a href="more.html" class="navitem active"><div class="ic">⚙️</div><span>المزيد</span></a>
 </div></nav>
 <script>
-    const toggle = document.getElementById('themeToggle');
-    const themeText = document.getElementById('themeText');
-    function updateUI() { const isDay = document.body.classList.contains('day-mode'); toggle.classList.toggle('on', isDay); themeText.textContent = 'الوضع الحالي: ' + (isDay ? 'نهاري' : 'ليلي'); }
-    toggle.onclick = () => { if (window.RafeeqTheme) { window.RafeeqTheme.toggle(); updateUI(); } };
-    document.getElementById('resetCity').onclick = () => { localStorage.setItem('cityCode', JSON.stringify('16')); alert('تمت إعادة التعيين'); window.location.href = 'index.html'; };
-    document.getElementById('shareApp').onclick = () => { const url = window.location.origin + window.location.pathname.replace('more.html', 'index.html'); if (navigator.share) { navigator.share({ title: 'الرفيق', text: 'رفيقك إلى الخير', url: url }); } else { navigator.clipboard.writeText(url).then(() => alert('تم النسخ')); } };
-    updateUI();
+    function shareApp() {
+        const url = window.location.origin + window.location.pathname.replace('more.html', 'index.html');
+        if (navigator.share) { navigator.share({ title: 'تطبيق الرفيق', text: 'رفيقك إلى الخير', url: url }); }
+        else { alert('رابط التطبيق: ' + url); }
+    }
 </script>
 </body>
 </html>
